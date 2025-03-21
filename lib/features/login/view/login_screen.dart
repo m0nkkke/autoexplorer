@@ -57,7 +57,7 @@ class LoginScreen extends StatelessWidget {
                       // Логика авторизации
                       print('Access Key: $accessKey');
                       print('Password: $password');
-                      Navigator.of(context).pushNamed('/');
+                      Navigator.of(context).pushNamed('/storage');
                     }
                   },
                 ),

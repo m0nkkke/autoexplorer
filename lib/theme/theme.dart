@@ -30,7 +30,7 @@ final mainTheme = ThemeData(
     size: 24,
   ),
 
-  // Добавляем стили текста в TextTheme
+  // Cтили текста в TextTheme
   textTheme: const TextTheme(
     bodyLarge: TextStyle(
       fontSize: 18,
@@ -44,6 +44,21 @@ final mainTheme = ThemeData(
     bodySmall: TextStyle( 
       fontSize: 14,
       color: Colors.black,
+    ),
+  ),
+   // Стиль полей ввода (включая hintText)
+  inputDecorationTheme: const InputDecorationTheme(
+    hintStyle: TextStyle(
+      color: Colors.grey,
+      fontSize: 16,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+      borderSide: BorderSide(color: Colors.grey),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+      borderSide: BorderSide(color: Colors.blue),
     ),
   ),
 );

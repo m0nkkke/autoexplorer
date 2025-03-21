@@ -1,3 +1,5 @@
+import 'package:autoexplorer/features/storage/widgets/app_bar_menu.dart';
+import 'package:autoexplorer/features/storage/widgets/app_bar_viewsort.dart';
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -88,54 +90,24 @@ class _CustomAppBarState extends State<CustomAppBar> {
         ),
       ),
       actions: widget.isSelectionMode
-          ? [
-              TextButton.icon(
-                onPressed: () {
-                  widget.onSelectAll(!widget.isAllSelected); // передача состояния
-                },
-                icon: Checkbox(
-                  value: widget.isAllSelected,
-                  onChanged: (value) {
-                    widget.onSelectAll(value ?? false); // передача состояния
-                  },
-                ),
-                label: const Text('Выделить все'),
-              ),
-            ]
-          : [
-              IconButton(
-                icon: const Icon(Icons.list_outlined, size: 36),
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/login');
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {},
-              ),
-            ],
-             bottom: widget.isSelectionMode 
-             ? null
-             : PreferredSize(
-                preferredSize: Size.fromHeight(56.0),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          // Обработка нажатия на кнопку
-                        },
-                        icon: const Icon(Icons.add_box, color: Colors.lightBlue, size: 36), 
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+    ? [
+        TextButton.icon(
+          onPressed: () {
+            widget.onSelectAll(!widget.isAllSelected);
+          },
+          icon: Checkbox(
+            value: widget.isAllSelected,
+            onChanged: (value) {
+              widget.onSelectAll(value ?? false);
+            },
+          ),
+          label: const Text('Выделить все'),
+        ),
+      ]
+    : [
+        const AppBarViewsort(),
+        const AppBarMenu(),
+      ],
     );
   }
 }

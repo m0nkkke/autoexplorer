@@ -30,10 +30,6 @@ class InputField extends StatelessWidget {
           controller: controller,
           obscureText: isPassword,
           decoration: InputDecoration(
-            hintStyle: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
             hintText: hintText,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
