@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:autoexplorer/features/storage/widgets/app_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
 import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
+import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:flutter/material.dart';
 import '../widgets/folder_list_item.dart';
+import 'package:image_picker/image_picker.dart';
 
 class StorageListScreen extends StatefulWidget {
   const StorageListScreen({super.key, required this.title});
@@ -24,6 +28,29 @@ class _StorageListScreenState extends State<StorageListScreen> {
   static const String storageCount = 'Хранится 1540 папок | заполнено 50%';
   static const String objectTitle = 'Участок 1';
   static const String dateCreation = '03.03.2025 16:43:00';
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
+    if (image != null) {
+      File file = File(image.path);
+      // Обработать полученный файл
+      print('Выбрано изображение: ${file.path}');
+    }
+  }
+
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return ImageSourceSheet(
+          onCameraTap: () => _pickImage(ImageSource.camera),
+          onGalleryTap: () => _pickImage(ImageSource.gallery),
+        );
+      },
+    );
+  }
 
   void _updateIconSize(bool isLarge) {
     setState(() {
@@ -118,6 +145,18 @@ class _StorageListScreenState extends State<StorageListScreen> {
       ? _buildFileList()
       : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: FloatingActionButton(
+          onPressed: () {
+            _showImageSourceActionSheet();
+          },
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.camera_alt),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
     );
   }
 

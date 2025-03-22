@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  image_picker: ^1.1.2
+  permission_handler: ^11.4.0
   flutter_svg: ^1.1.6
   flutter_bloc: ^9.1.0
 
