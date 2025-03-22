@@ -86,8 +86,11 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
   void _onSelectAll(bool value) {
     setState(() {
-      _selectedItems = value ? Set.from(List.generate(filesCount, (index) => index)) : {};
-      _isSelectionMode = _selectedItems.isNotEmpty;
+       if (value) {
+         _selectedItems = Set.from(List.generate(filesCount, (index) => index));
+       } else {
+         _selectedItems.clear();
+       }
       _appBarMode = _isSelectionMode ? AppBarMode.selection : AppBarMode.normal;
     });
   }
@@ -145,7 +148,9 @@ class _StorageListScreenState extends State<StorageListScreen> {
       ? _buildFileList()
       : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
-      floatingActionButton: Padding(
+      floatingActionButton: _isSelectionMode 
+      ? null
+      : Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: FloatingActionButton(
           onPressed: () {
