@@ -1,100 +1,66 @@
+import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:flutter/material.dart';
 
+enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
+
 class AppBarMenu extends StatelessWidget {
-  const AppBarMenu({super.key});
+  final VoidCallback onSearch;
+
+  AppBarMenu({super.key, required this.onSearch});
+
+  // Заполнение пунктов меню
+  final List<_MenuItem> _menuItems = [
+    _MenuItem(AppBarMenuOption.createFolder, Icons.add, 'Новая папка'),
+    _MenuItem(AppBarMenuOption.search, Icons.search, 'Поиск'),
+    _MenuItem(AppBarMenuOption.refresh, Icons.refresh, 'Обновить'),
+    _MenuItem(AppBarMenuOption.switchAccount, Icons.vpn_key, 'Сменить'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<int>(
       icon: const Icon(Icons.more_vert),
-      onSelected: (value) {
-        switch (value) {
-          case 0:
-            _showCreateFolderDialog(context);
-            break;
-          case 1:
-            // Логика поиска
-            break;
-          case 2:
-            // Логика обновления содержимого
-            break;
-          case 3:
-            Navigator.of(context).pushNamed('/'); // Смена аккаунта
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        const PopupMenuItem<int>(
-          value: 0,
-          child: Row(
-            children: [
-              Icon(Icons.add, color: Colors.black54),
-              SizedBox(width: 8),
-              Text('Новая папка'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<int>(
-          value: 1,
-          child: Row(
-            children: [
-              Icon(Icons.search, color: Colors.black54),
-              SizedBox(width: 8),
-              Text('Поиск'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<int>(
-          value: 2,
-          child: Row(
-            children: [
-              Icon(Icons.refresh, color: Colors.black54),
-              SizedBox(width: 8),
-              Text('Обновить'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<int>(
-          value: 3,
-          child: Row(
-            children: [
-              Icon(Icons.vpn_key, color: Colors.black54),
-              SizedBox(width: 8),
-              Text('Сменить'),
-            ],
-          ),
-        ),
-      ],
+      onSelected: (value) => _onMenuItemSelected(value, context),
+      itemBuilder: (context) => _menuItems
+          .map((item) => PopupMenuItem<int>(
+                value: item.option.index,
+                child: Row(
+                  children: [
+                    Icon(item.icon, color: Colors.black54),
+                    const SizedBox(width: 8),
+                    Text(item.text),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 
-  void _showCreateFolderDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: const Color.fromARGB(100, 0, 0, 0),
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Создать папку'),
-          content: const TextField(
-            decoration: InputDecoration(
-              hintText: "Название папки",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Отмена'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Логика создания папки
-                Navigator.of(context).pop();
-              },
-              child: const Text('Ок'),
-            ),
-          ],
-        );
-      },
-    );
+  // Обработка выбранного пункта меню
+  void _onMenuItemSelected(int value, BuildContext context) {
+    final option = AppBarMenuOption.values[value];
+    switch (option) {
+      case AppBarMenuOption.createFolder:
+        ShowCreateDialog.showCreateFolderDialog(context);
+        break;
+      case AppBarMenuOption.search:
+        onSearch();
+        break;
+      case AppBarMenuOption.refresh:
+        Navigator.of(context).pushNamed('/storage');
+        break;
+      case AppBarMenuOption.switchAccount:
+        Navigator.of(context).pushNamed('/');
+        break;
+    }
   }
+}
+
+// Вспомогательный класс для представления элементов меню
+class _MenuItem {
+  final AppBarMenuOption option;
+  final IconData icon;
+  final String text;
+
+  _MenuItem(this.option, this.icon, this.text);
 }

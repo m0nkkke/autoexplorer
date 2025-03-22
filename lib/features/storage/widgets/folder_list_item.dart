@@ -10,6 +10,7 @@ class FolderListItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onLongPress;
   final VoidCallback onTap;
+  final bool isLargeIcons;
 
   const FolderListItem({
     Key? key,
@@ -20,29 +21,27 @@ class FolderListItem extends StatelessWidget {
     required this.isSelected,
     required this.onLongPress,
     required this.onTap,
+    required this.isLargeIcons, 
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Размер иконок (вид значков)
+    final iconSize = isLargeIcons ? 60.0 : 40.0;
+
     return GestureDetector(
-      
       onLongPress: onLongPress,
       onTap: onTap,
       child: Container(
         color: isSelected ? Colors.lightBlue : Colors.transparent,
         child: ListTile(
           leading: SvgPicture.asset(
-            // ЗДЕСЬ ИКОНКА В ЗАВИСИМОСТИ ОТ ТИПА ФАЙЛА
             'assets/svg/folder_icon.svg',
-            height: 40,
-            width: 40,
+            height: iconSize, 
+            width: iconSize, 
           ),
-          // НАЗВАНИЕ ФАЙЛА/ПАПКИ
-          title: Text(title, 
-            style: Theme.of(context).textTheme.bodyMedium),
-          // ДАТА СОЗДАНИЯ
-          subtitle: Text(dateCreation, 
-             style: Theme.of(context).textTheme.bodySmall),
+          title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
+          subtitle: Text(dateCreation, style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
               ? Checkbox(
                   value: isSelected,
@@ -54,6 +53,5 @@ class FolderListItem extends StatelessWidget {
         ),
       ),
     );
-    
   }
 }
