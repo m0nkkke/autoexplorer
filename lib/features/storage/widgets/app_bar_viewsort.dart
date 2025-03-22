@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 
+enum SortOption { name, date }
+
 class AppBarViewsort extends StatefulWidget {
-  const AppBarViewsort({super.key});
+  const AppBarViewsort({super.key, required this.onIconSizeChanged});
+
+  final Function(bool) onIconSizeChanged;
 
   @override
   _AppBarViewsortState createState() => _AppBarViewsortState();
 }
 
 class _AppBarViewsortState extends State<AppBarViewsort> {
-  bool _isLargeIcons = false; // Переключатель между крупными и мелкими значками
-  String _sortBy = 'name'; // Сортировка по имени или дате
+  bool _isLargeIcons = false;
+  SortOption _sortBy = SortOption.name;
 
   void _toggleIconSize(bool isLarge) {
     setState(() {
       _isLargeIcons = isLarge;
+      widget.onIconSizeChanged(isLarge);
     });
   }
 
-  void _sortFiles(String sortBy) {
+  void _sortFiles(SortOption sortBy) {
     setState(() {
       _sortBy = sortBy;
     });
@@ -27,56 +32,51 @@ class _AppBarViewsortState extends State<AppBarViewsort> {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.list_outlined),
+      icon: const Icon(Icons.list_outlined),
       onSelected: (value) {
         switch (value) {
           case 'small':
-            _toggleIconSize(false); // Мелкий размер значков
+            _toggleIconSize(false);
             break;
           case 'large':
-            _toggleIconSize(true); // Крупный размер значков
+            _toggleIconSize(true);
             break;
           case 'name':
-            _sortFiles('name'); // Сортировка по имени
+            _sortFiles(SortOption.name);
             break;
           case 'date':
-            _sortFiles('date'); // Сортировка по дате создания
+            _sortFiles(SortOption.date);
             break;
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'Вид значков',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'small',
-          child: Text('Мелкий'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'large',
-          child: Text('Крупный'),
-        ),
+        _buildSectionHeader('Вид значков'),
+        _buildMenuItem('small', 'Мелкий'),
+        _buildMenuItem('large', 'Крупный'),
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            'Сортировка',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'name',
-          child: Text('Сортировка по имени'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'date',
-          child: Text('Сортировка по дате создания'),
-        ),
+        _buildSectionHeader('Сортировка'),
+        _buildMenuItem('name', 'Сортировка по имени'),
+        _buildMenuItem('date', 'Сортировка по дате создания'),
       ],
+    );
+  }
+
+
+// Методы для построения элементов
+  PopupMenuItem<String> _buildMenuItem(String value, String text) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Text(text),
+    );
+  }
+
+  PopupMenuItem<String> _buildSectionHeader(String text) {
+    return PopupMenuItem<String>(
+      enabled: false,
+      child: Text(
+        text,
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
