@@ -8,21 +8,21 @@ class FolderListItem extends StatelessWidget {
   final String dateCreation;
   final bool isSelectionMode;
   final bool isSelected;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final VoidCallback onTap;
   final bool isLargeIcons;
 
   const FolderListItem({
-    Key? key,
+    super.key,
     required this.index,
     required this.title,
     required this.dateCreation,
     required this.isSelectionMode,
     required this.isSelected,
-    required this.onLongPress,
+    this.onLongPress,
     required this.onTap,
     required this.isLargeIcons, 
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class FolderListItem extends StatelessWidget {
     final iconSize = isLargeIcons ? 60.0 : 40.0;
 
     return GestureDetector(
-      onLongPress: onLongPress,
+      onLongPress: onLongPress != null ? onLongPress : null,
       onTap: onTap,
       child: Container(
         color: isSelected ? Colors.lightBlue : Colors.transparent,

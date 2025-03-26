@@ -1,19 +1,13 @@
-import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:flutter/material.dart';
 
-enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
+enum AppBarMenuOption { change }
 
-class AppBarMenu extends StatelessWidget {
-  final VoidCallback onSearch;
+class AppBarActions extends StatelessWidget {
+  AppBarActions({Key? key}) : super(key: key);
 
-  AppBarMenu({super.key, required this.onSearch});
-
-  // Заполнение пунктов меню
+  // Заполнение пункта меню
   final List<_MenuItem> _menuItems = [
-    _MenuItem(AppBarMenuOption.createFolder, Icons.add, 'Новая папка'),
-    _MenuItem(AppBarMenuOption.search, Icons.search, 'Поиск'),
-    _MenuItem(AppBarMenuOption.refresh, Icons.refresh, 'Обновить'),
-    _MenuItem(AppBarMenuOption.switchAccount, Icons.vpn_key, 'Сменить'),
+    _MenuItem(AppBarMenuOption.change, Icons.key, 'Сменить'),
   ];
 
   @override
@@ -40,19 +34,35 @@ class AppBarMenu extends StatelessWidget {
   void _onMenuItemSelected(int value, BuildContext context) {
     final option = AppBarMenuOption.values[value];
     switch (option) {
-      case AppBarMenuOption.createFolder:
-        ShowCreateDialog.showCreateFolderDialog(context);
-        break;
-      case AppBarMenuOption.search:
-        onSearch();
-        break;
-      case AppBarMenuOption.refresh:
-        Navigator.of(context).pushNamed('/storage');
-        break;
-      case AppBarMenuOption.switchAccount:
-        Navigator.of(context).pushNamed('/admin');
+      case AppBarMenuOption.change:
+        _showChangeDialog(context);
         break;
     }
+  }
+
+  // Пример отображения диалога
+  void _showChangeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Выйти из панели?'),
+        content: const Text('Вы хотите сменить аккаунт?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed('/');
+            },
+            child: const Text('Сменить'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

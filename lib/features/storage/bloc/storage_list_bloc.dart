@@ -5,7 +5,6 @@ part 'storage_list_state.dart';
 class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   StorageListBloc() : super(StorageListInitial()) {
     on<StorageListEvent>((event, emit) {
-      // TODO: implement event handler
     });
   }
 }
