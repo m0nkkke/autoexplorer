@@ -1,32 +1,30 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class FolderListItem extends StatelessWidget {
+class FileListItem extends StatelessWidget {
   final int index;
   final String title;
-  final String filesCount;
+  final String creationDate;
   final bool isSelectionMode;
   final bool isSelected;
   final VoidCallback? onLongPress;
   final VoidCallback onTap;
   final bool isLargeIcons;
 
-  const FolderListItem({
+  const FileListItem({
     super.key,
     required this.index,
     required this.title,
-    required this.filesCount,
+    required this.creationDate,
     required this.isSelectionMode,
     required this.isSelected,
     this.onLongPress,
     required this.onTap,
-    required this.isLargeIcons, 
+    required this.isLargeIcons,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Размер иконок (вид значков)
     final iconSize = isLargeIcons ? 60.0 : 40.0;
 
     return GestureDetector(
@@ -36,12 +34,12 @@ class FolderListItem extends StatelessWidget {
         color: isSelected ? Colors.lightBlue : Colors.transparent,
         child: ListTile(
           leading: SvgPicture.asset(
-            'assets/svg/folder_icon.svg',
+            'assets/svg/file_icon.svg',
             height: iconSize, 
             width: iconSize, 
           ),
           title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          subtitle: Text(filesCount, style: Theme.of(context).textTheme.bodySmall),
+          subtitle: Text(creationDate, style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
               ? Checkbox(
                   value: isSelected,

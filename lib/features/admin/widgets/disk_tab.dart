@@ -35,7 +35,7 @@ class _DiskTabState extends State<DiskTab> {
         ),
         FolderListItem(
           title: 'Регионал 1',
-          dateCreation: 'dateCreation',
+          filesCount: 'dateCreation',
           isSelectionMode: false,
           index: 1,
           isSelected: false,
@@ -44,7 +44,7 @@ class _DiskTabState extends State<DiskTab> {
         ),
         FolderListItem(
           title: 'Регионал 2',
-          dateCreation: 'dateCreation',
+          filesCount: 'dateCreation',
           isSelectionMode: false,
           index: 1,
           isSelected: false,
@@ -53,7 +53,7 @@ class _DiskTabState extends State<DiskTab> {
         ),
         FolderListItem(
           title: 'Регионал 3',
-          dateCreation: 'dateCreation',
+          filesCount: 'dateCreation',
           isSelectionMode: false,
           index: 1,
           isSelected: false,
