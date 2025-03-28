@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 
 class StorageRepository extends AbstractStorageRepository {
   static const String token =
-      'OAuth y0__xDj-aHTARjblgMgo7HhyhLSdVBUSYOkbG8NtVhqaNdByRhX6g';
+      'OAuth ТОКЕН';
   final Dio dio = Dio(BaseOptions(
     baseUrl: 'https://cloud-api.yandex.net/v1/disk/resources',
     headers: {
