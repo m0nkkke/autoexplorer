@@ -64,45 +64,46 @@ class _StorageListScreenState extends State<StorageListScreen> {
     });
   }
 
-void _onTap(int index) {
-  final item = filesAndFolders[index];
-  if (_isSelectionMode) {
-    setState(() {
-      if (_selectedItems.contains(index)) {
-        _selectedItems.remove(index);
-        if (_selectedItems.isEmpty) {
-          _isSelectionMode = false;
-          _appBarMode = AppBarMode.normal;
+  void _onTap(int index) {
+    final item = filesAndFolders[index];
+    if (_isSelectionMode) {
+      setState(() {
+        if (_selectedItems.contains(index)) {
+          _selectedItems.remove(index);
+          if (_selectedItems.isEmpty) {
+            _isSelectionMode = false;
+            _appBarMode = AppBarMode.normal;
+          }
+        } else {
+          _selectedItems.add(index);
         }
-      } else {
-        _selectedItems.add(index);
+      });
+    } else {
+      if (item is FolderItem) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => StorageListScreen(
+            title: item.name,
+            path: item.path,
+          ),
+        ));
+      } else if (item is FileItem) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ImageViewerScreen(
+            imageUrl: item.imageURL,
+          ),
+        ));
       }
-    });
-  } else {
-    if (item is FolderItem) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => StorageListScreen(
-          title: item.name,
-          path: item.path,
-        ),
-      ));
-    } else if (item is FileItem) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => ImageViewerScreen(
-          imageUrl: item.path,
-        ),
-      ));
     }
   }
-}
 
   void _onSelectAll(bool value) {
     setState(() {
-       if (value) {
-         _selectedItems = Set.from(List.generate(filesAndFolders.length, (index) => index));
-       } else {
-         _selectedItems.clear();
-       }
+      if (value) {
+        _selectedItems =
+            Set.from(List.generate(filesAndFolders.length, (index) => index));
+      } else {
+        _selectedItems.clear();
+      }
       _appBarMode = _isSelectionMode ? AppBarMode.selection : AppBarMode.normal;
     });
   }
@@ -132,7 +133,8 @@ void _onTap(int index) {
   List<dynamic> filesAndFolders = [];
   Future<void> _loadData({String path = '/'}) async {
     try {
-      final results = await StorageRepository().getFileAndFolderModels(path: path);
+      final results =
+          await StorageRepository().getFileAndFolderModels(path: path);
       setState(() {
         filesAndFolders = results;
       });
@@ -142,7 +144,7 @@ void _onTap(int index) {
   }
   //
 
-  // ДОБАВИТЬ ФОТО В ПАПКУ 
+  // ДОБАВИТЬ ФОТО В ПАПКУ
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage(ImageSource source) async {
@@ -161,74 +163,74 @@ void _onTap(int index) {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: CustomAppBar(
-      title: widget.title,
-      storageCount: storageCount,
-      path: widget.path,
-      isSelectionMode: _isSelectionMode,
-      selectedCount: _selectedItems.length,
-      onCancel: _appBarMode == AppBarMode.selection
-          ? _clearSelection
-          : _onCancelSearch,
-      onSelectAll: _onSelectAll,
-      isAllSelected: _selectedItems.length == filesAndFolders.length,
-      onSearch: _onSearch,
-      mode: _appBarMode,
-      onIconSizeChanged: _updateIconSize,
-    ),
-    body: filesAndFolders.isNotEmpty
-        ? _buildFileList()
-        : const Center(child: CircularProgressIndicator()),
-    bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
-    floatingActionButton: _isSelectionMode
-        ? null
-        : Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: FloatingActionButton(
-              onPressed: () {
-                _showImageSourceActionSheet();
-              },
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.camera_alt),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: widget.title,
+        storageCount: storageCount,
+        path: widget.path,
+        isSelectionMode: _isSelectionMode,
+        selectedCount: _selectedItems.length,
+        onCancel: _appBarMode == AppBarMode.selection
+            ? _clearSelection
+            : _onCancelSearch,
+        onSelectAll: _onSelectAll,
+        isAllSelected: _selectedItems.length == filesAndFolders.length,
+        onSearch: _onSearch,
+        mode: _appBarMode,
+        onIconSizeChanged: _updateIconSize,
+      ),
+      body: filesAndFolders.isNotEmpty
+          ? _buildFileList()
+          : const Center(child: CircularProgressIndicator()),
+      bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
+      floatingActionButton: _isSelectionMode
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: FloatingActionButton(
+                onPressed: () {
+                  _showImageSourceActionSheet();
+                },
+                backgroundColor: Colors.blue,
+                child: const Icon(Icons.camera_alt),
+              ),
             ),
-          ),
-    floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-  );
-}
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
 
-Widget _buildFileList() {
-  return ListView.builder(
-    itemCount: filesAndFolders.length,
-    itemBuilder: (context, index) {
-      final item = filesAndFolders[index];
-      if (item is FileItem) {
-         print('File item found: ${item.name}');
-        return FileListItem(
-          title: item.name,
-          creationDate: item.creationDate,
-          isSelectionMode: _isSelectionMode,
-          index: index,
-          isSelected: _selectedItems.contains(index),
-          onLongPress: () => _onLongPress(index),
-          onTap: () => _onTap(index),
-          isLargeIcons: _isLargeIcons,
-        );
-      } else if (item is FolderItem) {
-        return FolderListItem(
-          title: item.name,
-          filesCount: item.filesCount.toString(),
-          isSelectionMode: _isSelectionMode,
-          index: index,
-          isSelected: _selectedItems.contains(index),
-          onLongPress: () => _onLongPress(index),
-          onTap: () => _onTap(index),
-          isLargeIcons: _isLargeIcons,
-        );
-      }
-      return Container();
-    },
-  );
-}
+  Widget _buildFileList() {
+    return ListView.builder(
+      itemCount: filesAndFolders.length,
+      itemBuilder: (context, index) {
+        final item = filesAndFolders[index];
+        if (item is FileItem) {
+          print('File item found: ${item.name}');
+          return FileListItem(
+            title: item.name,
+            creationDate: item.creationDate,
+            isSelectionMode: _isSelectionMode,
+            index: index,
+            isSelected: _selectedItems.contains(index),
+            onLongPress: () => _onLongPress(index),
+            onTap: () => _onTap(index),
+            isLargeIcons: _isLargeIcons,
+          );
+        } else if (item is FolderItem) {
+          return FolderListItem(
+            title: item.name,
+            filesCount: item.filesCount.toString(),
+            isSelectionMode: _isSelectionMode,
+            index: index,
+            isSelected: _selectedItems.contains(index),
+            onLongPress: () => _onLongPress(index),
+            onTap: () => _onTap(index),
+            isLargeIcons: _isLargeIcons,
+          );
+        }
+        return Container();
+      },
+    );
+  }
 }

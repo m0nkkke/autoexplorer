@@ -1,3 +1,4 @@
+import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:flutter/material.dart';
 
 class ImageViewerScreen extends StatelessWidget {
@@ -5,6 +6,7 @@ class ImageViewerScreen extends StatelessWidget {
 
   final String imageUrl;
 
+  // String href = await StorageRepository().getImageDownloadUrl(imageUrl);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -12,10 +14,10 @@ class ImageViewerScreen extends StatelessWidget {
         title: const Text('Просмотр изображения'),
       ),
       body: Center(
-        child: InteractiveViewer( 
+        child: InteractiveViewer(
           child: Image.network(
             imageUrl,
-            fit: BoxFit.contain, 
+            fit: BoxFit.contain,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
               return Center(
