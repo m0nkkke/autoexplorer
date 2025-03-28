@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/features/storage/view/image_view_screen.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
@@ -10,6 +11,7 @@ import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/folder_list_item.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -30,6 +32,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
   bool _isLargeIcons = false;
   AppBarMode _appBarMode = AppBarMode.normal;
   //
+
+  final _storageListBloc = StorageListBloc(StorageRepository());
 
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
   static const String storageCount = 'Хранится 1540 папок | заполнено 50%';
@@ -158,7 +162,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
   @override
   void initState() {
-    _loadData(path: widget.path);
+    _storageListBloc.add(StorageListLoad(path: widget.path));
+    // _loadData(path: widget.path);
     super.initState();
   }
 
@@ -180,9 +185,52 @@ class _StorageListScreenState extends State<StorageListScreen> {
         mode: _appBarMode,
         onIconSizeChanged: _updateIconSize,
       ),
-      body: filesAndFolders.isNotEmpty
-          ? _buildFileList()
-          : const Center(child: CircularProgressIndicator()),
+      body: BlocBuilder<StorageListBloc, StorageListState>(
+        bloc: _storageListBloc,
+        builder: (context, state) {
+          final theme = Theme.of(context);
+          if (state is StorageListLoaded) {
+            final items = state.items;
+            filesAndFolders = state.items;
+            return ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                if (item is FileItem) {
+                  print('File item found: ${item.name}');
+                  return FileListItem(
+                    title: item.name,
+                    creationDate: item.creationDate,
+                    isSelectionMode: _isSelectionMode,
+                    index: index,
+                    isSelected: _selectedItems.contains(index),
+                    onLongPress: () => _onLongPress(index),
+                    onTap: () => _onTap(index),
+                    isLargeIcons: _isLargeIcons,
+                  );
+                } else if (item is FolderItem) {
+                  return FolderListItem(
+                    title: item.name,
+                    filesCount: item.filesCount.toString(),
+                    isSelectionMode: _isSelectionMode,
+                    index: index,
+                    isSelected: _selectedItems.contains(index),
+                    onLongPress: () => _onLongPress(index),
+                    onTap: () => _onTap(index),
+                    isLargeIcons: _isLargeIcons,
+                  );
+                }
+                return Container();
+              },
+            );
+          } else if (state is StorageListLoadingFailure) {
+            return Text("Errorrrrrr", style: theme.textTheme.labelLarge);
+          }
+          return Container();
+        },
+      ),
+      //     ? _buildFileList()
+      //     : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
       floatingActionButton: _isSelectionMode
           ? null
@@ -200,7 +248,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
     );
   }
 
-  Widget _buildFileList() {
+  Widget _buildFileList(List<dynamic> filesAndFolders) {
     return ListView.builder(
       itemCount: filesAndFolders.length,
       itemBuilder: (context, index) {
@@ -228,8 +276,9 @@ class _StorageListScreenState extends State<StorageListScreen> {
             onTap: () => _onTap(index),
             isLargeIcons: _isLargeIcons,
           );
+        } else {
+          return Container();
         }
-        return Container();
       },
     );
   }

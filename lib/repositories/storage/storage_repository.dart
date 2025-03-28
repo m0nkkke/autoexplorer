@@ -1,9 +1,10 @@
+import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-class StorageRepository {
+class StorageRepository extends AbstractStorageRepository {
   static const String token =
       'OAuth y0__xDj-aHTARjblgMgo7HhyhLSdVBUSYOkbG8NtVhqaNdByRhX6g';
   final Dio dio = Dio(BaseOptions(
@@ -37,21 +38,21 @@ class StorageRepository {
     }
   }
 
-  Future<List<dynamic>> getFilesAndFoldersModels({String path = '/'}) async {
-    try {
-      final response = await dio.get('', queryParameters: {'path': path});
-      if (response.statusCode == 200) {
-        print('Loading data...');
-        debugPrint(response.data['_embedded'].toString());
-        debugPrint(response.data['_embedded']['total'].toString());
-        return response.data['_embedded']['items'];
-      } else {
-        throw Exception('Failed to load FileItems: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load FileItems: $e');
-    }
-  }
+  // Future<List<dynamic>> getFilesAndFoldersModels({String path = '/'}) async {
+  //   try {
+  //     final response = await dio.get('', queryParameters: {'path': path});
+  //     if (response.statusCode == 200) {
+  //       print('Loading data...');
+  //       debugPrint(response.data['_embedded'].toString());
+  //       debugPrint(response.data['_embedded']['total'].toString());
+  //       return response.data['_embedded']['items'];
+  //     } else {
+  //       throw Exception('Failed to load FileItems: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Failed to load FileItems: $e');
+  //   }
+  // }
 
   FileItem _mapFileItem(Map<String, dynamic> data) {
     final name = data['name'];
@@ -97,18 +98,26 @@ class StorageRepository {
     return response.data['href']; // Временная ссылка
   }
 
+  @override
   Future<List<dynamic>> getFileAndFolderModels({String path = '/'}) async {
     try {
-      final items = await getFilesAndFoldersModels(path: path);
+      final response = await dio.get('', queryParameters: {'path': path});
       List<dynamic> result = [];
-      for (var item in items) {
-        if (item['type'] == 'file') {
-          result.add(_mapFileItem(item));
-        } else if (item['type'] == 'dir') {
-          result.add(await _mapFolderItem(item));
+      if (response.statusCode == 200) {
+        print('Loading data...');
+        debugPrint(response.data['_embedded'].toString());
+        debugPrint(response.data['_embedded']['total'].toString());
+        final items = response.data['_embedded']['items'];
+        for (var item in items) {
+          if (item['type'] == 'file') {
+            result.add(_mapFileItem(item));
+          } else if (item['type'] == 'dir') {
+            result.add(await _mapFolderItem(item));
+          }
         }
+        return result;
       }
-      return result;
+      throw Exception('Failed to load FileItems');
     } catch (e) {
       throw Exception('Failed to load FileItems: $e');
     }
