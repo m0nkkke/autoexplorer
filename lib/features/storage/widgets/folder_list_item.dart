@@ -21,7 +21,7 @@ class FolderListItem extends StatelessWidget {
     required this.isSelected,
     this.onLongPress,
     required this.onTap,
-    required this.isLargeIcons, 
+    required this.isLargeIcons,
   });
 
   @override
@@ -37,11 +37,12 @@ class FolderListItem extends StatelessWidget {
         child: ListTile(
           leading: SvgPicture.asset(
             'assets/svg/folder_icon.svg',
-            height: iconSize, 
-            width: iconSize, 
+            height: iconSize,
+            width: iconSize,
           ),
           title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          subtitle: Text(filesCount, style: Theme.of(context).textTheme.bodySmall),
+          subtitle: Text('Количество файлов: $filesCount',
+              style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
               ? Checkbox(
                   value: isSelected,
