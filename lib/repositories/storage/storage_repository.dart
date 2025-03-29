@@ -5,20 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 class StorageRepository extends AbstractStorageRepository {
-  static const String token =
-      'OAuth TOKEN';
-  final Dio dio = Dio(BaseOptions(
-    baseUrl: 'https://cloud-api.yandex.net/v1/disk/resources',
-    headers: {
-      'Authorization': token,
-    },
-  ));
-  final Dio dioDownload = Dio(BaseOptions(
-    baseUrl: 'https://cloud-api.yandex.net/v1/disk/resources/download',
-    headers: {
-      'Authorization': token,
-    },
-  ));
+  StorageRepository({required this.dio});
+
+  final Dio dio;
 
   Future<List<dynamic>> getFileList({String path = '/'}) async {
     try {
@@ -94,7 +83,7 @@ class StorageRepository extends AbstractStorageRepository {
 
   Future<String> getImageDownloadUrl(String filePath) async {
     final response =
-        await dioDownload.get('', queryParameters: {'path': filePath});
+        await dio.get('/download', queryParameters: {'path': filePath});
     return response.data['href']; // Временная ссылка
   }
 
@@ -122,4 +111,23 @@ class StorageRepository extends AbstractStorageRepository {
       throw Exception('Failed to load FileItems: $e');
     }
   }
+
+  @override
+  Future<void> createFolder(
+      {required String name, required String path}) async {
+    try {
+      final fullpath = '$path/$name';
+      // final encodedPath = Uri.encodeComponent(fullpath);
+      final response = await dio.put('', queryParameters: {'path': fullpath});
+
+      if (response.statusCode == 201) {
+        debugPrint('good create');
+      } else {
+        throw Exception('Error create folder');
+      }
+    } catch (e) {
+      throw Exception('Error create folder - $e');
+    }
+  }
 }
+

@@ -7,11 +7,13 @@ import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
 import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
+import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import '../widgets/folder_list_item.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -33,7 +35,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
   AppBarMode _appBarMode = AppBarMode.normal;
   //
 
-  final _storageListBloc = StorageListBloc(StorageRepository());
+  final _storageListBloc =
+      StorageListBloc(GetIt.I<AbstractStorageRepository>());
 
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
   static const String storageCount = 'Хранится 1540 папок | заполнено 50%';
@@ -137,8 +140,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
   List<dynamic> filesAndFolders = [];
   Future<void> _loadData({String path = '/'}) async {
     try {
-      final results =
-          await StorageRepository().getFileAndFolderModels(path: path);
+      final results = await GetIt.I<AbstractStorageRepository>()
+          .getFileAndFolderModels(path: path);
       setState(() {
         filesAndFolders = results;
       });
@@ -184,6 +187,11 @@ class _StorageListScreenState extends State<StorageListScreen> {
         onSearch: _onSearch,
         mode: _appBarMode,
         onIconSizeChanged: _updateIconSize,
+        onCreateFolder: (folderName) {
+          _storageListBloc.add(
+            StorageListCreateFolder(name: folderName, path: widget.path),
+          );
+        },
       ),
       body: BlocBuilder<StorageListBloc, StorageListState>(
         bloc: _storageListBloc,

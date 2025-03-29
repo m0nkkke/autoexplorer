@@ -1,4 +1,5 @@
-import 'package:autoexplorer/repositories/storage/storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+// import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 part 'storage_list_event.dart';
@@ -15,7 +16,17 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         emit(StorageListLoadingFailure(exception: e));
       }
     });
+    on<StorageListCreateFolder>((event, emit) async {
+      try {
+        emit(StorageListLoading());
+
+        await yandexRepositoy.createFolder(name: event.name, path: event.path);
+        add(StorageListLoad(path: event.path));
+      } catch (e) {
+        emit(StorageListLoadingFailure(exception: e));
+      }
+    });
   }
 
-  final StorageRepository yandexRepositoy;
+  final AbstractStorageRepository yandexRepositoy;
 }

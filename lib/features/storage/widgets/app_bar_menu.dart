@@ -5,8 +5,9 @@ enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
 
 class AppBarMenu extends StatelessWidget {
   final VoidCallback onSearch;
+  final path;
 
-  AppBarMenu({super.key, required this.onSearch});
+  AppBarMenu({super.key, required this.onSearch, required this.path});
 
   // Заполнение пунктов меню
   final List<_MenuItem> _menuItems = [

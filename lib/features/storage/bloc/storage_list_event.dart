@@ -7,3 +7,10 @@ class StorageListLoad extends StorageListEvent {
 
   StorageListLoad({required this.path});
 }
+
+class StorageListCreateFolder extends StorageListEvent {
+  final String path;
+  final String name;
+
+  StorageListCreateFolder({required this.path, required this.name});
+}
