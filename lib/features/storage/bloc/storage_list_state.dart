@@ -29,3 +29,22 @@ class StorageListLoadingFailure extends StorageListState {
 
   StorageListLoadingFailure({required this.exception});
 }
+
+class ImageViewerInitial extends StorageListState {
+  @override
+  List<Object> get props => [];
+}
+
+class ImageUrlLoaded extends StorageListState {
+  final String imageUrl;
+
+  ImageUrlLoaded(this.imageUrl);
+
+  @override
+  List<Object> get props => [imageUrl];
+}
+
+class ImageLoadError extends StorageListState {
+  @override
+  List<Object> get props => [];
+}

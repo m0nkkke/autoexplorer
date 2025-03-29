@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
@@ -44,21 +46,37 @@ class StorageRepository extends AbstractStorageRepository {
   // }
 
   FileItem _mapFileItem(Map<String, dynamic> data) {
-    final name = data['name'];
-    final creationDate = data['created'];
-    final path = data['path'];
-    debugPrint(path);
-    debugPrint(data['sizes'][0].toString());
+    // final name = data['name'];
+    // final creationDate = data['created'];
+    // final path = data['path'];
+    // debugPrint(path);
+    // debugPrint(data['sizes'][0].toString());
 
-    // final dataSizes = data['sizes'];
-    // debugPrint(dataSizes);
-    final imageURL = data['sizes'][0]['url'];
-    // final imageURL = await getImageDownloadUrl(path);
+    // // final dataSizes = data['sizes'];
+    // // debugPrint(dataSizes);
+    // final imageURL = data['sizes'][0]['url'];
+    // // final imageURL = await getImageDownloadUrl(path);
+    // return FileItem(
+    //   name: name ?? '',
+    //   creationDate: creationDate ?? '',
+    //   path: path ?? '',
+    //   imageURL: imageURL ?? '',
+    // );
+    final name = data['name'] ?? '';
+    final creationDate = data['created'] ?? '';
+    final path = data['path'] ?? '';
+    String imageURL = '-'; // Значение по умолчанию
+
+    // Для изображений пытаемся получить превью
+    if (data['sizes'] != null && (data['sizes'] as List).isNotEmpty) {
+      imageURL = data['sizes'][0]['url'] ?? '-';
+    }
+
     return FileItem(
-      name: name ?? '',
-      creationDate: creationDate ?? '',
-      path: path ?? '',
-      imageURL: imageURL ?? '',
+      name: name,
+      creationDate: creationDate,
+      path: path,
+      imageURL: imageURL,
     );
   }
 
@@ -81,6 +99,7 @@ class StorageRepository extends AbstractStorageRepository {
     );
   }
 
+  @override
   Future<String> getImageDownloadUrl(String filePath) async {
     final response =
         await dio.get('/download', queryParameters: {'path': filePath});
@@ -129,5 +148,44 @@ class StorageRepository extends AbstractStorageRepository {
       throw Exception('Error create folder - $e');
     }
   }
-}
 
+  @override
+  Future<void> uploadFile({
+    required String filePath,
+    required String uploadPath,
+  }) async {
+    try {
+      // 1. Получаем URL для загрузки
+      final uploadUrlResponse = await dio.get(
+        '/upload',
+        queryParameters: {
+          'path': uploadPath,
+          'overwrite': 'true',
+        },
+      );
+
+      final uploadUrl = uploadUrlResponse.data['href'];
+
+      // 2. Загружаем файл по полученному URL
+      final file = File(filePath);
+      final fileBytes = await file.readAsBytes();
+
+      final uploadResponse = await dio.put(
+        uploadUrl,
+        data: Stream.fromIterable([fileBytes]),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': fileBytes.length,
+          },
+        ),
+      );
+
+      if (uploadResponse.statusCode != 201) {
+        throw Exception('Failed to upload file: ${uploadResponse.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to upload file: $e');
+    }
+  }
+}
