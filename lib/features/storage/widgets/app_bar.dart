@@ -16,6 +16,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onSearch;
   final bool isAllSelected;
   final AppBarMode mode;
+  final Function(String) onCreateFolder;
 
   const CustomAppBar({
     Key? key,
@@ -28,8 +29,9 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.onSelectAll,
     required this.isAllSelected,
     required this.onSearch,
-    required this.mode, 
+    required this.mode,
     required this.onIconSizeChanged,
+    required this.onCreateFolder,
   }) : super(key: key);
 
   @override
@@ -37,7 +39,8 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   @override
   // Назначение размеров аппбара: 20 - при поиске, 56 - при остальных видах
-  Size get preferredSize => Size.fromHeight(kToolbarHeight + (mode == AppBarMode.search ? 20.0 : 56.0));
+  Size get preferredSize => Size.fromHeight(
+      kToolbarHeight + (mode == AppBarMode.search ? 20.0 : 56.0));
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
@@ -47,9 +50,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   Widget build(BuildContext context) {
     return AppBar(
       leading: _buildLeading(),
-      title: widget.mode == AppBarMode.search
-          ? _buildSearchField()
-          : null,
+      title: widget.mode == AppBarMode.search ? _buildSearchField() : null,
       flexibleSpace: _buildFlexibleSpace(context),
       actions: _buildActions(),
       bottom: _buildBottom(),
@@ -89,22 +90,24 @@ class _CustomAppBarState extends State<CustomAppBar> {
   }
 
   // Текстовое поле аппбара
-Widget _buildFlexibleSpace(BuildContext context) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final topPadding = MediaQuery.of(context).padding.top;
-      final desiredPadding = topPadding + 16.0;
+  Widget _buildFlexibleSpace(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final topPadding = MediaQuery.of(context).padding.top;
+        final desiredPadding = topPadding + 16.0;
 
-      return PreferredSize(
-        preferredSize: widget.preferredSize,
-        child: Padding(
-          padding: EdgeInsets.only(left: 16.0, top: desiredPadding),
-          child: widget.mode == AppBarMode.selection ? _buildSelectionMode() : _buildNormalMode(),
-        ),
-      );
-    },
-  );
-}
+        return PreferredSize(
+          preferredSize: widget.preferredSize,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16.0, top: desiredPadding),
+            child: widget.mode == AppBarMode.selection
+                ? _buildSelectionMode()
+                : _buildNormalMode(),
+          ),
+        );
+      },
+    );
+  }
 
   // Текстовое поле (при выделении)
   Widget _buildSelectionMode() {
@@ -133,7 +136,7 @@ Widget _buildFlexibleSpace(BuildContext context) {
   // Контент текстового поля
   Widget _buildNormalMode() {
     if (widget.mode == AppBarMode.search) {
-      return Container(); 
+      return Container();
     } else {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,14 +183,15 @@ Widget _buildFlexibleSpace(BuildContext context) {
     } else {
       return [
         AppBarViewsort(onIconSizeChanged: widget.onIconSizeChanged),
-        AppBarMenu(onSearch: widget.onSearch),
+        AppBarMenu(onSearch: widget.onSearch, path: widget.path),
       ];
     }
   }
 
   // Нижняя панель при выделении файлов и папок
   PreferredSizeWidget? _buildBottom() {
-    if (widget.mode == AppBarMode.selection || widget.mode == AppBarMode.search) {
+    if (widget.mode == AppBarMode.selection ||
+        widget.mode == AppBarMode.search) {
       return null;
     } else {
       return PreferredSize(
@@ -198,10 +202,15 @@ Widget _buildFlexibleSpace(BuildContext context) {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                onPressed: () {
-                  ShowCreateDialog.showCreateFolderDialog(context);
+                onPressed: () async {
+                  final folderName =
+                      await ShowCreateDialog.showCreateFolderDialog(context);
+                  if (folderName != null) {
+                    widget.onCreateFolder(folderName);
+                  }
                 },
-                icon: const Icon(Icons.add_box, color: Colors.lightBlue, size: 36),
+                icon: const Icon(Icons.add_box,
+                    color: Colors.lightBlue, size: 36),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.transparent,
                 ),

@@ -2,25 +2,29 @@ import 'package:flutter/material.dart';
 
 class ShowCreateDialog extends StatelessWidget {
   const ShowCreateDialog({super.key});
+  // final String currentPath;
 
   @override
   Widget build(BuildContext context) {
+    TextEditingController controller = TextEditingController();
     return AlertDialog(
       title: const Text('Создать папку'),
-      content: const TextField(
-        decoration: InputDecoration(
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
           hintText: "Название папки",
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(null),
           child: const Text('Отмена'),
         ),
         TextButton(
           onPressed: () {
+            final folderName = controller.text.trim();
             // Логика создания папки
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(folderName);
           },
           child: const Text('Ок'),
         ),
@@ -28,12 +32,12 @@ class ShowCreateDialog extends StatelessWidget {
     );
   }
 
-  static Future<void> showCreateFolderDialog(BuildContext context) {
+  static Future<String?> showCreateFolderDialog(BuildContext context) {
     return showDialog(
       context: context,
       barrierColor: const Color.fromARGB(100, 0, 0, 0),
       builder: (BuildContext context) {
-        return const ShowCreateDialog();
+        return ShowCreateDialog();
       },
     );
   }
