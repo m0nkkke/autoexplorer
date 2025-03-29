@@ -96,7 +96,10 @@ class _StorageListScreenState extends State<StorageListScreen> {
       } else if (item is FileItem) {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => ImageViewerScreen(
+            name: item.name,
+            path: item.path,
             imageUrl: item.imageURL,
+            imageViewerBloc: _storageListBloc,
           ),
         ));
       }
@@ -154,11 +157,33 @@ class _StorageListScreenState extends State<StorageListScreen> {
   // ДОБАВИТЬ ФОТО В ПАПКУ
   final ImagePicker _picker = ImagePicker();
 
+  // Future<void> _pickImage(ImageSource source) async {
+  //   final XFile? image = await _picker.pickImage(source: source);
+  //   if (image != null) {
+  //     File file = File(image.path);
+  //     print('Выбрано изображение: ${file.path}');
+  //   }
+  // }
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       File file = File(image.path);
       print('Выбрано изображение: ${file.path}');
+
+      // Генерируем уникальное имя файла
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'photo_$timestamp.jpg';
+      final uploadPath =
+          '${widget.path.isEmpty ? '' : '${widget.path}/'}$fileName';
+
+      // Загружаем файл
+      _storageListBloc.add(
+        StorageListUploadFile(
+          filePath: file.path,
+          uploadPath: uploadPath,
+          currentPath: widget.path,
+        ),
+      );
     }
   }
   //
@@ -228,13 +253,28 @@ class _StorageListScreenState extends State<StorageListScreen> {
                     isLargeIcons: _isLargeIcons,
                   );
                 }
-                return Container();
               },
             );
           } else if (state is StorageListLoadingFailure) {
-            return Text("Errorrrrrr", style: theme.textTheme.labelLarge);
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text("Errorrrrrr", style: theme.textTheme.titleLarge),
+                  TextButton(
+                      onPressed: () {
+                        _storageListBloc
+                            .add(StorageListLoad(path: widget.path));
+                      },
+                      child: Text("Try again later"))
+                ],
+              ),
+            );
           }
-          return Container();
+          return Center(
+            child: CircularProgressIndicator(),
+          );
         },
       ),
       //     ? _buildFileList()

@@ -1,38 +1,96 @@
-import 'package:autoexplorer/repositories/storage/storage_repository.dart';
+import 'package:autoexplorer/features/storage/bloc/image_viewer_bloc.dart';
+import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
+import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
-class ImageViewerScreen extends StatelessWidget {
-  const ImageViewerScreen({super.key, required this.imageUrl});
-
+class ImageViewerScreen extends StatefulWidget {
+  // final FileItem fileItem;
+  final String path;
+  final String name;
   final String imageUrl;
+  final StorageListBloc imageViewerBloc;
 
-  // String href = await StorageRepository().getImageDownloadUrl(imageUrl);
+  const ImageViewerScreen({
+    super.key,
+    required this.path,
+    required this.name,
+    required this.imageUrl,
+    required this.imageViewerBloc,
+  });
+
+  @override
+  State<ImageViewerScreen> createState() => _ImageViewerScreenState();
+}
+
+class _ImageViewerScreenState extends State<ImageViewerScreen> {
+  @override
+  void initState() {
+    widget.imageViewerBloc.add(LoadImageUrl(
+        name: widget.name, path: widget.path, imageUrl: widget.imageUrl));
+    super.initState();
+  }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(title: const Text('Просмотр изображения')),
+  //     body: BlocBuilder<StorageListBloc, StorageListState>(
+  //       builder: (context, state) {
+  //         if (state is ImageUrlLoaded) {
+  //           return _buildImage(state.imageUrl);
+  //         } else if (state is ImageLoadError) {
+  //           return const Center(child: Text('Ошибка загрузки изображения'));
+  //         }
+  //         return const Center(child: CircularProgressIndicator());
+  //       },
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Просмотр изображения'),
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
+    return BlocProvider.value(
+      // Оборачиваем в BlocProvider.value
+      value: widget.imageViewerBloc,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Просмотр изображения')),
+        body: BlocBuilder<StorageListBloc, StorageListState>(
+          builder: (context, state) {
+            if (state is ImageUrlLoaded) {
+              return _buildImage(state.imageUrl);
+            } else if (state is ImageLoadError) {
               return const Center(child: Text('Ошибка загрузки изображения'));
-            },
-          ),
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(String imageUrl) {
+    return Center(
+      child: InteractiveViewer(
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        (loadingProgress.expectedTotalBytes ?? 1)
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Text('Ошибка отображения изображения'));
+          },
         ),
       ),
     );
