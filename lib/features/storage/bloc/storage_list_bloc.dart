@@ -55,6 +55,14 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         emit(ImageLoadError());
       }
     });
+    on<ResetImageLoadingState>((event, emit) async {
+      try {
+        emit(StorageListLoaded(items: event.currentItems));
+      } catch (e) {
+        print(e.toString());
+        emit(StorageListLoadingFailure(exception: e));
+      }
+    });
   }
 
   final AbstractStorageRepository yandexRepositoy;

@@ -20,5 +20,6 @@ final routes = {
         path: '',
         name: '',
         imageViewerBloc: StorageListBloc(GetIt.I<AbstractStorageRepository>()),
+        currentItems: [],
       ),
 };

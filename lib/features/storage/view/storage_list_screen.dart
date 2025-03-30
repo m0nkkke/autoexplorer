@@ -100,6 +100,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
             path: item.path,
             imageUrl: item.imageURL,
             imageViewerBloc: _storageListBloc,
+            currentItems: filesAndFolders,
           ),
         ));
       }
@@ -273,7 +274,15 @@ class _StorageListScreenState extends State<StorageListScreen> {
             );
           }
           return Center(
-            child: CircularProgressIndicator(),
+            child: Column(
+              children: [
+                Text("Загрузка данных", style: theme.textTheme.titleLarge),
+                SizedBox(
+                  height: 10,
+                ),
+                CircularProgressIndicator(),
+              ],
+            ),
           );
         },
       ),

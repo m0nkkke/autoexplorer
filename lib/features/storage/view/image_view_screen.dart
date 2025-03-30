@@ -1,10 +1,6 @@
-import 'package:autoexplorer/features/storage/bloc/image_viewer_bloc.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
-import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
-import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 
 class ImageViewerScreen extends StatefulWidget {
   // final FileItem fileItem;
@@ -12,6 +8,7 @@ class ImageViewerScreen extends StatefulWidget {
   final String name;
   final String imageUrl;
   final StorageListBloc imageViewerBloc;
+  final List<dynamic> currentItems;
 
   const ImageViewerScreen({
     super.key,
@@ -19,6 +16,7 @@ class ImageViewerScreen extends StatefulWidget {
     required this.name,
     required this.imageUrl,
     required this.imageViewerBloc,
+    required this.currentItems,
   });
 
   @override
@@ -31,6 +29,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
     widget.imageViewerBloc.add(LoadImageUrl(
         name: widget.name, path: widget.path, imageUrl: widget.imageUrl));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // Сбрасываем состояние при закрытии экрана
+    widget.imageViewerBloc.add(ResetImageLoadingState(widget.currentItems));
+    super.dispose();
   }
 
   // @override
