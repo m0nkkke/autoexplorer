@@ -174,8 +174,14 @@ class _StorageListScreenState extends State<StorageListScreen> {
       // Генерируем уникальное имя файла
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'photo_$timestamp.jpg';
-      final uploadPath =
-          '${widget.path.isEmpty ? '' : '${widget.path}/'}$fileName';
+      late String uploadPath;
+      if (widget.path == '/' || widget.path.isEmpty) {
+        uploadPath = fileName;
+      } else {
+        uploadPath = '${widget.path}/$fileName';
+      }
+
+      // '${widget.path.isEmpty ? '' : '${widget.path}/'}$fileName';
 
       // Загружаем файл
       _storageListBloc.add(
@@ -219,88 +225,100 @@ class _StorageListScreenState extends State<StorageListScreen> {
           );
         },
       ),
-      body: BlocBuilder<StorageListBloc, StorageListState>(
-        bloc: _storageListBloc,
-        builder: (context, state) {
-          final theme = Theme.of(context);
-          if (state is StorageListLoaded) {
-            final items = state.items;
-            filesAndFolders = state.items;
-            return ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                if (item is FileItem) {
-                  print('File item found: ${item.name}');
-                  return FileListItem(
-                    title: item.name,
-                    creationDate: item.creationDate,
-                    isSelectionMode: _isSelectionMode,
-                    index: index,
-                    isSelected: _selectedItems.contains(index),
-                    onLongPress: () => _onLongPress(index),
-                    onTap: () => _onTap(index),
-                    isLargeIcons: _isLargeIcons,
-                  );
-                } else if (item is FolderItem) {
-                  return FolderListItem(
-                    title: item.name,
-                    filesCount: item.filesCount.toString(),
-                    isSelectionMode: _isSelectionMode,
-                    index: index,
-                    isSelected: _selectedItems.contains(index),
-                    onLongPress: () => _onLongPress(index),
-                    onTap: () => _onTap(index),
-                    isLargeIcons: _isLargeIcons,
-                  );
-                }
-              },
-            );
-          } else if (state is StorageListLoadingFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text("Errorrrrrr", style: theme.textTheme.titleLarge),
-                  TextButton(
-                      onPressed: () {
-                        _storageListBloc
-                            .add(StorageListLoad(path: widget.path));
-                      },
-                      child: Text("Try again later"))
-                ],
-              ),
-            );
-          }
-          return Center(
-            child: Column(
-              children: [
-                Text("Загрузка данных", style: theme.textTheme.titleLarge),
-                SizedBox(
-                  height: 10,
-                ),
-                CircularProgressIndicator(),
-              ],
-            ),
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // final completer = Completer();
+          _storageListBloc.add(StorageListLoad(path: widget.path));
+          setState(() {});
+          // return completer.future;
         },
+        child: BlocBuilder<StorageListBloc, StorageListState>(
+          bloc: _storageListBloc,
+          builder: (context, state) {
+            final theme = Theme.of(context);
+            if (state is StorageListLoaded) {
+              final items = state.items;
+              filesAndFolders = state.items;
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  if (item is FileItem) {
+                    print('File item found: ${item.name}');
+                    return FileListItem(
+                      title: item.name,
+                      creationDate: item.creationDate,
+                      isSelectionMode: _isSelectionMode,
+                      index: index,
+                      isSelected: _selectedItems.contains(index),
+                      onLongPress: () => _onLongPress(index),
+                      onTap: () => _onTap(index),
+                      isLargeIcons: _isLargeIcons,
+                    );
+                  } else if (item is FolderItem) {
+                    return FolderListItem(
+                      title: item.name,
+                      filesCount: item.filesCount.toString(),
+                      isSelectionMode: _isSelectionMode,
+                      index: index,
+                      isSelected: _selectedItems.contains(index),
+                      onLongPress: () => _onLongPress(index),
+                      onTap: () => _onTap(index),
+                      isLargeIcons: _isLargeIcons,
+                    );
+                  }
+                },
+              );
+            } else if (state is StorageListLoadingFailure) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("Errorrrrrr", style: theme.textTheme.titleLarge),
+                    TextButton(
+                        onPressed: () {
+                          _storageListBloc
+                              .add(StorageListLoad(path: widget.path));
+                        },
+                        child: Text("Try again later"))
+                  ],
+                ),
+              );
+            } else {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Загрузка данных", style: theme.textTheme.titleLarge),
+                    SizedBox(
+                      height: 30,
+                    ),
+                    CircularProgressIndicator(),
+                  ],
+                ),
+              );
+            }
+          },
+        ),
       ),
       //     ? _buildFileList()
       //     : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: _isSelectionMode ? BottomActionBar() : null,
       floatingActionButton: _isSelectionMode
           ? null
-          : Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: FloatingActionButton(
-                onPressed: () {
-                  _showImageSourceActionSheet();
-                },
-                backgroundColor: Colors.blue,
-                child: const Icon(Icons.camera_alt),
-              ),
-            ),
+          : (widget.path != '/')
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      _showImageSourceActionSheet();
+                    },
+                    backgroundColor: Colors.blue,
+                    child: const Icon(Icons.camera_alt),
+                  ),
+                )
+              : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
