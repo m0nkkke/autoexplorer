@@ -1,3 +1,4 @@
+import 'package:autoexplorer/features/access/view/userkey_create_provider.dart';
 import 'package:autoexplorer/features/access/view/userkey_create_screen.dart';
 import 'package:autoexplorer/features/access/view/userkey_info_screen.dart';
 import 'package:autoexplorer/features/admin/view/admin_panel_screen.dart';
@@ -14,7 +15,7 @@ final routes = {
   '/storage': (context) => StorageListScreen(title: 'Серверное хранилище'),
   '/admin': (context) => AdminPanelScreen(),
   '/access': (context) => UserKeyInfoScreen(),
-  '/access/create': (context) => UserKeyCreateScreen(),
+  '/access/create': (context) => UserKeyCreateProvider(),
   '/image_viewer': (context) => ImageViewerScreen(
         imageUrl: '',
         path: '',

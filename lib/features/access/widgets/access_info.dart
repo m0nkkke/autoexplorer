@@ -4,8 +4,13 @@ import 'dart:math';
 
 class AccessInfoWidget extends StatefulWidget {
   final bool isNew;
+  final String? imagesCreated;
+  final String? lastUpload;
+  final String? accessGranted; 
+  final String? accessModified; 
+  final String? accessKey;
 
-  const AccessInfoWidget({super.key, this.isNew = false});
+  const AccessInfoWidget({super.key, this.isNew = false, this.imagesCreated, this.lastUpload, this.accessGranted, this.accessModified, this.accessKey});
 
   @override
   State<AccessInfoWidget> createState() => _AccessInfoWidgetState();
@@ -22,11 +27,11 @@ class _AccessInfoWidgetState extends State<AccessInfoWidget> {
   void initState() {
     super.initState();
     if (!widget.isNew) {
-      _imagesCreated = '842 шт.';
-      _lastUpload = '10.03.2025 16:32:42';
-      _accessGranted = '12.12.2024';
-      _accessModified = '22.01.2025';
-      _accessKey = 'a9a17715c624a2d7';
+      _imagesCreated = widget.imagesCreated ?? '-';
+      _lastUpload = widget.lastUpload ?? '-';
+      _accessGranted = widget.accessGranted ?? '-';
+      _accessModified = widget.accessModified ?? '-';
+      _accessKey = widget.accessKey ?? '-';
     }
   }
 

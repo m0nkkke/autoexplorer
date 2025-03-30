@@ -5,6 +5,7 @@ class UserInfoWidget extends StatefulWidget {
   final String? firstName;
   final String? middleName;
   final bool isNew;
+  final ValueChanged<Map<String, String>> onSaveData; // Добавляем колбэк
 
   const UserInfoWidget({
     super.key,
@@ -12,6 +13,7 @@ class UserInfoWidget extends StatefulWidget {
     this.firstName,
     this.middleName,
     this.isNew = false,
+    required this.onSaveData, // Инициализируем колбэк
   });
 
   @override
@@ -31,7 +33,6 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
   void initState() {
     super.initState();
 
-    // Если это новый пользователь — открыть поля для редактирования
     _lastNameController = TextEditingController(text: widget.lastName ?? '');
     _firstNameController = TextEditingController(text: widget.firstName ?? '');
     _middleNameController = TextEditingController(text: widget.middleName ?? '');
@@ -50,7 +51,7 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
           'Контроль доступа и учетной записи',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16), // Отступ для заголовка
+        const SizedBox(height: 16),
         _buildEditableInfoRow(
           label: 'Фамилия',
           controller: _lastNameController,
@@ -63,6 +64,11 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
           onSave: () {
             setState(() {
               _isEditingLastName = false;
+            });
+            widget.onSaveData({
+              'lastName': _lastNameController.text,
+              'firstName': _firstNameController.text,
+              'middleName': _middleNameController.text,
             });
           },
         ),
@@ -79,6 +85,11 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
             setState(() {
               _isEditingFirstName = false;
             });
+            widget.onSaveData({
+              'lastName': _lastNameController.text,
+              'firstName': _firstNameController.text,
+              'middleName': _middleNameController.text,
+            });
           },
         ),
         _buildEditableInfoRow(
@@ -93,6 +104,11 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
           onSave: () {
             setState(() {
               _isEditingMiddleName = false;
+            });
+            widget.onSaveData({
+              'lastName': _lastNameController.text,
+              'firstName': _firstNameController.text,
+              'middleName': _middleNameController.text,
             });
           },
         ),

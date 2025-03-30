@@ -32,8 +32,6 @@ class UsersRepository implements AbstractUsersRepository {
       final user = await getUserByAccessKey(accessKey);
       if (user == null) return false;
       
-      // Здесь должна быть логика проверки хэша пароля
-      // Пока просто сравниваем строки
       return user.password == password;
     } catch (e) {
       throw Exception('Password verification failed: ${e.toString()}');
@@ -42,16 +40,29 @@ class UsersRepository implements AbstractUsersRepository {
 
   @override
   Future<void> createUser(User user) async {
-  try {
-    await _firestore.collection('users').doc(user.accessKey).set(user.toFirestore());
-  } catch (e) {
-    throw Exception('Failed to create user: $e');
+    try {
+      await _firestore.collection('users').doc(user.accessKey).set(user.toFirestore());
+    } catch (e) {
+      throw Exception('Failed to create user: ${e.toString()}');
+    }
   }
-}
 
-  // Дополнительные методы репозитория по мере необходимости
-  // Например:
-  // - updateUser
-  // - getAllUsers
-  // - changePassword
+  @override
+  Future<QuerySnapshot> getUsers() async {
+    try {
+      final snapshot = await _firestore.collection('users').get();
+      return snapshot;
+    } catch (e) {
+      throw Exception('Failed to load users: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> updateUser(User user) async {
+    try {
+      await _firestore.collection('users').doc(user.accessKey).update(user.toFirestore());
+    } catch (e) {
+      throw Exception('Failed to update user: ${e.toString()}');
+    }
+  }
 }
