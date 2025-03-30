@@ -275,11 +275,10 @@ class _StorageListScreenState extends State<StorageListScreen> {
           }
           return Center(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text("Загрузка данных", style: theme.textTheme.titleLarge),
-                SizedBox(
-                  height: 10,
-                ),
+                SizedBox(height: 10),
                 CircularProgressIndicator(),
               ],
             ),

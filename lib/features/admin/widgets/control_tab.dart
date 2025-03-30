@@ -1,46 +1,69 @@
+import 'package:autoexplorer/features/admin/bloc/control/control_bloc.dart';
 import 'package:autoexplorer/features/admin/widgets/key_list_item.dart';
+import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ControlTab extends StatelessWidget {
   const ControlTab({Key? key}) : super(key: key);
 
   @override
- Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(left: 16, top: 16),
-      children: [
-        Align( 
-          alignment: Alignment.centerLeft, 
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/access/create');
-            },
-            icon: const Icon(Icons.add_box, color: Colors.lightBlue, size: 32), 
-            label: const Text('Создать новый ключ доступа'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.black, 
-              elevation: 0,
+  Widget build(BuildContext context) {
+    final usersRepository = UsersRepository(); 
+
+    return BlocProvider(
+      create: (context) => ControlBloc(usersRepository)..add(LoadUsers()),
+      child: Scaffold(
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/access/create');
+                  },
+                  icon: const Icon(Icons.add_box,
+                      color: Colors.lightBlue, size: 32),
+                  label: const Text('Создать новый ключ доступа'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                  ),
+                ),
+              ),
             ),
-          ),
+            Expanded(
+              child: BlocBuilder<ControlBloc, ControlState>(
+                builder: (context, state) {
+                  if (state.status == ControlStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state.status == ControlStatus.failure) {
+                    return Center(child: Text('Ошибка: ${state.errorMessage}'));
+                  } else if (state.users.isEmpty) {
+                    return const Center(child: Text('Нет доступных пользователей'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: state.users.length,
+                      itemBuilder: (context, index) {
+                        final user = state.users[index].data()
+                            as Map<String, dynamic>;
+                        return KeyListItem(
+                          keyUserName: user['firstName'] + ' ' + user['lastName'],
+                          keyArea : user['accessList']['regional']['regName'],
+                          userData: user,
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
         ),
-        KeyListItem(
-          keyUserName: 'Бабиджон', 
-          keyArea: 'Регионал 1',
-          ),
-        KeyListItem(
-          keyUserName: 'Бабиджон', 
-          keyArea: 'Регионал 1',
-          ),
-        KeyListItem(
-          keyUserName: 'Бабиджон', 
-          keyArea: 'Регионал 1',
-          ),
-        KeyListItem(
-          keyUserName: 'Бабиджон', 
-          keyArea: 'Регионал 1',
-          ),
-      ],
+      ),
     );
   }
 }
