@@ -41,3 +41,8 @@ class LoadImageUrl extends StorageListEvent {
   LoadImageUrl(
       {required this.name, required this.path, required this.imageUrl});
 }
+
+class ResetImageLoadingState extends StorageListEvent {
+  final List<dynamic> currentItems;
+  ResetImageLoadingState(this.currentItems);
+}
