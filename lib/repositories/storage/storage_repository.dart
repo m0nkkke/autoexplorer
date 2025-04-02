@@ -29,39 +29,7 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
-  // Future<List<dynamic>> getFilesAndFoldersModels({String path = '/'}) async {
-  //   try {
-  //     final response = await dio.get('', queryParameters: {'path': path});
-  //     if (response.statusCode == 200) {
-  //       print('Loading data...');
-  //       debugPrint(response.data['_embedded'].toString());
-  //       debugPrint(response.data['_embedded']['total'].toString());
-  //       return response.data['_embedded']['items'];
-  //     } else {
-  //       throw Exception('Failed to load FileItems: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     throw Exception('Failed to load FileItems: $e');
-  //   }
-  // }
-
   FileItem _mapFileItem(Map<String, dynamic> data) {
-    // final name = data['name'];
-    // final creationDate = data['created'];
-    // final path = data['path'];
-    // debugPrint(path);
-    // debugPrint(data['sizes'][0].toString());
-
-    // // final dataSizes = data['sizes'];
-    // // debugPrint(dataSizes);
-    // final imageURL = data['sizes'][0]['url'];
-    // // final imageURL = await getImageDownloadUrl(path);
-    // return FileItem(
-    //   name: name ?? '',
-    //   creationDate: creationDate ?? '',
-    //   path: path ?? '',
-    //   imageURL: imageURL ?? '',
-    // );
     final name = data['name'] ?? '';
     final creationDate = data['created'] ?? '';
     final path = data['path'] ?? '';
