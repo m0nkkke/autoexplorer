@@ -13,7 +13,7 @@ class DiskLoading extends DiskState {
 }
 
 class DiskLoaded extends DiskState {
-  final List<dynamic> items;
+  final List<FolderItem> items;
 
   DiskLoaded(this.items);
 
