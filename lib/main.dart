@@ -32,6 +32,8 @@ Future<void> main() async {
   GetIt.I.registerLazySingleton<AbstractUsersRepository>(
     () => UsersRepository(firestore: firestore)
   );
+  GetIt.I.registerSingleton<String>(token, instanceName: "yandex_token");
+
 
   runApp(const AutoExplorerApp());
 }
