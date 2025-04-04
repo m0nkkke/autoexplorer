@@ -1,4 +1,5 @@
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
@@ -51,7 +52,8 @@ class AppBarMenu extends StatelessWidget {
         Navigator.of(context).pushNamed('/storage');
         break;
       case AppBarMenuOption.switchAccount:
-        Navigator.of(context).pushNamed('/admin');
+        FirebaseAuth.instance.signOut(); // НЕ ЗАБЫТЬ ПОМЕНЯТЬ И СДЕЛАТЬ ЧЕРЕЗ БЛОК
+        Navigator.of(context).pushNamed('/');
         break;
     }
   }

@@ -52,7 +52,7 @@ class ControlTab extends StatelessWidget {
                             as Map<String, dynamic>;
                         return KeyListItem(
                           keyUserName: user['firstName'] + ' ' + user['lastName'],
-                          keyArea : user['accessList']['regional']['regName'],
+                          keyArea : user['regional'],
                           userData: user,
                         );
                       },

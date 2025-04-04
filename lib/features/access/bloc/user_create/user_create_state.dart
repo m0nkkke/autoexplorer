@@ -5,7 +5,7 @@ enum UserStatus { initial, loading, success, failure }
 class UserState {
   final UserStatus status;
   final String? errorMessage;
-  final User? user;
+  final AEUser? user;
 
   const UserState({
     required this.status,
@@ -16,7 +16,7 @@ class UserState {
   UserState copyWith({
     UserStatus? status,
     String? errorMessage,
-    User? user,
+    AEUser? user,
   }) {
     return UserState(
       status: status ?? this.status,

@@ -2,12 +2,9 @@ import 'package:autoexplorer/features/access/bloc/user_create/user_create_bloc.d
 import 'package:autoexplorer/features/access/widgets/roots_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:autoexplorer/repositories/users/models/user/user_role.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:intl/intl.dart';
 import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/area.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/line.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/regional.dart';
 
 class UserKeyCreateScreen extends StatefulWidget {
   const UserKeyCreateScreen({super.key});
@@ -21,15 +18,11 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _middleNameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _accessKeyController = TextEditingController();
+  final _emailController = TextEditingController(); 
+  final _passwordController = TextEditingController(); 
 
   UserRole _role = UserRole.worker;
-  final AccessList _accessList = AccessList(
-    area: Area(name: 'Участок 1'),
-    line: Line(name: 'Пролет 1'),
-    regional: Regional(name: 'Регионал 1')
-  );
+  final List<String> _accessList = [];
 
   final Set<String> selectedRegions = {};
   final Set<String> selectedSections = {};
@@ -66,8 +59,8 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
     if (_formKey.currentState!.validate()) {
       BlocProvider.of<UserBloc>(context).add(
         CreateUserEvent(
-          accessKey: _accessKeyController.text,
           accessEdit: getCurrentTimeString(),
+          regional: selectedRegions.first.toString(),
           accessList: _accessList,
           accessSet: getCurrentTimeString(),
           firstName: _firstNameController.text,
@@ -75,8 +68,9 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
           lastName: _lastNameController.text,
           lastUpload: 'Никогда',
           middleName: _middleNameController.text,
-          password: _passwordController.text,
           role: _role,
+          email: _emailController.text,
+          password: _passwordController.text, 
         ),
       );
     }
@@ -96,8 +90,8 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
           } else if (state.status == UserStatus.failure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  'Ошибка создания пользователя: ${state.errorMessage}')),
+                  content: Text(
+                      'Ошибка создания пользователя: ${state.errorMessage}')),
             );
           }
         },
@@ -110,78 +104,72 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Создание нового ключа доступа'),
+                    Text('Создание нового пользователя'),
                     SizedBox(height: 16),
                     _buildTextField(
-                      controller: _firstNameController,
-                      hintText: 'Имя',
-                      validator: (value) =>
-                        value == null || value.isEmpty ? 'Введите имя' : null),
+                        controller: _firstNameController,
+                        hintText: 'Имя',
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Введите имя'
+                            : null),
                     const SizedBox(height: 20),
                     _buildTextField(
-                      controller: _lastNameController,
-                      hintText: 'Фамилия',
-                      validator: (value) => value == null || value.isEmpty
-                        ? 'Введите фамилию'
-                        : null),
+                        controller: _lastNameController,
+                        hintText: 'Фамилия',
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Введите фамилию'
+                            : null),
                     const SizedBox(height: 20),
                     _buildTextField(
-                      controller: _middleNameController, hintText: 'Отчество'),
+                        controller: _middleNameController, hintText: 'Отчество'),
                     const SizedBox(height: 20),
                     _buildTextField(
-                      controller: _accessKeyController,
-                      hintText: 'Ключ доступа',
-                      validator: (value) => value == null || value.isEmpty
-                        ? 'Введите ключ доступа'
-                        : null),
+                        controller: _emailController,
+                        hintText: 'Email',
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Введите email'
+                            : null),
                     const SizedBox(height: 20),
                     _buildTextField(
-                      controller: _passwordController,
-                      hintText: 'Пароль',
-                      obscureText: true,
-                      validator: (value) => value == null || value.isEmpty
-                        ? 'Введите пароль'
-                        : null),
+                        controller: _passwordController, 
+                        hintText: 'Пароль',
+                        obscureText: true,
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Введите пароль'
+                            : null),
                     const SizedBox(height: 20),
-                    _buildRoleDropdown(role: _role, onChanged: (UserRole? newValue) {
-                      setState(() {
-                        _role = newValue!;
-                      });
-                    }),
+                    _buildRoleDropdown(
+                        role: _role,
+                        onChanged: (UserRole? newValue) {
+                          setState(() {
+                            _role = newValue!;
+                          });
+                        }),
                     const Divider(),
                     RootsInfo(
-                      title: 'Регион',
-                      items: ['Регионал 321', 'Регионал 1', 'Регионал 2'],
-                      selectedItems: selectedRegions,
-                      onChanged: _onRegionsChanged,
-                    ),
+                        title: 'Регион',
+                        items: ['Регионал 321', 'Регионал 1', 'Регионал 2'],
+                        selectedItems: selectedRegions,
+                        onChanged: _onRegionsChanged),
                     const SizedBox(height: 10),
                     RootsInfo(
-                      title: 'Участок',
-                      items: [
-                        'Участок 1',
-                        'Участок 2',
-                        'Участок 3',
-                        'Участок 1',
-                        'Участок 2',
-                        'Участок 3'
-                      ],
-                      selectedItems: selectedSections,
-                      onChanged: _onSectionsChanged,
-                    ),
-                    const SizedBox(height: 10),
-                    RootsInfo(
-                      title: 'Пролёт',
-                      items: ['Пролёт A', 'Пролёт B', 'Пролёт C'],
-                      selectedItems: selectedSpans,
-                      onChanged: _onSpansChanged,
-                    ),
+                        title: 'Участок',
+                        items: [
+                          'Участок 1',
+                          'Участок 2',
+                          'Участок 3',
+                          'Участок 1',
+                          'Участок 2',
+                          'Участок 3'
+                        ],
+                        selectedItems: selectedSections,
+                        onChanged: _onSectionsChanged),
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
                         onPressed: _save,
-                        child: const Text('Сохранить'),
+                        child: const Text('Создать'),
                       ),
                     ),
                   ],

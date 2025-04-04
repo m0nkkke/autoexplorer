@@ -1,24 +1,69 @@
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
-import 'package:autoexplorer/repositories/users/models/user/user.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user.dart'; // Изменено на AEUser
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UsersRepository implements AbstractUsersRepository {
   final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
-  UsersRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  UsersRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
-  @override
-  Future<User?> getUserByAccessKey(String accessKey) async {
+  Future<AEUser?> registerUser(String email, String password, AEUser userData) async { 
     try {
-      final QuerySnapshot result = await _firestore
-          .collection('users')
-          .where('accessKey', isEqualTo: accessKey)
-          .get();
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
-      if (result.docs.isNotEmpty) {
-        final userData = result.docs.first.data() as Map<String, dynamic>;
-        return User.fromFirestore(userData);
+      final uid = userCredential.user!.uid;
+
+      final user = AEUser( 
+        uid: uid,
+        email: email,
+        accessEdit: userData.accessEdit,
+        regional: userData.regional,
+        accessList: userData.accessList,
+        accessSet: userData.accessSet,
+        firstName: userData.firstName,
+        imagesCount: userData.imagesCount,
+        lastName: userData.lastName,
+        lastUpload: userData.lastUpload,
+        middleName: userData.middleName,
+        role: userData.role,
+      );
+
+      await _firestore.collection('users').doc(uid).set(user.toFirestore());
+
+      return user;
+    } catch (e) {
+      throw Exception('Failed to register user: ${e.toString()}');
+    }
+  }
+
+  // Авторизация пользователя
+  Future<AEUser?> signInUser(String email, String password) async { 
+    try {
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      final uid = userCredential.user!.uid;
+      return await getUserByUid(uid);
+    } catch (e) {
+      throw Exception('Failed to sign in user: ${e.toString()}');
+    }
+  }
+
+  // Получение пользователя по UID
+  Future<AEUser?> getUserByUid(String uid) async { 
+    try {
+      final DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+
+      if (doc.exists) {
+        final userData = doc. data() as Map<String, dynamic>?;
+        if (userData != null) {
+          return AEUser.fromFirestore(userData, uid); 
+        }
       }
       return null;
     } catch (e) {
@@ -26,27 +71,17 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
+  // Создание пользователя в Firestore
   @override
-  Future<bool> verifyPassword(String accessKey, String password) async {
+  Future<void> createUser(AEUser user) async { 
     try {
-      final user = await getUserByAccessKey(accessKey);
-      if (user == null) return false;
-      
-      return user.password == password;
-    } catch (e) {
-      throw Exception('Password verification failed: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<void> createUser(User user) async {
-    try {
-      await _firestore.collection('users').doc(user.accessKey).set(user.toFirestore());
+      await _firestore.collection('users').doc(user.uid).set(user.toFirestore());
     } catch (e) {
       throw Exception('Failed to create user: ${e.toString()}');
     }
   }
 
+  // Получение всех пользователей
   @override
   Future<QuerySnapshot> getUsers() async {
     try {
@@ -57,10 +92,11 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
+  // Обновление пользователя
   @override
-  Future<void> updateUser(User user) async {
+  Future<void> updateUser(AEUser user) async { 
     try {
-      await _firestore.collection('users').doc(user.accessKey).update(user.toFirestore());
+      await _firestore.collection('users').doc(user.uid).update(user.toFirestore());
     } catch (e) {
       throw Exception('Failed to update user: ${e.toString()}');
     }

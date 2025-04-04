@@ -12,7 +12,9 @@ class DiskBloc extends Bloc<DiskEvent, DiskState> {
       try {
         final itemsList =
             await storageRepository.getFileAndFolderModels(path: '/');
-        emit(DiskLoaded(itemsList));
+        final folders = itemsList.whereType<FolderItem>().toList();
+
+        emit(DiskLoaded(folders));
       } catch (e) {
         print(e.toString());
         emit(DiskError(e));

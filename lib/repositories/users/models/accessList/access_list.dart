@@ -1,32 +1,21 @@
-import 'package:autoexplorer/repositories/users/models/accessList/area.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/line.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/regional.dart';
-
 class AccessList {
-  final Area area;
-  final Line line;
-  final Regional regional;
+  final Map<String, String> folders;
 
-  AccessList({required this.area, required this.line, required this.regional});
+  AccessList({required this.folders});
 
-  factory AccessList.fromMap(Map<String, dynamic>? map) {
-    if (map == null) {
-      return AccessList(
-        area: Area(name: ''),
-        line: Line(name: ''),
-        regional: Regional(name: ''),
-      );
+  factory AccessList.fromMap(Map<String, dynamic>? data) {
+    if (data == null) {
+      return AccessList(folders: {});
     }
-    return AccessList(
-      area: Area.fromMap(map['area'] as Map<String, dynamic>?),
-      line: Line.fromMap(map['line'] as Map<String, dynamic>?),
-      regional: Regional.fromMap(map['regional'] as Map<String, dynamic>?),
-    );
+
+    final convertedFolders = data.map<String, String>((key, value) {
+      return MapEntry(key, value.toString());
+    });
+
+    return AccessList(folders: convertedFolders);
   }
 
-  Map<String, dynamic> toMap() => {
-    'area': area.toMap(),
-    'line': line.toMap(),
-    'regional': regional.toMap(),
-  };
+  Map<String, dynamic> toMap() {
+    return folders;
+  }
 }

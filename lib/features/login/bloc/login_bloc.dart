@@ -13,39 +13,27 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   Future<void> _onLoginButtonPressed(
       LoginButtonPressed event, Emitter<LoginState> emit) async {
     emit(state.copyWith(status: LoginStatus.loading));
-    
+
     try {
-      final user = await _usersRepository.getUserByAccessKey(event.accessKey);
-      
+      final user = await _usersRepository.signInUser(event.emailKey, event.password);
+
       if (user == null) {
         emit(state.copyWith(
           status: LoginStatus.failure,
-          errorMessage: 'Пользователь не найден',
+          errorMessage: 'Неверный email или пароль',
         ));
         return;
       }
 
-      final isPasswordValid = await _usersRepository.verifyPassword(
-        event.accessKey,
-        event.password,
-      );
-
-      if (isPasswordValid) {
-        emit(state.copyWith(
-          status: LoginStatus.success,
-          role: user.role,
-        ));
-      } else {
-        emit(state.copyWith(
-          status: LoginStatus.failure,
-          errorMessage: 'Неверный пароль',
-        ));
-      }
+      emit(state.copyWith(
+        status: LoginStatus.success,
+        role: user.role,
+      ));
     } catch (e) {
       emit(state.copyWith(
         status: LoginStatus.failure,
         errorMessage: e.toString(),
       ));
     }
-   }
+  }
 }
