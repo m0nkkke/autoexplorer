@@ -1,6 +1,7 @@
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
 class ImageViewerScreen extends StatefulWidget {
   // final FileItem fileItem;
@@ -57,29 +58,28 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      // Оборачиваем в BlocProvider.value
-      value: widget.imageViewerBloc,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Просмотр изображения')),
-        body: BlocBuilder<StorageListBloc, StorageListState>(
-          builder: (context, state) {
-            if (state is ImageUrlLoaded) {
-              return _buildImage(state.imageUrl);
-            } else if (state is ImageLoadError) {
-              return const Center(child: Text('Ошибка загрузки изображения'));
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Просмотр изображения')),
+      body: BlocBuilder<StorageListBloc, StorageListState>(
+        bloc: widget.imageViewerBloc,
+        builder: (context, state) {
+          if (state is ImageUrlLoaded) {
+            return _buildImage(state.imageUrl);
+          } else if (state is ImageLoadError) {
+            return const Center(child: Text('Ошибка загрузки изображения'));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
 
   Widget _buildImage(String imageUrl) {
+    final token = GetIt.I<String>(instanceName: "yandex_token");
     return Center(
       child: InteractiveViewer(
         child: Image.network(
+          headers: {"Authorization": "OAuth ${token}"},
           imageUrl,
           fit: BoxFit.contain,
           loadingBuilder: (context, child, loadingProgress) {
@@ -94,7 +94,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Text('Ошибка отображения изображения'));
+            print(error.toString());
+            return const Center(
+                child: Column(
+              children: [
+                Text('Ошибка отображения изображения'),
+              ],
+            ));
           },
         ),
       ),
