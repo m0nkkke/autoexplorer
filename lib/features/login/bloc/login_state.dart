@@ -1,4 +1,4 @@
-import 'package:autoexplorer/repositories/users/models/user/user_role.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:equatable/equatable.dart';
 
 enum LoginStatus { initial, loading, success, failure }

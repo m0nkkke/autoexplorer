@@ -4,7 +4,7 @@ import 'package:autoexplorer/features/login/bloc/login_state.dart';
 import 'package:autoexplorer/features/login/widgets/input_field.dart';
 import 'package:autoexplorer/features/login/widgets/login_button.dart';
 import 'package:autoexplorer/features/login/widgets/logo_widget.dart';
-import 'package:autoexplorer/repositories/users/models/user/user_role.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,7 +14,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accessKeyController = TextEditingController();
+    final emailController = TextEditingController();
     final passwordController = TextEditingController();
     final _formKey = GlobalKey<FormState>();
 
@@ -27,7 +27,7 @@ class LoginScreen extends StatelessWidget {
               if (state.role == UserRole.admin) {
                 Navigator.of(context).pushNamed('/admin');
               } else if (state.role == UserRole.worker) {
-                Navigator.of(context).pushNamed('/storage');
+                Navigator.of(context).pushNamed('/admin');
               }
             } else if (state.status == LoginStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -46,12 +46,12 @@ class LoginScreen extends StatelessWidget {
                     const LogoWidget(),
                     const SizedBox(height: 32),
                     InputField(
-                      labelText: 'Ключ доступа',
-                      hintText: 'Например: F3A0ETbfjPs4kIP',
-                      controller: accessKeyController,
+                      labelText: 'Email',
+                      hintText: 'Например: example@email.com',
+                      controller: emailController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите ключ доступа';
+                          return 'Пожалуйста, введите email';
                         }
                         return null;
                       },
@@ -80,7 +80,7 @@ class LoginScreen extends StatelessWidget {
                                       false) {
                                     context.read<LoginBloc>().add(
                                           LoginButtonPressed(
-                                            accessKey: accessKeyController.text,
+                                            emailKey: emailController.text,
                                             password: passwordController.text,
                                           ),
                                         );

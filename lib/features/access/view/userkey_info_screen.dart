@@ -54,9 +54,9 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
 
     // Проставляем галочки для данных из user
     if (user['accessList'] != null) {
-      selectedRegions.add('${user['accessList']['regional']['regName']}');
-      selectedSections.add('${user['accessList']['area']['areaName']}');
-      selectedSpans.add('${user['accessList']['line']['lineName']}');
+      selectedRegions.add('${user['accessList'][0]}');
+      selectedSections.add('${user['accessList'][0]}');
+      selectedSpans.add('${user['accessList'][0]}');
     }
   }
 
@@ -98,16 +98,16 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
               lastUpload: '${user['lastUpload']}',
               accessGranted: '${user['accessSet']}',
               accessModified: '${user['accessEdit']}',
-              accessKey: '${user['accessKey']}',
+              emailKey: '${user['email']}',
             ),
             Divider(),
-            // Регион
+            // Регионал
             RootsInfo(
-              title: 'Регион',
+              title: 'Регионал',
               items: _getSortedItems(
                 [
-                  ...randomRegions, // добавляем рандомные регионы
-                  '${user['accessList']['regional']['regName']}', // добавляем данные из user
+                  ...randomRegions, 
+                  '${user['accessList'][0]}', 
                 ],
                 selectedRegions,
               ),
@@ -120,8 +120,8 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
               title: 'Участок',
               items: _getSortedItems(
                 [
-                  ...randomSections, // добавляем рандомные участки
-                  '${user['accessList']['area']['areaName']}', // добавляем данные из user
+                  ...randomSections, 
+                  '${user['accessList'][0]}', 
                 ],
                 selectedSections,
               ),
@@ -130,18 +130,6 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
             ),
             SizedBox(height: 10),
             // Пролёт
-            RootsInfo(
-              title: 'Пролёт',
-              items: _getSortedItems(
-                [
-                  ...randomSpans, // добавляем рандомные пролёты
-                  '${user['accessList']['line']['lineName']}', // добавляем данные из user
-                ],
-                selectedSpans,
-              ),
-              selectedItems: selectedSpans,
-              onChanged: _onSpansChanged,
-            ),
           ],
         ),
       ),

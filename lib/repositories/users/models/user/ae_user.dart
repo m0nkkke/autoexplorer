@@ -1,22 +1,24 @@
-import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
-import 'package:autoexplorer/repositories/users/models/user/user_role.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 
-class User {
-  final String accessKey;
+class AEUser {
+  final String uid;
+  final String email;
   final String accessEdit;
-  final AccessList accessList;
+  final String regional;
+  final List<String> accessList; 
   final String accessSet;
   final String firstName;
   final int imagesCount;
   final String lastName;
   final String lastUpload;
   final String middleName;
-  final String password;
   final UserRole role;
 
-  User({
-    required this.accessKey,
+  AEUser({
+    required this.uid,
+    required this.email,
     required this.accessEdit,
+    required this.regional,
     required this.accessList,
     required this.accessSet,
     required this.firstName,
@@ -24,43 +26,43 @@ class User {
     required this.lastName,
     required this.lastUpload,
     required this.middleName,
-    required this.password,
     required this.role,
   });
 
-  factory User.fromFirestore(Map<String, dynamic>? data) {
+  factory AEUser.fromFirestore(Map<String, dynamic>? data, String uid) {
     if (data == null) throw Exception('User data is null');
 
-    final roleString = data ['role'] as String? ?? 'worker';
+    final roleString = data['role'] as String? ?? 'worker';
     final role = roleString == 'admin' ? UserRole.admin : UserRole.worker;
 
-    return User(
-      accessKey: data['accessKey'] as String? ?? '',
+    return AEUser(
+      uid: uid,
+      email: data['email'] as String? ?? '',
       accessEdit: data['accessEdit'] as String? ?? '',
-      accessList: AccessList.fromMap(data['accessList'] as Map<String, dynamic>?),
+      regional: data['regional'] as String,
+      accessList: List<String>.from(data['accessList'] ?? []),
       accessSet: data['accessSet'] as String? ?? '',
-      firstName: data ['firstName'] as String? ?? '',
-      imagesCount: data ['imagesCount']  as int? ?? 0,
+      firstName: data['firstName'] as String? ?? '',
+      imagesCount: data['imagesCount'] as int? ?? 0,
       lastName: data['lastName'] as String? ?? '',
       lastUpload: data['lastUpload'] as String? ?? '',
       middleName: data['middleName'] as String? ?? '',
-      password: data['password'] as String? ?? '',
       role: role,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'accessKey': accessKey,
+      'email': email,
       'accessEdit': accessEdit,
-      'accessList': accessList.toMap(),
+      'regional': regional,
+      'accessList': accessList, 
       'accessSet': accessSet,
       'firstName': firstName,
       'imagesCount': imagesCount,
       'lastName': lastName,
       'lastUpload': lastUpload,
       'middleName': middleName,
-      'password': password,
       'role': role == UserRole.admin ? 'admin' : 'worker',
     };
   }

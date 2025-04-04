@@ -1,7 +1,7 @@
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
-import 'package:autoexplorer/repositories/users/models/user/user.dart';
-import 'package:autoexplorer/repositories/users/models/user/user_role.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'user_create_event.dart';
@@ -19,9 +19,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(state.copyWith(status: UserStatus.loading));
 
     try {
-      final user = User(
-        accessKey: event.accessKey,
+      final user = AEUser(
         accessEdit: event.accessEdit,
+        regional: event.regional,
         accessList: event.accessList,
         accessSet: event.accessSet,
         firstName: event.firstName,
@@ -29,15 +29,24 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         lastName: event.lastName,
         lastUpload: event.lastUpload,
         middleName: event.middleName,
-        password: event.password,
         role: event.role,
+        uid: '', 
+        email: event.email, 
       );
 
-      await _usersRepository.createUser(user);
+      final registeredUser = await _usersRepository.registerUser(event.email, event.password, user);
+
+      if (registeredUser == null) {
+        emit(state.copyWith(
+          status: UserStatus.failure,
+          errorMessage: 'Ошибка регистрации пользователя.',
+        ));
+        return;
+      }
 
       emit(state.copyWith(
         status: UserStatus.success,
-        user: user,
+        user: registeredUser,
       ));
     } catch (e) {
       emit(state.copyWith(

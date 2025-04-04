@@ -8,9 +8,9 @@ class AccessInfoWidget extends StatefulWidget {
   final String? lastUpload;
   final String? accessGranted; 
   final String? accessModified; 
-  final String? accessKey;
+  final String? emailKey;
 
-  const AccessInfoWidget({super.key, this.isNew = false, this.imagesCreated, this.lastUpload, this.accessGranted, this.accessModified, this.accessKey});
+  const AccessInfoWidget({super.key, this.isNew = false, this.imagesCreated, this.lastUpload, this.accessGranted, this.accessModified, this.emailKey});
 
   @override
   State<AccessInfoWidget> createState() => _AccessInfoWidgetState();
@@ -21,7 +21,7 @@ class _AccessInfoWidgetState extends State<AccessInfoWidget> {
   String _lastUpload = '-';
   String _accessGranted = '-';
   String _accessModified = '-';
-  String _accessKey = '';
+  String _emailKey = '';
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _AccessInfoWidgetState extends State<AccessInfoWidget> {
       _lastUpload = widget.lastUpload ?? '-';
       _accessGranted = widget.accessGranted ?? '-';
       _accessModified = widget.accessModified ?? '-';
-      _accessKey = widget.accessKey ?? '-';
+      _emailKey = widget.emailKey ?? '-';
     }
   }
 
@@ -50,7 +50,7 @@ class _AccessInfoWidgetState extends State<AccessInfoWidget> {
         _buildInfoRow('Последняя загрузка', _lastUpload),
         _buildInfoRow('Доступ выдан', _accessGranted),
         _buildInfoRow('Доступ изменен', _accessModified),
-        _buildCopyableInfoRow('Ключ доступа', _accessKey, context),
+        _buildCopyableInfoRow('Ключ доступа', _emailKey, context),
       ],
     );
   }
@@ -116,7 +116,7 @@ class _AccessInfoWidgetState extends State<AccessInfoWidget> {
                 : ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _accessKey = _generateRandomKey();
+                        _emailKey = _generateRandomKey();
                       });
                     },
                     child: const Text('Генерация'),
