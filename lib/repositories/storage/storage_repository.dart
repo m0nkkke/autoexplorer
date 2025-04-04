@@ -37,8 +37,17 @@ class StorageRepository extends AbstractStorageRepository {
 
     // Для изображений пытаемся получить превью
     if (data['sizes'] != null && (data['sizes'] as List).isNotEmpty) {
-      imageURL = data['sizes'][0]['url'] ?? '-';
+      if (data['sizes'].length > 9) {
+        imageURL = data['sizes'][8]['url'];
+      } else {
+        imageURL = data['sizes'][0]['url'] ?? '-';
+      }
     }
+    // debugPrint('=========data of $name========');
+    // debugPrint(data['sizes'].length.toString());
+    // for (int i = 0; i < data['sizes'].length; i++) {
+    //   debugPrint(data['sizes'][i].toString());
+    // }
 
     return FileItem(
       name: name,
@@ -71,6 +80,7 @@ class StorageRepository extends AbstractStorageRepository {
   Future<String> getImageDownloadUrl(String filePath) async {
     final response =
         await dio.get('/download', queryParameters: {'path': filePath});
+    debugPrint(response.data.toString());
     return response.data['href']; // Временная ссылка
   }
 
@@ -81,8 +91,9 @@ class StorageRepository extends AbstractStorageRepository {
       List<dynamic> result = [];
       if (response.statusCode == 200) {
         print('Loading data...');
-        debugPrint(response.data['_embedded'].toString());
-        debugPrint(response.data['_embedded']['total'].toString());
+        debugPrint('Public key: ${response.data['resource_id'].toString()}');
+        // debugPrint(response.data['_embedded'].toString());
+        // debugPrint(response.data['_embedded']['total'].toString());
         final items = response.data['_embedded']['items'];
         for (var item in items) {
           if (item['type'] == 'file') {
