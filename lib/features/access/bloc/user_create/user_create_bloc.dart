@@ -1,5 +1,4 @@
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +18,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(state.copyWith(status: UserStatus.loading));
 
     try {
+      // Создаем объект AEUser с данными, полученными из события
       final user = AEUser(
         accessEdit: event.accessEdit,
         regional: event.regional,
@@ -30,25 +30,20 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         lastUpload: event.lastUpload,
         middleName: event.middleName,
         role: event.role,
-        uid: '', 
+        uid: event.uid,
         email: event.email, 
       );
 
-      final registeredUser = await _usersRepository.registerUser(event.email, event.password, user);
+      // Регистрируем пользователя в Firestore, передавая uid
+      await _usersRepository.registerUser(event.uid, user);  // Используем registerUser с уже существующим uid
 
-      if (registeredUser == null) {
-        emit(state.copyWith(
-          status: UserStatus.failure,
-          errorMessage: 'Ошибка регистрации пользователя.',
-        ));
-        return;
-      }
-
+      // Если регистрация прошла успешно, обновляем состояние
       emit(state.copyWith(
         status: UserStatus.success,
-        user: registeredUser,
+        user: user,
       ));
     } catch (e) {
+      // В случае ошибки, обновляем состояние с сообщением об ошибке
       emit(state.copyWith(
         status: UserStatus.failure,
         errorMessage: e.toString(),

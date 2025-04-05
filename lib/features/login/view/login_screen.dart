@@ -27,7 +27,7 @@ class LoginScreen extends StatelessWidget {
               if (state.role == UserRole.admin) {
                 Navigator.of(context).pushNamed('/admin');
               } else if (state.role == UserRole.worker) {
-                Navigator.of(context).pushNamed('/admin');
+                Navigator.of(context).pushNamed('/storage');
               }
             } else if (state.status == LoginStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(

@@ -11,16 +11,12 @@ class UsersRepository implements AbstractUsersRepository {
       : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  Future<AEUser?> registerUser(String email, String password, AEUser userData) async { 
+ Future<void> registerUser(String uid, AEUser userData) async { 
     try {
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final uid = userCredential.user!.uid;
-
+      // Создаем объект AEUser для сохранения в Firestore
       final user = AEUser( 
         uid: uid,
-        email: email,
+        email: userData.email,
         accessEdit: userData.accessEdit,
         regional: userData.regional,
         accessList: userData.accessList,
@@ -33,11 +29,11 @@ class UsersRepository implements AbstractUsersRepository {
         role: userData.role,
       );
 
+      // Сохранение пользователя в Firestore
       await _firestore.collection('users').doc(uid).set(user.toFirestore());
 
-      return user;
     } catch (e) {
-      throw Exception('Failed to register user: ${e.toString()}');
+      throw Exception('Failed to register user in Firestore: ${e.toString()}');
     }
   }
 
@@ -102,3 +98,4 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 }
+

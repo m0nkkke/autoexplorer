@@ -5,6 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:intl/intl.dart';
 import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:autoexplorer/firebase_options.dart';
+
 
 class UserKeyCreateScreen extends StatefulWidget {
   const UserKeyCreateScreen({super.key});
@@ -20,17 +24,17 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
   final _middleNameController = TextEditingController();
   final _emailController = TextEditingController(); 
   final _passwordController = TextEditingController(); 
+  String uid = '';
 
   UserRole _role = UserRole.worker;
   final List<String> _accessList = [];
 
   final Set<String> selectedRegions = {};
-  final Set<String> selectedSections = {};
-  final Set<String> selectedSpans = {};
+  final Set<String> selectedAreas = {};
 
   String getCurrentTimeString() {
-    final now = DateTime.now();
-    final formatter = DateFormat('yyyy-dd-MM HH:mm:ss');
+    final now  = DateTime .now();
+    final formatter  = DateFormat('yyyy-dd-MM HH:mm:ss');
     return formatter.format(now);
   }
 
@@ -41,40 +45,64 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
     });
   }
 
-  void _onSectionsChanged(Set<String> newSelection) {
+  void _onAreasChanged(Set<String> newSelection) {
     setState(() {
-      selectedSections.clear();
-      selectedSections.addAll(newSelection);
+      selectedAreas.clear();
+      selectedAreas.addAll(newSelection);
+
+      _accessList.clear();
+      _accessList.addAll(newSelection); 
     });
   }
 
-  void _onSpansChanged(Set<String> newSelection) {
-    setState(() {
-      selectedSpans.clear();
-      selectedSpans.addAll(newSelection);
-    });
-  }
+Future<void> _save() async {
+  if (!_formKey.currentState!.validate()) return;
 
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      BlocProvider.of<UserBloc>(context).add(
-        CreateUserEvent(
-          accessEdit: getCurrentTimeString(),
-          regional: selectedRegions.first.toString(),
-          accessList: _accessList,
-          accessSet: getCurrentTimeString(),
-          firstName: _firstNameController.text,
-          imagesCount: 0,
-          lastName: _lastNameController.text,
-          lastUpload: 'Никогда',
-          middleName: _middleNameController.text,
-          role: _role,
-          email: _emailController.text,
-          password: _passwordController.text, 
-        ),
-      );
-    }
+  try {
+    FirebaseApp secondaryApp =  await Firebase.initializeApp(
+      name: 'SecondaryApp',
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseAuth secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+    final newUser = await secondaryAuth.createUserWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    uid = newUser.user!.uid;
+
+    print('Firebase-пользователь создан: ${newUser.user?.uid}');
+
+    await secondaryAuth.signOut();
+    await secondaryApp.delete();
+
+
+    BlocProvider.of<UserBloc>(context).add(
+      CreateUserEvent(
+        accessEdit: getCurrentTimeString(),
+        regional: selectedRegions.first.toString(),
+        accessList: _accessList,
+        accessSet: getCurrentTimeString(),
+        firstName: _firstNameController.text,
+        imagesCount: 0,
+        lastName: _lastNameController.text,
+        lastUpload: 'Никогда',
+        middleName: _middleNameController.text,
+        role: _role,
+        email: _emailController.text,
+        password: _passwordController.text,
+        uid: uid,
+      ),
+    );
+  } catch (e) {
+    print('Ошибка: $e');
+    ScaffoldMessenger. of(context).showSnackBar(
+      SnackBar(content: Text('Ошибка создания пользователя: $e')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +190,8 @@ class _UserKeyCreateState extends State<UserKeyCreateScreen> {
                           'Участок 2',
                           'Участок 3'
                         ],
-                        selectedItems: selectedSections,
-                        onChanged: _onSectionsChanged),
+                        selectedItems: selectedAreas,
+                        onChanged: _onAreasChanged),
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.center,
