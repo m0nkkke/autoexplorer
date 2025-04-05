@@ -5,7 +5,7 @@ class UserInfoWidget extends StatefulWidget {
   final String? firstName;
   final String? middleName;
   final bool isNew;
-  final ValueChanged<Map<String, String>> onSaveData; // Добавляем колбэк
+  final void Function(Map<String, String>) onSaveData;
 
   const UserInfoWidget({
     super.key,
@@ -13,7 +13,7 @@ class UserInfoWidget extends StatefulWidget {
     this.firstName,
     this.middleName,
     this.isNew = false,
-    required this.onSaveData, // Инициализируем колбэк
+    required this.onSaveData,
   });
 
   @override
@@ -32,7 +32,6 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
   @override
   void initState() {
     super.initState();
-
     _lastNameController = TextEditingController(text: widget.lastName ?? '');
     _firstNameController = TextEditingController(text: widget.firstName ?? '');
     _middleNameController = TextEditingController(text: widget.middleName ?? '');
@@ -40,6 +39,15 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
     _isEditingLastName = widget.isNew;
     _isEditingFirstName = widget.isNew;
     _isEditingMiddleName = widget.isNew;
+  }
+
+  void _saveData() {
+    final userData = {
+      'lastName': _lastNameController.text,
+      'firstName': _firstNameController.text,
+      'middleName': _middleNameController.text,
+    };
+    widget.onSaveData(userData);
   }
 
   @override
@@ -60,16 +68,9 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
             setState(() {
               _isEditingLastName = !_isEditingLastName;
             });
-          },
-          onSave: () {
-            setState(() {
-              _isEditingLastName = false;
-            });
-            widget.onSaveData({
-              'lastName': _lastNameController.text,
-              'firstName': _firstNameController.text,
-              'middleName': _middleNameController.text,
-            });
+            if (!_isEditingLastName) {
+              _saveData(); 
+            }
           },
         ),
         _buildEditableInfoRow(
@@ -80,16 +81,9 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
             setState(() {
               _isEditingFirstName = !_isEditingFirstName;
             });
-          },
-          onSave: () {
-            setState(() {
-              _isEditingFirstName = false;
-            });
-            widget.onSaveData({
-              'lastName': _lastNameController.text,
-              'firstName': _firstNameController.text,
-              'middleName': _middleNameController.text,
-            });
+            if (!_isEditingFirstName) {
+              _saveData();  
+            }
           },
         ),
         _buildEditableInfoRow(
@@ -100,22 +94,15 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
             setState(() {
               _isEditingMiddleName = !_isEditingMiddleName;
             });
-          },
-          onSave: () {
-            setState(() {
-              _isEditingMiddleName = false;
-            });
-            widget.onSaveData({
-              'lastName': _lastNameController.text,
-              'firstName': _firstNameController.text,
-              'middleName': _middleNameController.text,
-            });
+            if (!_isEditingMiddleName) {
+              _saveData();  
+            }
           },
         ),
-        _buildStaticInfoRow(
-          label: 'Регионал',
-          value: 'Регионал 321',
-        ),
+        // _buildStaticInfoRow(
+        //   label: 'Регионал',
+        //   value: 'Регионал 321',
+        // ),
       ],
     );
   }
@@ -125,7 +112,6 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
     required TextEditingController controller,
     required bool isEditing,
     required VoidCallback onEditPressed,
-    required VoidCallback onSave,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -133,7 +119,7 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 100, // Фиксированная ширина для выравнивания заголовков
+            width: 120, 
             child: Text(
               '$label:',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -148,7 +134,6 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
                       contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       border: OutlineInputBorder(),
                     ),
-                    onFieldSubmitted: (_) => onSave(),
                   )
                 : Align(
                     alignment: Alignment.centerLeft,
@@ -159,7 +144,7 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
           ),
           IconButton(
             icon: Icon(isEditing ? Icons.check : Icons.edit),
-            onPressed: isEditing ? onSave : onEditPressed,
+            onPressed: onEditPressed,
           ),
         ],
       ),
@@ -176,7 +161,7 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 100,
+            width: 120,
             child: Text(
               '$label:',
               style: const TextStyle(fontWeight: FontWeight.bold),

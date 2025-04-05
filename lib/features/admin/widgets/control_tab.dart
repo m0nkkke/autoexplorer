@@ -50,10 +50,12 @@ class ControlTab extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final user = state.users[index].data()
                             as Map<String, dynamic>;
+                        final uid = state.users[index].id;
                         return KeyListItem(
                           keyUserName: user['firstName'] + ' ' + user['lastName'],
                           keyArea : user['regional'],
                           userData: user,
+                          uid: uid,
                         );
                       },
                     );

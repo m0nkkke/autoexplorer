@@ -4,18 +4,23 @@ class KeyListItem extends StatelessWidget {
   final String keyUserName;
   final String keyArea;
   final Map<String, dynamic> userData;
+  final String uid;
 
   const KeyListItem({
     Key? key,
     required this.keyUserName,
     required this.keyArea,
     required this.userData,
+    required this. uid,
   }) : super(key: key);
 
   void _onTap(BuildContext context) {
     Navigator.of(context).pushNamed(
       '/access', 
-      arguments: userData,
+      arguments: {
+        'userData': userData,
+        'uid': uid,
+      },
     );
   }
 

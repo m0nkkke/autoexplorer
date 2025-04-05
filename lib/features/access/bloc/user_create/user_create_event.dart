@@ -15,6 +15,7 @@ class CreateUserEvent extends UserEvent {
   final String email; 
   final String password; 
   final UserRole role;
+  final String uid;
 
   CreateUserEvent({
     required this.accessEdit,
@@ -29,5 +30,6 @@ class CreateUserEvent extends UserEvent {
     required this.email,
     required this.password,
     required this.role,
+    required this.uid,
   });
 }
