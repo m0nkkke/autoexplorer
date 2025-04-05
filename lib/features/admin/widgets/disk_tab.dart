@@ -1,6 +1,7 @@
 import 'package:autoexplorer/features/admin/bloc/control/disk_bloc.dart';
 import 'package:autoexplorer/features/storage/view/storage_list_screen.dart';
 import 'package:autoexplorer/features/storage/widgets/folder_list_item.dart';
+import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,7 +30,7 @@ class _DiskTabState extends State<DiskTab> {
 
   @override
   void initState() {
-    _disk_bloc.add(LoadFolders());
+    _disk_bloc.add(DiskLoadFoldersEvent());
     // _loadData(path: widget.path);
     super.initState();
   }
@@ -47,7 +48,18 @@ class _DiskTabState extends State<DiskTab> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final folderName =
+                        await ShowCreateDialog.showCreateFolderDialog(context);
+                    if (folderName != null) {
+                      // Вызов логики создания папки
+                      _disk_bloc
+                          .add(DiskCreateFolderEvent(folderName: folderName));
+                      // context
+                      //     .read<DiskBloc>()
+                      //     .add(CreateFolderOnDisk(folderName));
+                    }
+                  },
                   icon: const Icon(Icons.add_box,
                       color: Colors.lightBlue, size: 32),
                   label: const Text('Добавить новый регионал'),
@@ -71,6 +83,17 @@ class _DiskTabState extends State<DiskTab> {
                 );
               }),
             ],
+          );
+        }
+        if (state is DiskError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text("Disk Error"),
+              ],
+            ),
           );
         }
         return Center(

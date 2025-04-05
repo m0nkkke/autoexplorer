@@ -61,7 +61,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       StorageListCreateFolder event, Emitter<StorageListState> emit) async {
     try {
       emit(StorageListLoading());
-
+      print('creating folder ${event.path}');
       await yandexRepositoy.createFolder(name: event.name, path: event.path);
       add(StorageListLoad(path: event.path));
     } catch (e) {

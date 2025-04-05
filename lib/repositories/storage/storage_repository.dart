@@ -114,7 +114,12 @@ class StorageRepository extends AbstractStorageRepository {
   Future<void> createFolder(
       {required String name, required String path}) async {
     try {
-      final fullpath = '$path/$name';
+      String fullpath;
+      if (path != '/' && path != 'disk:/') {
+        fullpath = '$path/$name';
+      } else {
+        fullpath = 'disk:/$name';
+      }
       // final encodedPath = Uri.encodeComponent(fullpath);
       final response = await dio.put('', queryParameters: {'path': fullpath});
 
