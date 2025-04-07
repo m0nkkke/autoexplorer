@@ -62,6 +62,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     try {
       emit(StorageListLoading());
       print('creating folder ${event.path}');
+      print('📁 Creating folder: ${event.name}');
+      print('📂 Inside path: ${event.path}');
       await yandexRepositoy.createFolder(name: event.name, path: event.path);
       add(StorageListLoad(path: event.path));
     } catch (e) {
@@ -75,8 +77,10 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     try {
       final itemsList =
           await yandexRepositoy.getFileAndFolderModels(path: event.path);
+      print(itemsList.toString());
       emit(StorageListLoaded(items: itemsList));
     } catch (e) {
+      print(e.toString());
       emit(StorageListLoadingFailure(exception: e));
     }
   }

@@ -32,8 +32,7 @@ class DiskBloc extends Bloc<DiskEvent, DiskState> {
     try {
       emit(DiskLoading());
 
-      await storageRepository.createFolder(
-          name: event.folderName, path: 'disk:/');
+      await storageRepository.createFolder(name: event.folderName, path: '/');
       add(DiskLoadFoldersEvent());
     } catch (e) {
       print(e.toString());
