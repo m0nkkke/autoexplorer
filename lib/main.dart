@@ -27,6 +27,7 @@ Future<void> main() async {
 
   GetIt.I.registerLazySingleton<AbstractStorageRepository>(
     () => StorageRepository(dio: dio),
+    // () => LocalRepository(),
   );
 
   GetIt.I.registerLazySingleton<AbstractUsersRepository>(
