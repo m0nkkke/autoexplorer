@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -76,33 +78,36 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
 
   Widget _buildImage(String imageUrl) {
     final token = GetIt.I<String>(instanceName: "yandex_token");
+    final isNetwork = imageUrl.startsWith('http');
     return Center(
       child: InteractiveViewer(
-        child: Image.network(
-          headers: {"Authorization": "OAuth ${token}"},
-          imageUrl,
-          fit: BoxFit.contain,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        (loadingProgress.expectedTotalBytes ?? 1)
-                    : null,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            print(error.toString());
-            return const Center(
-                child: Column(
-              children: [
-                Text('Ошибка отображения изображения'),
-              ],
-            ));
-          },
-        ),
+        child: isNetwork
+            ? Image.network(
+                headers: {"Authorization": "OAuth ${token}"},
+                imageUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print(error.toString());
+                  return const Center(
+                      child: Column(
+                    children: [
+                      Text('Ошибка отображения изображения'),
+                    ],
+                  ));
+                },
+              )
+            : Image.file(File(imageUrl)),
       ),
     );
   }
