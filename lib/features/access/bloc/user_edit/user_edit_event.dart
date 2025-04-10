@@ -32,3 +32,9 @@ class UpdateAccessListEvent extends UserEditEvent {
 
   UpdateAccessListEvent(this.accessList);
 }
+
+class DeleteUserEvent extends UserEditEvent {
+  final String uid;
+
+  DeleteUserEvent(this.uid);
+}

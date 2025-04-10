@@ -33,8 +33,13 @@ class AuthGuard extends NavigatorObserver {
       _initialAuthCheckDone = true;
       if (user != null && routeName == '/') {
         final userData = await _usersRepository.getUserByUid(user.uid);
+        final userRole = userData?.role;
         if (userData != null) {
-          navigator?.pushNamedAndRemoveUntil('/storage', (route) => false);
+          if(userRole == UserRole.admin) {
+            navigator?.pushNamedAndRemoveUntil('/admin', (route) => false);
+          } else {
+            navigator?.pushNamedAndRemoveUntil('/', (route) => false);
+          }
           return;
         }
       }
