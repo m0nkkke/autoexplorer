@@ -25,19 +25,30 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
     emit(state.copyWith(accessList: event.accessList)); 
   });
 
-on<SubmitUserEvent>((event, emit) async {
-  emit(state.copyWith(isSaving: true));
+  on<SubmitUserEvent>((event, emit) async {
+    emit(state.copyWith(isSaving: true));
 
-  try {
-    final updatedUser = event.updatedUser;
-    updatedUser.accessList = state.accessList;
-    
-    await repository.updateUser(updatedUser);
+    try {
+      final updatedUser = event.updatedUser;
+      updatedUser.accessList = state.accessList;
+      
+      await repository.updateUser(updatedUser);
 
-    emit(state.copyWith(isSaving: false, saved: true));
-  } catch (_) {
-    emit(state.copyWith(isSaving: false, error: 'Ошибка при сохранении'));
+      emit(state.copyWith(isSaving: false, saved: true));
+    } catch (_) {
+      emit(state.copyWith(isSaving: false, error: 'Ошибка при сохранении'));
+    }
+  });
+  on<DeleteUserEvent>((event, emit) async {
+        emit(state.copyWith(isSaving: true));
+
+        try {
+          await repository.deleteUser(event.uid);
+
+          emit(state.copyWith(isSaving: false, deleted: true));
+        } catch (_) {
+          emit(state.copyWith(isSaving: false, error: 'Ошибка при удалении'));
+        }
+      });
   }
-});
-}
 }

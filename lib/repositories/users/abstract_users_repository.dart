@@ -11,4 +11,5 @@ abstract class AbstractUsersRepository {
   Future<AEUser?> getUserByUid(String uid);
   Future<void> createUser(AEUser user);
   Future<void> updateUser(AEUser user);
+  Future<void> deleteUser(String uid);
 }

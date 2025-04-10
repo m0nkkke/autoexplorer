@@ -44,6 +44,13 @@ class UsersRepository implements AbstractUsersRepository {
           .signInWithEmailAndPassword(email: email, password: password);
 
       final uid = userCredential.user!.uid;
+
+      final user = await getUserByUid(uid);
+      if (user == null) {
+        // Если пользователь удален из Firestore
+        throw Exception("Ваш аккаунт был удалён. Доступ запрещен.");
+      }
+
       return await getUserByUid(uid);
     } catch (e) {
       throw Exception('Failed to sign in user: ${e.toString()}');
@@ -96,6 +103,19 @@ class UsersRepository implements AbstractUsersRepository {
     } catch (e) {
       throw Exception('Failed to update user: ${e.toString()}');
     }
+  }
+  
+  @override
+  Future<void> deleteUser(String uid) async {
+    final auth = FirebaseAuth.instance;
+    User? currentUser = auth.currentUser;
+
+    if (currentUser?.uid == uid) {
+      throw Exception("Невозможно удалить свой собственный аккаунт.");
+    }
+    
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    await userRef.delete();
   }
 }
 
