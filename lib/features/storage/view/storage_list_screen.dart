@@ -204,11 +204,20 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final fullPath = widget.path;
+    String viewPath;
+    if (fullPath.contains('applicationData')) {
+      viewPath = fullPath.substring(
+          fullPath.indexOf('applicationData') + 'applicationData'.length + 1);
+    } else {
+      viewPath = fullPath;
+    }
+
     return Scaffold(
       appBar: CustomAppBar(
         title: widget.title,
         storageCount: storageCount,
-        path: widget.path,
+        path: viewPath,
         isSelectionMode: _isSelectionMode,
         selectedCount: _selectedItems.length,
         onCancel: _appBarMode == AppBarMode.selection
