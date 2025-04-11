@@ -10,13 +10,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  print("te1");
+  await dotenv.load();
+  print("te");
 
-  final String token = 'token';
+  final String token = dotenv.env['YANDEX_DISK_TOKEN'] ?? 'DEFAULT';
+  print(token);
   final Dio dio = Dio(BaseOptions(
     baseUrl: 'https://cloud-api.yandex.net/v1/disk/resources',
     headers: {
@@ -32,10 +37,8 @@ Future<void> main() async {
   );
 
   GetIt.I.registerLazySingleton<AbstractUsersRepository>(
-    () => UsersRepository(firestore: firestore)
-  );
+      () => UsersRepository(firestore: firestore));
   GetIt.I.registerSingleton<String>(token, instanceName: "yandex_token");
-
 
   runApp(const AutoExplorerApp());
 }

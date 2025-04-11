@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,4 +41,47 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static FirebaseOptions web = FirebaseOptions(
+    apiKey: dotenv.env['API_KEY_WEB'] ?? 'DEFAULT',
+    appId: dotenv.env['APP_ID_WEB'] ?? 'DEFAULT',
+    messagingSenderId: dotenv.env['MESSAGING_SENDER_ID'] ?? 'DEFAULT',
+    projectId: dotenv.env['PROJECT_ID'] ?? 'DEFAULT',
+    authDomain: dotenv.env['AUTH_DOMAIN'] ?? 'DEFAULT',
+    storageBucket: dotenv.env['STORAGE_BUCKET'] ?? 'DEFAULT',
+  );
 
+  static FirebaseOptions android = FirebaseOptions(
+    apiKey: dotenv.env['API_KEY_ANDROID'] ?? 'DEFAULT',
+    appId: dotenv.env['APP_ID_ANDROID'] ?? 'DEFAULT',
+    messagingSenderId: dotenv.env['MESSAGING_SENDER_ID'] ?? 'DEFAULT',
+    projectId: dotenv.env['PROJECT_ID'] ?? 'DEFAULT',
+    storageBucket: dotenv.env['STORAGE_BUCKET'] ?? 'DEFAULT',
+  );
+
+  static FirebaseOptions ios = FirebaseOptions(
+    apiKey: dotenv.env['API_KEY_IOS'] ?? 'DEFAULT',
+    appId: dotenv.env['APP_ID_IOS'] ?? 'DEFAULT',
+    messagingSenderId: dotenv.env['MESSAGING_SENDER_ID'] ?? 'DEFAULT',
+    projectId: dotenv.env['PROJECT_ID'] ?? 'DEFAULT',
+    storageBucket: dotenv.env['STORAGE_BUCKET'] ?? 'DEFAULT',
+    iosBundleId: dotenv.env['IOS_BUNDLE_ID'] ?? 'DEFAULT',
+  );
+
+  static FirebaseOptions macos = FirebaseOptions(
+    apiKey: dotenv.env['API_KEY_IOS'] ?? 'DEFAULT',
+    appId: dotenv.env['APP_ID_IOS'] ?? 'DEFAULT',
+    messagingSenderId: dotenv.env['MESSAGING_SENDER_ID'] ?? 'DEFAULT',
+    projectId: dotenv.env['PROJECT_ID'] ?? 'DEFAULT',
+    storageBucket: dotenv.env['STORAGE_BUCKET'] ?? 'DEFAULT',
+    iosBundleId: dotenv.env['IOS_BUNDLE_ID'] ?? 'DEFAULT',
+  );
+
+  static FirebaseOptions windows = FirebaseOptions(
+    apiKey: dotenv.env['API_KEY_WEB'] ?? 'DEFAULT',
+    appId: dotenv.env['APP_ID_WEB'] ?? 'DEFAULT',
+    messagingSenderId: dotenv.env['MESSAGING_SENDER_ID'] ?? 'DEFAULT',
+    projectId: dotenv.env['PROJECT_ID'] ?? 'DEFAULT',
+    authDomain: dotenv.env['AUTH_DOMAIN'] ?? 'DEFAULT',
+    storageBucket: dotenv.env['STORAGE_BUCKET'] ?? 'DEFAULT',
+  );
+}
