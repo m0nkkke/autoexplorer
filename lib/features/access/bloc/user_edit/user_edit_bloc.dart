@@ -39,16 +39,5 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
       emit(state.copyWith(isSaving: false, error: 'Ошибка при сохранении'));
     }
   });
-  on<DeleteUserEvent>((event, emit) async {
-        emit(state.copyWith(isSaving: true));
-
-        try {
-          await repository.deleteUser(event.uid);
-
-          emit(state.copyWith(isSaving: false, deleted: true));
-        } catch (_) {
-          emit(state.copyWith(isSaving: false, error: 'Ошибка при удалении'));
-        }
-      });
   }
 }

@@ -4,15 +4,34 @@ import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ControlTab extends StatelessWidget {
+class ControlTab extends StatefulWidget {
   const ControlTab({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final usersRepository = UsersRepository(); 
+  State<ControlTab> createState() => _ControlTabState();
+}
 
-    return BlocProvider(
-      create: (context) => ControlBloc(usersRepository)..add(LoadUsers()),
+class _ControlTabState extends State<ControlTab> {
+  late final UsersRepository _usersRepository;
+  late final ControlBloc _controlBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersRepository = UsersRepository();
+    _controlBloc = ControlBloc(_usersRepository)..add(LoadUsers());
+  }
+
+  @override
+  void dispose() {
+    _controlBloc.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ControlBloc>(
+      create: (context) => _controlBloc,
       child: Scaffold(
         body: Column(
           children: [
@@ -53,7 +72,7 @@ class ControlTab extends StatelessWidget {
                         final uid = state.users[index].id;
                         return KeyListItem(
                           keyUserName: user['firstName'] + ' ' + user['lastName'],
-                          keyArea : user['regional'],
+                          keyArea: user['regional'],
                           userData: user,
                           uid: uid,
                         );

@@ -15,7 +15,6 @@ class UserEditState extends Equatable {
   final String lastUpload;
   final bool isSaving;
   final bool saved;
-  final bool deleted;
   final String? error;
 
   const UserEditState({
@@ -33,7 +32,6 @@ class UserEditState extends Equatable {
     required this.lastUpload,
     this.isSaving = false,
     this.saved = false,
-    this.deleted = false,
     this.error,
   });
 
@@ -88,7 +86,6 @@ class UserEditState extends Equatable {
     String? accessEdit,
     bool? isSaving,
     bool? saved,
-    bool? deleted,
     String? error,
   }) {
     return UserEditState(
@@ -106,7 +103,6 @@ class UserEditState extends Equatable {
       accessEdit: accessEdit ?? this.accessEdit,
       isSaving: isSaving ?? this.isSaving,
       saved: saved ?? this.saved,
-      deleted: deleted ?? this.deleted,
       error: error,
     );
   }
@@ -132,6 +128,6 @@ class UserEditState extends Equatable {
   List<Object?> get props => [
         uid, email, firstName, lastName, middleName,
         regional, accessList, role, accessSet, imagesCount,
-        accessEdit, isSaving, saved, deleted, error
+        accessEdit, isSaving, saved, error
       ];
 }
