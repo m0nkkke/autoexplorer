@@ -38,12 +38,6 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
     _userEditBloc.add(UpdateAccessListEvent(newSelection.toList()));
   }
 
-  void _deleteUser() {
-    final Map<String, dynamic> arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    final String uid = arguments['uid']; 
-    _userEditBloc.add(DeleteUserEvent(uid));
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -85,26 +79,7 @@ class _UserKeyInfoState extends State<UserKeyInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Админ-панель'),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (String result) {
-                if (result == 'delete') {
-                  _deleteUser();
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete, color: Colors.red),
-                    title: Text('Удалить', style: TextStyle(color: Colors.red)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-      ),
+      appBar: AppBar(title: const Text('Админ-панель')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: BlocProvider<UserEditBloc>(
