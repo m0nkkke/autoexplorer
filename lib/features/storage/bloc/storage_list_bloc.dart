@@ -1,18 +1,25 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/local_repository.dart';
+import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 // import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 part 'storage_list_event.dart';
 part 'storage_list_state.dart';
 
 class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
-  StorageListBloc(this.yandexRepositoy) : super(StorageListInitial()) {
+  StorageListBloc() : super(StorageListInitial()) {
     on<StorageListLoad>(_onStorageListLoad);
     on<StorageListCreateFolder>(_onStorageListCreateFolder);
     on<StorageListUploadFile>(_onStorageListUploadFile);
     on<LoadImageUrl>(_onLoadImageUrl);
     on<ResetImageLoadingState>(_onResetImageLoadingState);
+    on<SyncFromYandexEvent>(_onSyncFromYandex);
+    on<SyncToYandexEvent>(_onSyncToYandex);
+    on<DeleteFolderEvent>(_onDeleteFolder);
   }
 
   FutureOr<void> _onResetImageLoadingState(
@@ -35,7 +42,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       }
 
       // Если ссылки нет, запрашиваем её
-      final url = await yandexRepositoy.getImageDownloadUrl(event.path);
+      final url = await localRepository.getImageDownloadUrl(event.path);
       emit(ImageUrlLoaded(url));
     } catch (e) {
       emit(ImageLoadError());
@@ -46,7 +53,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       StorageListUploadFile event, Emitter<StorageListState> emit) async {
     try {
       emit(StorageListLoading());
-      await yandexRepositoy.uploadFile(
+      await localRepository.uploadFile(
         filePath: event.filePath,
         uploadPath: event.uploadPath,
       );
@@ -64,7 +71,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       print('creating folder ${event.path}');
       print('📁 Creating folder: ${event.name}');
       print('📂 Inside path: ${event.path}');
-      await yandexRepositoy.createFolder(name: event.name, path: event.path);
+      await localRepository.createFolder(name: event.name, path: event.path);
       add(StorageListLoad(path: event.path));
     } catch (e) {
       print(e.toString());
@@ -76,7 +83,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       StorageListLoad event, Emitter<StorageListState> emit) async {
     try {
       final itemsList =
-          await yandexRepositoy.getFileAndFolderModels(path: event.path);
+          await localRepository.getFileAndFolderModels(path: event.path);
       print(itemsList.toString());
       emit(StorageListLoaded(items: itemsList));
     } catch (e) {
@@ -85,5 +92,55 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     }
   }
 
-  final AbstractStorageRepository yandexRepositoy;
+  // Обработчик события синхронизации с Яндекс Диском
+  FutureOr<void> _onSyncFromYandex(
+      SyncFromYandexEvent event, Emitter<StorageListState> emit) async {
+    try {
+      emit(StorageListLoading());
+      await yandexRepository.syncFromYandexDisk(); // Синхронизация
+      add(StorageListLoad(
+          path: event.path)); // Обновление UI после синхронизации
+    } catch (e) {
+      print('==========onSyncFromYandex=========');
+      print(e);
+      emit(StorageListLoadingFailure(exception: e));
+    }
+  }
+
+  // Обработчик события синхронизации с локальным хранилищем
+  FutureOr<void> _onSyncToYandex(
+      SyncToYandexEvent event, Emitter<StorageListState> emit) async {
+    try {
+      emit(StorageListLoading());
+      await yandexRepository
+          .syncToYandexDisk(); // Синхронизация с локального хранилища
+      add(StorageListLoad(
+          path: event.path)); // Обновление UI после синхронизации
+    } catch (e) {
+      print('=========onSyncToYandex==========');
+      print(e);
+      emit(StorageListLoadingFailure(exception: e));
+    }
+  }
+
+  FutureOr<void> _onDeleteFolder(
+      DeleteFolderEvent event, Emitter<StorageListState> emit) async {
+    try {
+      emit(StorageListLoading());
+      await localRepository.deleteFolder(
+        name: event.folderName,
+        path: event.currentPath,
+      );
+      add(StorageListLoad(path: event.currentPath));
+    } catch (e) {
+      emit(StorageListLoadingFailure(exception: e));
+    }
+  }
+
+  final LocalRepository localRepository =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+          as LocalRepository;
+  final StorageRepository yandexRepository =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository')
+          as StorageRepository;
 }

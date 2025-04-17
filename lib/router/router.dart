@@ -20,10 +20,10 @@ final routes = {
   '/access': (context) => UserKeyInfoScreen(),
   '/access/create': (context) => UserKeyCreateProvider(),
   '/image_viewer': (context) => ImageViewerScreen(
-    imageUrl: '',
-    path: '',
-    name: '',
-    imageViewerBloc: StorageListBloc(GetIt.I<AbstractStorageRepository>()),
-    currentItems: [],
-  ),
+        imageUrl: '',
+        path: '',
+        name: '',
+        imageViewerBloc: StorageListBloc(),
+        currentItems: [],
+      ),
 };

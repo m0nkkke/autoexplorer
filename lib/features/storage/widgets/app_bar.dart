@@ -17,6 +17,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool isAllSelected;
   final AppBarMode mode;
   final Function(String) onCreateFolder;
+  final VoidCallback? onDelete;
 
   const CustomAppBar({
     Key? key,
@@ -32,6 +33,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.mode,
     required this.onIconSizeChanged,
     required this.onCreateFolder,
+    required this.onDelete,
   }) : super(key: key);
 
   @override
@@ -177,6 +179,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
           label: const Text('Выделить все'),
         ),
+        if (widget.onDelete != null)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: widget.onDelete,
+            tooltip: 'Удалить выбранное',
+          ),
       ];
     } else if (widget.mode == AppBarMode.search) {
       return [];

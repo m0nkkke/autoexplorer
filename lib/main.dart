@@ -1,3 +1,4 @@
+import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
@@ -33,12 +34,22 @@ Future<void> main() async {
 
   GetIt.I.registerLazySingleton<AbstractStorageRepository>(
     () => StorageRepository(dio: dio),
-    // () => LocalRepository(),
+    instanceName: 'yandex_repository',
+  );
+  GetIt.I.registerLazySingleton<AbstractStorageRepository>(
+    () => LocalRepository(),
+    instanceName: 'local_repository',
   );
 
   GetIt.I.registerLazySingleton<AbstractUsersRepository>(
       () => UsersRepository(firestore: firestore));
   GetIt.I.registerSingleton<String>(token, instanceName: "yandex_token");
+
+  GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
+
+  final _storageListBloc = GetIt.I<StorageListBloc>();
+  _storageListBloc.add(SyncFromYandexEvent(path: '/'));
+  _storageListBloc.add(SyncToYandexEvent(path: '/'));
 
   runApp(const AutoExplorerApp());
 }
