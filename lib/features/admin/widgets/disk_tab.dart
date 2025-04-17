@@ -25,8 +25,9 @@ void _onTap(BuildContext context, item) {
 }
 
 class _DiskTabState extends State<DiskTab> {
-  final _disk_bloc =
-      DiskBloc(storageRepository: GetIt.I<AbstractStorageRepository>());
+  final _disk_bloc = DiskBloc(
+      storageRepository:
+          GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository'));
 
   @override
   void initState() {

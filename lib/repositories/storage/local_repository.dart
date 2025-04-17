@@ -111,4 +111,24 @@ class LocalRepository extends AbstractStorageRepository {
 
     return appDir;
   }
+
+  Future<void> deleteFolder({
+    required String name,
+    required String path,
+  }) async {
+    try {
+      final dir = await getAppDirectory(path: path);
+      final folder = Directory(p.join(dir.path, name));
+
+      if (await folder.exists()) {
+        await folder.delete(recursive: true);
+        print('🗑 Папка удалена: ${folder.path}');
+      } else {
+        throw Exception('Папка не существует');
+      }
+    } catch (e) {
+      print('❌ Ошибка удаления папки: $e');
+      rethrow;
+    }
+  }
 }

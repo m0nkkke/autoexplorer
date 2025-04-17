@@ -46,3 +46,25 @@ class ResetImageLoadingState extends StorageListEvent {
   final List<dynamic> currentItems;
   ResetImageLoadingState(this.currentItems);
 }
+
+class SyncFromYandexEvent extends StorageListEvent {
+  final String path;
+
+  SyncFromYandexEvent({required this.path});
+}
+
+class SyncToYandexEvent extends StorageListEvent {
+  final String path;
+
+  SyncToYandexEvent({required this.path});
+}
+
+class DeleteFolderEvent extends StorageListEvent {
+  final String folderName;
+  final String currentPath;
+
+  DeleteFolderEvent({
+    required this.folderName,
+    required this.currentPath,
+  });
+}
