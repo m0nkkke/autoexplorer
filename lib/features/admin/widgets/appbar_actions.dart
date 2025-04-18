@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum AppBarMenuOption { change }
 
 class AppBarActions extends StatelessWidget {
-  AppBarActions({Key? key}) : super(key: key);
+  AppBarActions({super.key});
 
   // Заполнение пункта меню
   final List<_MenuItem> _menuItems = [

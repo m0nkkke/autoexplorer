@@ -40,6 +40,7 @@ class LocalRepository extends AbstractStorageRepository {
         // Если это папка, подсчитываем количество файлов в ней
         final filesCount = await _getFilesCountInDirectory(entity.path);
         folderItems.add(FolderItem(
+          resourceId: '',
           name: name,
           filesCount: filesCount,
           path: entity.path,
@@ -111,6 +112,11 @@ class LocalRepository extends AbstractStorageRepository {
 
     return appDir;
   }
+  
+  @override
+  Future<List<Map<String, String>>> getFolderIds(String path) {
+    // TODO: implement getFolderIds
+    throw UnimplementedError();
 
   // @override
   Future<void> deleteFolder({

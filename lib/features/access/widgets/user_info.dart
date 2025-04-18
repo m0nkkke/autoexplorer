@@ -5,7 +5,9 @@ class UserInfoWidget extends StatefulWidget {
   final String? firstName;
   final String? middleName;
   final bool isNew;
-  final void Function(Map<String, String>) onSaveData;
+
+  /// Теперь мы зовем его при сохранении каждого отдельного поля
+  final void Function(String fieldName, String newValue) onSaveField;
 
   const UserInfoWidget({
     super.key,
@@ -13,7 +15,7 @@ class UserInfoWidget extends StatefulWidget {
     this.firstName,
     this.middleName,
     this.isNew = false,
-    required this.onSaveData,
+    required this.onSaveField,
   });
 
   @override
@@ -32,22 +34,48 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
   @override
   void initState() {
     super.initState();
-    _lastNameController = TextEditingController(text: widget.lastName ?? '');
-    _firstNameController = TextEditingController(text: widget.firstName ?? '');
+    _lastNameController   = TextEditingController(text: widget.lastName   ?? '');
+    _firstNameController  = TextEditingController(text: widget.firstName  ?? '');
     _middleNameController = TextEditingController(text: widget.middleName ?? '');
 
-    _isEditingLastName = widget.isNew;
-    _isEditingFirstName = widget.isNew;
+    _isEditingLastName   = widget.isNew;
+    _isEditingFirstName  = widget.isNew;
     _isEditingMiddleName = widget.isNew;
   }
 
-  void _saveData() {
-    final userData = {
-      'lastName': _lastNameController.text,
-      'firstName': _firstNameController.text,
-      'middleName': _middleNameController.text,
-    };
-    widget.onSaveData(userData);
+  @override
+  void didUpdateWidget(covariant UserInfoWidget old) {
+    super.didUpdateWidget(old);
+    // Синхронизируем контроллеры, когда в widget.* придут новые значения из BLoC
+    if (widget.lastName != old.lastName) {
+      _lastNameController.text = widget.lastName ?? '';
+    }
+    if (widget.firstName != old.firstName) {
+      _firstNameController.text = widget.firstName ?? '';
+    }
+    if (widget.middleName != old.middleName) {
+      _middleNameController.text = widget.middleName ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _lastNameController.dispose();
+    _firstNameController.dispose();
+    _middleNameController.dispose();
+    super.dispose();
+  }
+
+  void _onEditPressed({
+    required String fieldName,
+    required TextEditingController controller,
+    required bool isEditing,
+    required VoidCallback toggleEditing,
+  }) {
+    toggleEditing();
+    if (!isEditing) {
+      widget.onSaveField(fieldName, controller.text);
+    }
   }
 
   @override
@@ -64,45 +92,35 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
           label: 'Фамилия',
           controller: _lastNameController,
           isEditing: _isEditingLastName,
-          onEditPressed: () {
-            setState(() {
-              _isEditingLastName = !_isEditingLastName;
-            });
-            if (!_isEditingLastName) {
-              _saveData(); 
-            }
-          },
+          onEditPressed: () => _onEditPressed(
+            fieldName: 'lastName',
+            controller: _lastNameController,
+            isEditing: _isEditingLastName,
+            toggleEditing: () => setState(() => _isEditingLastName = !_isEditingLastName),
+          ),
         ),
         _buildEditableInfoRow(
           label: 'Имя',
           controller: _firstNameController,
           isEditing: _isEditingFirstName,
-          onEditPressed: () {
-            setState(() {
-              _isEditingFirstName = !_isEditingFirstName;
-            });
-            if (!_isEditingFirstName) {
-              _saveData();  
-            }
-          },
+          onEditPressed: () => _onEditPressed(
+            fieldName: 'firstName',
+            controller: _firstNameController,
+            isEditing: _isEditingFirstName,
+            toggleEditing: () => setState(() => _isEditingFirstName = !_isEditingFirstName),
+          ),
         ),
         _buildEditableInfoRow(
           label: 'Отчество',
           controller: _middleNameController,
           isEditing: _isEditingMiddleName,
-          onEditPressed: () {
-            setState(() {
-              _isEditingMiddleName = !_isEditingMiddleName;
-            });
-            if (!_isEditingMiddleName) {
-              _saveData();  
-            }
-          },
+          onEditPressed: () => _onEditPressed(
+            fieldName: 'middleName',
+            controller: _middleNameController,
+            isEditing: _isEditingMiddleName,
+            toggleEditing: () => setState(() => _isEditingMiddleName = !_isEditingMiddleName),
+          ),
         ),
-        // _buildStaticInfoRow(
-        //   label: 'Регионал',
-        //   value: 'Регионал 321',
-        // ),
       ],
     );
   }
@@ -116,10 +134,9 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 120, 
+            width: 120,
             child: Text(
               '$label:',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -135,45 +152,11 @@ class _UserInfoWidgetState extends State<UserInfoWidget> {
                       border: OutlineInputBorder(),
                     ),
                   )
-                : Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      controller.text.isEmpty ? '—' : controller.text,
-                    ),
-                  ),
+                : Text(controller.text.isEmpty ? '—' : controller.text),
           ),
           IconButton(
             icon: Icon(isEditing ? Icons.check : Icons.edit),
             onPressed: onEditPressed,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStaticInfoRow({
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-              ),
-            ),
           ),
         ],
       ),

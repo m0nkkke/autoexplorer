@@ -1,3 +1,4 @@
+// lib/features/access/bloc/user_edit_state.dart
 part of 'user_edit_bloc.dart';
 
 class UserEditState extends Equatable {
@@ -13,9 +14,18 @@ class UserEditState extends Equatable {
   final int imagesCount;
   final String accessEdit;
   final String lastUpload;
+
   final bool isSaving;
   final bool saved;
   final String? error;
+
+  final bool isRegionsLoading;
+  final bool isAreasLoading;
+
+  final List<FolderItem> regionalFolderList;
+  final Map<String, String> regionalIdsMap;
+  final Map<String, String> areasIdsMap;
+  final Set<String> selectedAreas;
 
   const UserEditState({
     required this.uid,
@@ -33,16 +43,23 @@ class UserEditState extends Equatable {
     this.isSaving = false,
     this.saved = false,
     this.error,
+
+    this.isRegionsLoading = false,
+    this.isAreasLoading = false,
+
+    this.regionalFolderList = const [],
+    this.regionalIdsMap = const {},
+    this.areasIdsMap = const {},
+    this.selectedAreas = const {},
   });
 
-  // Метод для получения текущего времени в формате строки
+    // Метод для получения текущего времени в формате строки
   String getCurrentTimeString() {
     final now = DateTime.now();
     final formatter = DateFormat('yyyy-dd-MM HH:mm:ss');
     return formatter.format(now);
   }
 
-  // Метод для преобразования AEUser в UserEditState
   factory UserEditState.fromUser(AEUser user) {
     return UserEditState(
       uid: user.uid,
@@ -77,6 +94,20 @@ class UserEditState extends Equatable {
     );
   }
 
+ UserEditState copyWithField(String fieldName, String newValue) {
+    switch (fieldName) {
+      case 'firstName':
+        return copyWith(firstName: newValue);
+      case 'lastName':
+        return copyWith(lastName: newValue);
+      case 'middleName':
+        return copyWith(middleName: newValue);
+      default:
+        return this;
+    }
+  }
+
+  /// Your existing copyWith(…) method below
   UserEditState copyWith({
     String? firstName,
     String? lastName,
@@ -87,6 +118,12 @@ class UserEditState extends Equatable {
     bool? isSaving,
     bool? saved,
     String? error,
+    bool? isRegionsLoading,
+    bool? isAreasLoading,
+    List<FolderItem>? regionalFolderList,
+    Map<String, String>? regionalIdsMap,
+    Map<String, String>? areasIdsMap,
+    Set<String>? selectedAreas,
   }) {
     return UserEditState(
       uid: uid,
@@ -99,35 +136,29 @@ class UserEditState extends Equatable {
       role: role,
       accessSet: accessSet,
       imagesCount: imagesCount,
-      lastUpload: lastUpload,
       accessEdit: accessEdit ?? this.accessEdit,
+      lastUpload: lastUpload,
       isSaving: isSaving ?? this.isSaving,
       saved: saved ?? this.saved,
-      error: error,
-    );
-  }
+      error: error ?? this.error,
 
-  UserEditState copyWithField(String field, String value) {
-    switch (field) {
-      case 'firstName':
-        return copyWith(firstName: value);
-      case 'lastName':
-        return copyWith(lastName: value);
-      case 'middleName':
-        return copyWith(middleName: value);
-      case 'regional':
-        return copyWith(regional: value);
-      case 'accessEdit':
-        return copyWith(accessEdit: value);
-      default:
-        return this;
-    }
+      isRegionsLoading: isRegionsLoading ?? this.isRegionsLoading,
+      isAreasLoading: isAreasLoading ?? this.isAreasLoading,
+
+      regionalFolderList: regionalFolderList ?? this.regionalFolderList,
+      regionalIdsMap: regionalIdsMap ?? this.regionalIdsMap,
+      areasIdsMap: areasIdsMap ?? this.areasIdsMap,
+      selectedAreas: selectedAreas ?? this.selectedAreas,
+    );
   }
 
   @override
   List<Object?> get props => [
         uid, email, firstName, lastName, middleName,
         regional, accessList, role, accessSet, imagesCount,
-        accessEdit, isSaving, saved, error
+        accessEdit, lastUpload,
+        isSaving, saved, error,
+        isRegionsLoading, isAreasLoading,
+        regionalFolderList, regionalIdsMap, areasIdsMap, selectedAreas,
       ];
 }

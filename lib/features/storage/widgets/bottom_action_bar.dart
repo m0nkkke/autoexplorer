@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class BottomActionBar extends StatelessWidget {
+  const BottomActionBar({super.key});
+
   // final VoidCallback onCopy;
   // final VoidCallback onMove;
   // final VoidCallback onRename;

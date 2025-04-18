@@ -1,254 +1,171 @@
 import 'package:autoexplorer/features/access/bloc/user_create/user_create_bloc.dart';
+import 'package:autoexplorer/features/access/widgets/region_selector.dart';
 import 'package:autoexplorer/features/access/widgets/roots_info.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
-import 'package:intl/intl.dart';
-import 'package:autoexplorer/repositories/users/models/accessList/access_list.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:autoexplorer/firebase_options.dart';
 
-
-class UserKeyCreateScreen extends StatefulWidget {
+class UserKeyCreateScreen extends StatelessWidget {
   const UserKeyCreateScreen({super.key});
 
   @override
-  State<UserKeyCreateScreen> createState() => _UserKeyCreateState();
-}
-
-class _UserKeyCreateState extends State<UserKeyCreateScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
-  final _emailController = TextEditingController(); 
-  final _passwordController = TextEditingController(); 
-  String uid = '';
-
-  UserRole _role = UserRole.worker;
-  final List<String> _accessList = [];
-
-  final Set<String> selectedRegions = {};
-  final Set<String> selectedAreas = {};
-
-  String getCurrentTimeString() {
-    final now  = DateTime .now();
-    final formatter  = DateFormat('yyyy-dd-MM HH:mm:ss');
-    return formatter.format(now);
-  }
-
-  void _onRegionsChanged(Set<String> newSelection) {
-    setState(() {
-      selectedRegions.clear();
-      selectedRegions.addAll(newSelection);
-    });
-  }
-
-  void _onAreasChanged(Set<String> newSelection) {
-    setState(() {
-      selectedAreas.clear();
-      selectedAreas.addAll(newSelection);
-
-      _accessList.clear();
-      _accessList.addAll(newSelection); 
-    });
-  }
-
-Future<void> _save() async {
-  if (!_formKey.currentState!.validate()) return;
-
-  try {
-    FirebaseApp secondaryApp =  await Firebase.initializeApp(
-      name: 'SecondaryApp',
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    FirebaseAuth secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
-
-    final newUser = await secondaryAuth.createUserWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-
-    uid = newUser.user!.uid;
-
-    print('Firebase-пользователь создан: ${newUser.user?.uid}');
-
-    await secondaryAuth.signOut();
-    await secondaryApp.delete();
-
-
-    BlocProvider.of<UserBloc>(context).add(
-      CreateUserEvent(
-        accessEdit: getCurrentTimeString(),
-        regional: selectedRegions.first.toString(),
-        accessList: _accessList,
-        accessSet: getCurrentTimeString(),
-        firstName: _firstNameController.text,
-        imagesCount: 0,
-        lastName: _lastNameController.text,
-        lastUpload: 'Никогда',
-        middleName: _middleNameController.text,
-        role: _role,
-        email: _emailController.text,
-        password: _passwordController.text,
-        uid: uid,
-      ),
-    );
-  } catch (e) {
-    print('Ошибка: $e');
-    ScaffoldMessenger. of(context).showSnackBar(
-      SnackBar(content: Text('Ошибка создания пользователя: $e')),
-    );
-  }
-}
-
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Админ-панель')),
-      body: BlocListener<UserBloc, UserState>(
-        listener: (context, state) {
-          if (state.status == UserStatus.success) {
-            Navigator.of(context).pop(true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Пользователь успешно создан!')),
+    return BlocProvider(
+      create: (_) => UserCreateBloc(
+      )..add(LoadCreateRegionsEvent()),
+      child: BlocConsumer<UserCreateBloc, UserCreateState>(
+        listener: (ctx, state) {
+          if (state.status == CreateStatus.success) {
+            Navigator.pop(ctx, true);
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              const SnackBar(content: Text('Пользователь создан')),
             );
-          } else if (state.status == UserStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      'Ошибка создания пользователя: ${state.errorMessage}')),
+          }
+          if (state.status == CreateStatus.failure) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(content: Text(state.errorMessage ?? 'Ошибка')),
             );
           }
         },
-        child: BlocBuilder<UserBloc, UserState>(
-          builder: (context, state) {
-            return SingleChildScrollView(
+        builder: (ctx, state) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Создать пользователя')),
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Создание нового пользователя'),
-                    SizedBox(height: 16),
-                    _buildTextField(
-                        controller: _firstNameController,
-                        hintText: 'Имя',
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Введите имя'
-                            : null),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                        controller: _lastNameController,
-                        hintText: 'Фамилия',
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Введите фамилию'
-                            : null),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                        controller: _middleNameController, hintText: 'Отчество'),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                        controller: _emailController,
-                        hintText: 'Email',
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Введите email'
-                            : null),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                        controller: _passwordController, 
-                        hintText: 'Пароль',
-                        obscureText: true,
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Введите пароль'
-                            : null),
-                    const SizedBox(height: 20),
-                    _buildRoleDropdown(
-                        role: _role,
-                        onChanged: (UserRole? newValue) {
-                          setState(() {
-                            _role = newValue!;
-                          });
-                        }),
-                    const Divider(),
-                    RootsInfo(
-                        title: 'Регион',
-                        items: ['Регионал 321', 'Регионал 1', 'Регионал 2'],
-                        selectedItems: selectedRegions,
-                        onChanged: _onRegionsChanged),
-                    const SizedBox(height: 10),
-                    RootsInfo(
-                        title: 'Участок',
-                        items: [
-                          'Участок 1',
-                          'Участок 2',
-                          'Участок 3',
-                          'Участок 1',
-                          'Участок 2',
-                          'Участок 3'
-                        ],
-                        selectedItems: selectedAreas,
-                        onChanged: _onAreasChanged),
-                    const SizedBox(height: 20),
-                    Align(
-                      alignment: Alignment.center,
-                      child: ElevatedButton(
-                        onPressed: _save,
-                        child: const Text('Создать'),
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ФИО + Email + Password + Role
+                  _buildTextField(
+                    label: 'Имя',
+                    value: state.firstName,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('firstName', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: 'Фамилия',
+                    value: state.lastName,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('lastName', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: 'Отчество',
+                    value: state.middleName,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('middleName', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: 'Email',
+                    value: state.email,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('email', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: 'Пароль',
+                    value: state.password,
+                    obscure: true,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('password', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    title: const Text('Роль'),
+                    trailing: DropdownButton<UserRole>(
+                      value: state.role,
+                      onChanged: (v) => ctx
+                          .read<UserCreateBloc>()
+                          .add(UpdateCreateFieldEvent('role', v)),
+                      items: const [
+                        DropdownMenuItem(
+                          value: UserRole.worker,
+                          child: Text('Работник'),
+                        ),
+                        DropdownMenuItem(
+                          value: UserRole.admin,
+                          child: Text('Администратор'),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+
+                  const Divider(),
+                  const SizedBox(height: 10),
+
+                  // Регион
+                  if (state.isRegionsLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    RegionSelector(
+                      title: 'Регионал',
+                      regions: state.regionalIdsMap.keys.toList(),
+                      selectedRegion: state.regional.isEmpty
+                          ? null
+                          : state.regionalIdsMap.entries
+                              .firstWhere((e) => e.value == state.regional)
+                              .key,
+                      onRegionChanged: (name) => ctx
+                          .read<UserCreateBloc>()
+                          .add(OnCreateRegionChangedEvent(name)),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Участки
+                  RootsInfo(
+                    title: 'Участок',
+                    items: state.areasIdsMap.keys.toList(),
+                    selectedItems: state.selectedAreas,
+                    onChanged: (set) => ctx
+                        .read<UserCreateBloc>()
+                        .add(OnCreateAreaChangedEvent(set)),
+                    folderIdsMap: state.areasIdsMap,
+                    isLoading: state.isAreasLoading,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: state.status == CreateStatus.loading
+                          ? null
+                          : () => ctx
+                              .read<UserCreateBloc>()
+                              .add(SubmitCreateEvent()),
+                      child: state.status == CreateStatus.loading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white)
+                          : const Text('Создать'),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    String? Function(String?)? validator,
-    bool obscureText = false,
+    required String label,
+    required String value,
+    bool obscure = false,
+    required ValueChanged<String> onChanged,
   }) {
     return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hintText,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        border: const OutlineInputBorder(),
-      ),
-      validator: validator,
-      obscureText: obscureText,
-    );
-  }
-
-  Widget _buildRoleDropdown({
-    required UserRole role,
-    required Function(UserRole?) onChanged,
-  }) {
-    return ListTile(
-      title: const Text('Роль:'),
-      trailing: DropdownButton<UserRole>(
-        value: role,
-        onChanged: onChanged,
-        items: const [
-          DropdownMenuItem(
-            value: UserRole.worker,
-            child: Text('Работник'),
-          ),
-          DropdownMenuItem(
-            value: UserRole.admin,
-            child: Text('Администратор'),
-          ),
-        ],
-      ),
+      initialValue: value,
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      obscureText: obscure,
+      onChanged: onChanged,
     );
   }
 }

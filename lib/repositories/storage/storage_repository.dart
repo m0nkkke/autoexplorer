@@ -61,12 +61,12 @@ class StorageRepository extends AbstractStorageRepository {
   }
 
   Future<FolderItem> _mapFolderItem(Map<String, dynamic> data) async {
+
     final path = data['path'] ?? '';
     final name = data['name'] ?? '';
-
     // Убираем disk:/ из имени папки
     final cleanName = name.replaceFirst('disk:/', '');
-
+    
     try {
       final response = await dio.get('', queryParameters: {'path': path});
       final filesCount = response.data['_embedded']['total'] ?? 0;
@@ -84,6 +84,13 @@ class StorageRepository extends AbstractStorageRepository {
         path: path.replaceFirst('disk:/', ''),
       );
     }
+    return FolderItem(
+      resourceId: resourceId ?? '',
+      name: name ?? '',
+      filesCount: filesCount,
+      // 0, // Невозможно получить точное число файлов в папке из этого запроса
+      path: path ?? '',
+    );
   }
 
   @override
@@ -108,11 +115,12 @@ class StorageRepository extends AbstractStorageRepository {
 
         for (var item in items) {
           if (item['type'] == 'file') {
-            result.add(_mapFileItem(item));
+            result.add(_mapFileItem(item)); // Добавляем файл
           } else if (item['type'] == 'dir') {
-            result.add(await _mapFolderItem(item));
+            result.add(await _mapFolderItem(item)); // Добавляем папку
           }
         }
+
         return result;
       }
       throw Exception('Failed to load items');

@@ -1,35 +1,45 @@
 part of 'user_create_bloc.dart';
 
-abstract class UserEvent {}
-
-class CreateUserEvent extends UserEvent {
-  final String accessEdit;
-  final List<String> accessList;
-  final String regional;
-  final String accessSet;
-  final String firstName;
-  final int imagesCount;
-  final String lastName;
-  final String lastUpload;
-  final String middleName;
-  final String email; 
-  final String password; 
-  final UserRole role;
-  final String uid;
-
-  CreateUserEvent({
-    required this.accessEdit,
-    required this.regional,
-    required this.accessList,
-    required this.accessSet,
-    required this.firstName,
-    required this.imagesCount,
-    required this.lastName,
-    required this.lastUpload,
-    required this.middleName,
-    required this.email,
-    required this.password,
-    required this.role,
-    required this.uid,
-  });
+abstract class UserCreateEvent extends Equatable {
+  @override
+  List<Object?> get props => [];
 }
+
+/// Поля формы
+class UpdateCreateFieldEvent extends UserCreateEvent {
+  final String field;
+  final dynamic value;
+  UpdateCreateFieldEvent(this.field, this.value);
+  @override
+  List<Object?> get props => [field, value];
+}
+
+/// Загрузить регионы
+class LoadCreateRegionsEvent extends UserCreateEvent {}
+
+/// Пользователь выбрал регион по имени
+class OnCreateRegionChangedEvent extends UserCreateEvent {
+  final String regionName;
+  OnCreateRegionChangedEvent(this.regionName);
+  @override
+  List<Object?> get props => [regionName];
+}
+
+/// Загрузить участки для заданного regionId
+class LoadCreateAreasEvent extends UserCreateEvent {
+  final String regionId;
+  LoadCreateAreasEvent(this.regionId);
+  @override
+  List<Object?> get props => [regionId];
+}
+
+/// Пользователь изменил набор выбранных участков
+class OnCreateAreaChangedEvent extends UserCreateEvent {
+  final Set<String> areaIds;
+  OnCreateAreaChangedEvent(this.areaIds);
+  @override
+  List<Object?> get props => [areaIds];
+}
+
+/// Нажали «Создать»
+class SubmitCreateEvent extends UserCreateEvent {}

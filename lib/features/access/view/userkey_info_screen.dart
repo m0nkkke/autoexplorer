@@ -1,162 +1,128 @@
 import 'package:autoexplorer/features/access/bloc/user_edit/user_edit_bloc.dart';
 import 'package:autoexplorer/features/access/widgets/access_info.dart';
+import 'package:autoexplorer/features/access/widgets/region_selector.dart';
 import 'package:autoexplorer/features/access/widgets/roots_info.dart';
 import 'package:autoexplorer/features/access/widgets/user_info.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
-import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
-class UserKeyInfoScreen extends StatefulWidget {
+class UserKeyInfoScreen extends StatelessWidget {
   const UserKeyInfoScreen({super.key});
 
   @override
-  State<UserKeyInfoScreen> createState() => _UserKeyInfoState();
-}
-
-class _UserKeyInfoState extends State<UserKeyInfoScreen> {
-  late UserEditBloc _userEditBloc;
-  Map<String, dynamic> user = {};
-
-  final Set<String> selectedRegions = {};
-  final Set<String> selectedAreas = {};
-
-  void _onRegionsChanged(Set<String> newSelection) {
-    setState(() {
-      selectedRegions.clear();
-      selectedRegions.addAll(newSelection);
-    });
-  }
-
-  void _onAreasChanged(Set<String> newSelection) {
-    setState(() {
-      selectedAreas.clear();
-      selectedAreas.addAll(newSelection);
-    });
-
-    _userEditBloc.add(UpdateAccessListEvent(newSelection.toList()));
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    final Map<String, dynamic> arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-
-    final String uid = arguments['uid']; 
-
-    setState(() {
-      user = arguments['userData'];
-    });
-
-    _userEditBloc = UserEditBloc(UsersRepository(), AEUser.fromFirestore(user, uid));
-  }
-
-  @override
-  void dispose() {
-    _userEditBloc.close();
-    super.dispose();
-  }
-
-  void _handleSaveData(Map<String, String> userData) {
-    final updatedUser = _userEditBloc.state.toUser();
-
-    updatedUser.lastName = userData['lastName'] ?? updatedUser.lastName;
-    updatedUser.firstName = userData['firstName'] ?? updatedUser.firstName;
-    updatedUser.middleName = userData['middleName'] ?? updatedUser.middleName;
-
-    _userEditBloc.add(SubmitUserEvent(updatedUser));
-
-    print('Данные отправлены на сервер: $updatedUser');
-  }
-
-  List<String> _getSortedItems(List<String> items, Set<String> selectedItems) {
-    selectedItems.addAll(items);
-    return items;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Админ-панель')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: BlocProvider<UserEditBloc>(
-          create: (_) => _userEditBloc,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BlocBuilder<UserEditBloc, UserEditState>(
-                builder: (context, state) {
-                  return UserInfoWidget(
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final uid = args['uid'] as String;
+    final raw = args['userData'] as Map<String, dynamic>;
+
+    return BlocProvider(
+      create: (_) => UserEditBloc(AEUser.fromFirestore(raw, uid))
+        ..add(LoadRegionsEvent()),
+      child: BlocConsumer<UserEditBloc, UserEditState>(
+        listener: (ctx, state) {
+          if (state.saved) {
+            ScaffoldMessenger.of(ctx).showSnackBar(
+                const SnackBar(content: Text('Изменения сохранены')));
+          } else if (state.error != null) {
+            ScaffoldMessenger.of(ctx)
+                .showSnackBar(SnackBar(content: Text(state.error!)));
+          }
+        },
+        builder: (ctx, state) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Админ‑панель')),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ФИО
+                  UserInfoWidget(
                     lastName: state.lastName,
                     firstName: state.firstName,
                     middleName: state.middleName,
                     isNew: false,
-                    onSaveData: _handleSaveData,
-                  );
-                },
-              ),
-              Divider(),
-              SizedBox(height: 10),
-              BlocBuilder<UserEditBloc, UserEditState>(
-                builder: (context, state) {
-                  return AccessInfoWidget(
+                    onSaveField: (field, value) => ctx
+                        .read<UserEditBloc>()
+                        .add(UpdateFieldEvent(field, value)),
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+
+                  // Статистика доступа
+                  AccessInfoWidget(
                     imagesCreated: '${state.imagesCount}',
                     lastUpload: state.lastUpload,
                     accessGranted: state.accessSet,
                     accessModified: state.accessEdit,
                     emailKey: state.email,
-                  );
-                },
-              ),
-              SizedBox(height: 10),
-              Divider(),
-              BlocBuilder<UserEditBloc, UserEditState>(
-                builder: (context, state) {
-                  return RootsInfo(
-                    title: 'Регионал',
-                    items: _getSortedItems(
-                      [state.regional],
-                      selectedRegions,
+                  ),
+                  const SizedBox(height: 10),
+                  const Divider(),
+
+                  if (state.isRegionsLoading ||
+                      state.regionalFolderList.isEmpty ||
+                      state.isAreasLoading ||
+                      state.areasIdsMap.isEmpty) ...[
+                    SizedBox(
+                      height: 300, 
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Загрузка данных'),
+                          ],
+                        ),
+                      ),
                     ),
-                    selectedItems: selectedRegions,
-                    onChanged: _onRegionsChanged,
-                  );
-                },
-              ),
-              SizedBox(height: 10),
-              BlocBuilder<UserEditBloc, UserEditState>(
-                builder: (context, state) {
-                  return RootsInfo(
-                    title: 'Участок',
-                    items: _getSortedItems(
-                      List<String>.from(state.accessList),
-                      selectedAreas,
+                  ] else ...
+                  [
+                    RegionSelector(
+                      title: 'Регионал',
+                      regions: state.regionalIdsMap.keys.toList(),
+                      selectedRegion: state.regionalIdsMap.entries
+                          .firstWhere((e) => e.value == state.regional)
+                          .key,
+                      onRegionChanged: (newName) => ctx
+                          .read<UserEditBloc>()
+                          .add(OnRegionChangedEvent(newName)),
                     ),
-                    selectedItems: selectedAreas,
-                    onChanged: _onAreasChanged,
-                  );
-                },
+                    const SizedBox(height: 10),
+                    RootsInfo(
+                      title: 'Участок',
+                      items: state.areasIdsMap.keys.toList(),
+                      selectedItems: state.selectedAreas,
+                      onChanged: (newSet) =>
+                          ctx.read<UserEditBloc>().add(OnAreaChangedEvent(newSet)),
+                      folderIdsMap: state.areasIdsMap,
+                      isLoading: state.isAreasLoading,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // Сохранить
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          ctx.read<UserEditBloc>().add(SubmitUserEvent()),
+                      child: state.isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Сохранить изменения'),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 10),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    final userData = {
-                      'lastName': _userEditBloc.state.lastName,
-                      'firstName': _userEditBloc.state.firstName,
-                      'middleName': _userEditBloc.state.middleName,
-                    };
-                    _handleSaveData(userData);
-                  },
-                  child: const Text('Сохранить изменения'),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

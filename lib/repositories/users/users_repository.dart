@@ -11,7 +11,8 @@ class UsersRepository implements AbstractUsersRepository {
       : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
- Future<void> registerUser(String uid, AEUser userData) async { 
+ @override
+  Future<void> registerUser(String uid, AEUser userData) async { 
     try {
       // Создаем объект AEUser для сохранения в Firestore
       final user = AEUser( 
@@ -38,6 +39,7 @@ class UsersRepository implements AbstractUsersRepository {
   }
 
   // Авторизация пользователя
+  @override
   Future<AEUser?> signInUser(String email, String password) async { 
     try {
       final UserCredential userCredential = await _auth
@@ -58,6 +60,7 @@ class UsersRepository implements AbstractUsersRepository {
   }
 
   // Получение пользователя по UID
+  @override
   Future<AEUser?> getUserByUid(String uid) async { 
     try {
       final DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();

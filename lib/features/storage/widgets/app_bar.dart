@@ -20,7 +20,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onDelete;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.storageCount,
     required this.path,

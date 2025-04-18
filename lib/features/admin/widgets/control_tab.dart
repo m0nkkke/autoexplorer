@@ -1,25 +1,22 @@
 import 'package:autoexplorer/features/admin/bloc/control/control_bloc.dart';
 import 'package:autoexplorer/features/admin/widgets/key_list_item.dart';
-import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ControlTab extends StatefulWidget {
-  const ControlTab({Key? key}) : super(key: key);
+  const ControlTab({super.key});
 
   @override
   State<ControlTab> createState() => _ControlTabState();
 }
 
 class _ControlTabState extends State<ControlTab> {
-  late final UsersRepository _usersRepository;
   late final ControlBloc _controlBloc;
 
   @override
   void initState() {
     super.initState();
-    _usersRepository = UsersRepository();
-    _controlBloc = ControlBloc(_usersRepository)..add(LoadUsers());
+    _controlBloc = ControlBloc()..add(LoadUsers());
   }
 
   @override

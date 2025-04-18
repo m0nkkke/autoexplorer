@@ -10,7 +10,7 @@ class StorageInfo extends StatefulWidget {
   final double totalStorageSize;
 
   const StorageInfo({
-    Key? key, 
+    super.key, 
     required this.connectionStatus, 
     required this.imagesCount, 
     required this.foldersCount, 
@@ -18,7 +18,7 @@ class StorageInfo extends StatefulWidget {
     required this.currentStorageSize, 
     required this.totalStorageSize,
 
-  }) : super(key: key);
+  });
 
   @override
   State<StorageInfo> createState() => _StorageInfoState();

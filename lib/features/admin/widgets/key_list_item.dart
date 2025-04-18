@@ -9,12 +9,12 @@ class KeyListItem extends StatelessWidget {
   final String uid;
 
   const KeyListItem({
-    Key? key,
+    super.key,
     required this.keyUserName,
     required this.keyArea,
     required this.userData,
     required this.uid,
-  }) : super(key: key);
+  });
 
   void _onTap(BuildContext context) {
     Navigator.of(context).pushNamed(
@@ -26,13 +26,13 @@ class KeyListItem extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context) { // Receive the context here
+  void _showDeleteDialog(BuildContext context) { 
     showDialog(
-      context: context, // Use the received context
-      builder: (BuildContext dialogContext) { // A new context for the dialog
+      context: context, 
+      builder: (BuildContext dialogContext) { 
         return AlertDialog(
           title: const Text("Удалить пользователя?"),
-          content: Text("Вы уверены, что хотите удалить пользователя ${keyUserName}?"),
+          content: Text("Вы уверены, что хотите удалить пользователя $keyUserName?"),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -42,7 +42,6 @@ class KeyListItem extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // Use the context passed to _showDeleteDialog
                 context.read<ControlBloc>().add(DeleteUserEvent(uid));
                 Navigator.of(dialogContext).pop();
               },
@@ -59,7 +58,7 @@ class KeyListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _onTap(context),
-      onLongPress: () => _showDeleteDialog(context),  // Долгое нажатие для показа диалога удаления
+      onLongPress: () => _showDeleteDialog(context),  
       child: ListTile(
         leading: Icon(
           Icons.account_circle, 
