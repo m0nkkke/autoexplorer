@@ -300,7 +300,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
           bloc: _storageListBloc,
           builder: (context, state) {
             final theme = Theme.of(context);
-            if (state is StorageListLoaded) {
+            if (state is StorageListLoaded && state.items.isNotEmpty) {
               final items = state.items;
               filesAndFolders = state.items;
               return ListView.builder(
@@ -332,6 +332,16 @@ class _StorageListScreenState extends State<StorageListScreen> {
                     );
                   }
                 },
+              );
+            } else if (state is StorageListLoaded) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('В данном каталоге нет файлов'),
+                  ],
+                ),
               );
             } else if (state is StorageListLoadingFailure) {
               return Center(

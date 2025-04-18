@@ -6,6 +6,7 @@ import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 // import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
 import 'package:get_it/get_it.dart';
 part 'storage_list_event.dart';
 part 'storage_list_state.dart';
@@ -50,32 +51,114 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     }
   }
 
+  // FutureOr<void> _onStorageListUploadFile(
+  //     StorageListUploadFile event, Emitter<StorageListState> emit) async {
+  //   try {
+  //     emit(StorageListLoading());
+  //     await localRepository.uploadFile(
+  //       filePath: event.filePath,
+  //       uploadPath: event.uploadPath,
+  //     );
+  //     add(StorageListLoad(path: event.currentPath));
+  //   } catch (e) {
+  //     print(e.toString());
+  //     emit(StorageListLoadingFailure(exception: e));
+  //   }
+  // }
+
   FutureOr<void> _onStorageListUploadFile(
-      StorageListUploadFile event, Emitter<StorageListState> emit) async {
+    StorageListUploadFile event,
+    Emitter<StorageListState> emit,
+  ) async {
     try {
       emit(StorageListLoading());
+
+      // 1) Копируем файл в локальное хранилище
       await localRepository.uploadFile(
         filePath: event.filePath,
-        uploadPath: event.uploadPath,
+        uploadPath: event.uploadPath, // это путь относительно applicationData
       );
+
+      // 2) Строим удалённый путь, вырезая всё до applicationData
+      final appDir = await localRepository.getAppDirectory(path: '/');
+      // абсолютный путь локального файла в applicationData
+      final absLocal = p.join(appDir.path, event.uploadPath);
+      // относительный путь от applicationData
+      final rel = p.relative(absLocal, from: appDir.path);
+      // финальный путь для API — с ведущим слэшем
+      final remotePath = '/$rel';
+
+      // 3) Загружаем на Яндекс.Диск
+      try {
+        await yandexRepository.uploadFile(
+          filePath: event.filePath,
+          uploadPath: remotePath,
+        );
+        print('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
+      } catch (e) {
+        print('⚠️ Не удалось загрузить на Я.Диск: $e');
+      }
+
+      // 4) Обновляем UI
       add(StorageListLoad(path: event.currentPath));
     } catch (e) {
-      print(e.toString());
+      print('❌ Ошибка в _onStorageListUploadFile: $e');
       emit(StorageListLoadingFailure(exception: e));
     }
   }
 
+  // FutureOr<void> _onStorageListCreateFolder(
+  //     StorageListCreateFolder event, Emitter<StorageListState> emit) async {
+  //   try {
+  //     emit(StorageListLoading());
+  //     print('creating folder ${event.path}');
+  //     print('📁 Creating folder: ${event.name}');
+  //     print('📂 Inside path: ${event.path}');
+  //     await localRepository.createFolder(name: event.name, path: event.path);
+  //     add(StorageListLoad(path: event.path));
+  //   } catch (e) {
+  //     print(e.toString());
+  //     emit(StorageListLoadingFailure(exception: e));
+  //   }
+  // }
   FutureOr<void> _onStorageListCreateFolder(
-      StorageListCreateFolder event, Emitter<StorageListState> emit) async {
+    StorageListCreateFolder event,
+    Emitter<StorageListState> emit,
+  ) async {
     try {
       emit(StorageListLoading());
-      print('creating folder ${event.path}');
-      print('📁 Creating folder: ${event.name}');
-      print('📂 Inside path: ${event.path}');
-      await localRepository.createFolder(name: event.name, path: event.path);
+
+      // 1) создаём локально (event.path — полный локальный путь к папке)
+      await localRepository.createFolder(
+        name: event.name,
+        path: event.path,
+      );
+
+      // 2) вычисляем «удалённый» путь относительно applicationData
+      //    найдём в event.path сегмент 'applicationData'
+      const marker = 'applicationData';
+      final idx = event.path.indexOf(marker);
+      String remoteParent;
+      if (idx >= 0) {
+        // берём всё, что после 'applicationData'
+        remoteParent = event.path.substring(idx + marker.length);
+        // гарантируем ведущий слэш
+        if (!remoteParent.startsWith('/')) remoteParent = '/$remoteParent';
+      } else {
+        remoteParent = '/';
+      }
+
+      // 3) создаём папку на Яндекс.Диске по относительному пути
+      await yandexRepository.createFolder(
+        name: event.name,
+        path: remoteParent, // вот здесь уже /Test999 или /
+      );
+      print('✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+
+      // 4) обновляем UI
       add(StorageListLoad(path: event.path));
     } catch (e) {
-      print(e.toString());
+      print('❌ Ошибка в _onStorageListCreateFolder: $e');
       emit(StorageListLoadingFailure(exception: e));
     }
   }
