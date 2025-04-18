@@ -122,38 +122,64 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
+  // @override
+  // Future<void> createFolder({
+  //   required String name,
+  //   required String path,
+  // }) async {
+  //   try {
+  //     String fullPath;
+
+  //     // Формируем полный путь
+  //     if (path != '/' && path != 'disk:/') {
+  //       fullPath = '$path/$name';
+  //     } else {
+  //       fullPath = 'disk:/$name';
+  //     }
+
+  //     // Проверяем, существует ли папка
+  //     final exists = await checkIfFolderExistsOnYandex(fullPath);
+  //     if (exists) {
+  //       debugPrint('Папка уже существует: $fullPath');
+  //       return;
+  //     }
+
+  //     // Создаём папку, если её нет
+  //     final response = await dio.put('', queryParameters: {'path': fullPath});
+
+  //     if (response.statusCode == 201) {
+  //       debugPrint('✅ Папка создана: $fullPath');
+  //     } else {
+  //       throw Exception('Ошибка создания папки: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     debugPrint('❌ Ошибка при создании папки: $e');
+  //     rethrow;
+  //   }
+  // }
   @override
   Future<void> createFolder({
     required String name,
-    required String path,
+    required String path, // что‑то вроде "/" или "/Test999"
   }) async {
+    // 1) Собираем чистый POSIX‑путь: "/Test999/666" или "/444" для корня
+    final fullPath = p.join(path, name);
+
     try {
-      String fullPath;
+      // 2) Отправляем запрос без дополнительного кодирования
+      final response = await dio.put(
+        '',
+        queryParameters: {'path': fullPath},
+      );
 
-      // Формируем полный путь
-      if (path != '/' && path != 'disk:/') {
-        fullPath = '$path/$name';
-      } else {
-        fullPath = 'disk:/$name';
-      }
-
-      // Проверяем, существует ли папка
-      final exists = await checkIfFolderExistsOnYandex(fullPath);
-      if (exists) {
-        debugPrint('Папка уже существует: $fullPath');
-        return;
-      }
-
-      // Создаём папку, если её нет
-      final response = await dio.put('', queryParameters: {'path': fullPath});
-
-      if (response.statusCode == 201) {
+      // 3) 201 — создано, 409 — уже есть (тоже ок)
+      if (response.statusCode == 201 || response.statusCode == 409) {
         debugPrint('✅ Папка создана: $fullPath');
       } else {
-        throw Exception('Ошибка создания папки: ${response.statusCode}');
+        debugPrint('⚠️ Unexpected status ${response.statusCode}: $fullPath');
       }
-    } catch (e) {
-      debugPrint('❌ Ошибка при создании папки: $e');
+    } on DioException catch (e) {
+      debugPrint('❌ Ошибка при создании папки: ${e.message}');
       rethrow;
     }
   }
@@ -377,5 +403,13 @@ class StorageRepository extends AbstractStorageRepository {
       debugPrint('⚠️ Ошибка проверки файла: ${e.message}');
       return true; // В случае ошибки считаем что файл существует
     }
+  }
+
+  @override
+  Future<void> syncAll({String path = '/'}) async {
+    // 1) «Яндекс → локаль»
+    await syncFromYandexDisk();
+    // 2) «Локаль → Яндекс»
+    await syncToYandexDisk();
   }
 }

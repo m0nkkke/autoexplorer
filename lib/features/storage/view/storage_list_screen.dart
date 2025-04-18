@@ -8,6 +8,7 @@ import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
@@ -196,8 +197,10 @@ class _StorageListScreenState extends State<StorageListScreen> {
   void _deleteSelectedItems() {
     // Получаем выбранные папки (исключаем файлы)
     final foldersToDelete = _selectedItems
-        .where((index) => filesAndFolders[index] is FolderItem)
-        .map((index) => filesAndFolders[index] as FolderItem)
+        .where((index) =>
+            filesAndFolders[index] is FolderItem ||
+            filesAndFolders[index] is FileItem)
+        .map((index) => filesAndFolders[index] as Abstractfile)
         .toList();
 
     if (foldersToDelete.isNotEmpty) {
@@ -229,7 +232,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
     }
   }
 
-  void _performDeletion(List<FolderItem> folders) {
+  void _performDeletion(List<Abstractfile> folders) {
     for (final folder in folders) {
       _storageListBloc.add(
         DeleteFolderEvent(
@@ -245,6 +248,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
   void initState() {
     // _storageListBloc.add(SyncFromYandexEvent(path: widget.path));
     // _storageListBloc.add(SyncToYandexEvent(path: widget.path));
+    // _storageListBloc.add(SyncAllEvent(path: widget.path));
     _storageListBloc.add(StorageListLoad(path: widget.path));
     // _loadData(path: widget.path);
     super.initState();
@@ -287,8 +291,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
       body: RefreshIndicator(
         onRefresh: () async {
           // final completer = Completer();
-          _storageListBloc.add(SyncFromYandexEvent(path: widget.path));
-          _storageListBloc.add(SyncToYandexEvent(path: widget.path));
+          _storageListBloc.add(SyncAllEvent(path: widget.path));
           // _storageListBloc.add(StorageListLoad(path: widget.path));
           setState(() {});
           // return completer.future;
@@ -297,7 +300,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
           bloc: _storageListBloc,
           builder: (context, state) {
             final theme = Theme.of(context);
-            if (state is StorageListLoaded) {
+            if (state is StorageListLoaded && state.items.isNotEmpty) {
               final items = state.items;
               filesAndFolders = state.items;
               return ListView.builder(
@@ -329,6 +332,16 @@ class _StorageListScreenState extends State<StorageListScreen> {
                     );
                   }
                 },
+              );
+            } else if (state is StorageListLoaded) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('В данном каталоге нет файлов'),
+                  ],
+                ),
               );
             } else if (state is StorageListLoadingFailure) {
               return Center(

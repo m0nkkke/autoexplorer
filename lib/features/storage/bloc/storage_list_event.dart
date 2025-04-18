@@ -68,3 +68,8 @@ class DeleteFolderEvent extends StorageListEvent {
     required this.currentPath,
   });
 }
+
+class SyncAllEvent extends StorageListEvent {
+  final String path;
+  SyncAllEvent({required this.path});
+}

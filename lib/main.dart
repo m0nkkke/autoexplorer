@@ -48,8 +48,7 @@ Future<void> main() async {
   GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
 
   final _storageListBloc = GetIt.I<StorageListBloc>();
-  _storageListBloc.add(SyncFromYandexEvent(path: '/'));
-  _storageListBloc.add(SyncToYandexEvent(path: '/'));
+  _storageListBloc.add(SyncAllEvent(path: '/'));
 
   runApp(const AutoExplorerApp());
 }
