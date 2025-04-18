@@ -378,4 +378,12 @@ class StorageRepository extends AbstractStorageRepository {
       return true; // В случае ошибки считаем что файл существует
     }
   }
+
+  @override
+  Future<void> syncAll({String path = '/'}) async {
+    // 1) «Яндекс → локаль»
+    await syncFromYandexDisk();
+    // 2) «Локаль → Яндекс»
+    await syncToYandexDisk();
+  }
 }

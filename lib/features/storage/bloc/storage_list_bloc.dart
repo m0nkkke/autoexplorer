@@ -20,6 +20,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     on<SyncFromYandexEvent>(_onSyncFromYandex);
     on<SyncToYandexEvent>(_onSyncToYandex);
     on<DeleteFolderEvent>(_onDeleteFolder);
+    on<SyncAllEvent>(_onSyncAll);
   }
 
   FutureOr<void> _onResetImageLoadingState(
@@ -98,8 +99,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     try {
       emit(StorageListLoading());
       await yandexRepository.syncFromYandexDisk(); // Синхронизация
-      add(StorageListLoad(
-          path: event.path)); // Обновление UI после синхронизации
+      // add(StorageListLoad(
+      //     path: event.path)); // Обновление UI после синхронизации
     } catch (e) {
       print('==========onSyncFromYandex=========');
       print(e);
@@ -118,6 +119,23 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           path: event.path)); // Обновление UI после синхронизации
     } catch (e) {
       print('=========onSyncToYandex==========');
+      print(e);
+      emit(StorageListLoadingFailure(exception: e));
+    }
+  }
+
+  FutureOr<void> _onSyncAll(
+    SyncAllEvent event,
+    Emitter<StorageListState> emit,
+  ) async {
+    try {
+      emit(StorageListLoading());
+      // единый вызов
+      await yandexRepository.syncAll(path: event.path);
+      // обновляем UI
+      add(StorageListLoad(path: event.path));
+    } catch (e) {
+      print('=========onSyncAll==========');
       print(e);
       emit(StorageListLoadingFailure(exception: e));
     }
