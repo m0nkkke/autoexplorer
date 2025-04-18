@@ -8,6 +8,7 @@ import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:flutter/material.dart';
@@ -34,8 +35,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
   AppBarMode _appBarMode = AppBarMode.normal;
   //
 
-  final _storageListBloc =
-      StorageListBloc(GetIt.I<AbstractStorageRepository>());
+  final _storageListBloc = StorageListBloc();
 
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
   static const String storageCount = 'Хранится 1540 папок | заполнено 50%';
@@ -192,10 +192,62 @@ class _StorageListScreenState extends State<StorageListScreen> {
       );
     }
   }
-  //
+
+  void _deleteSelectedItems() {
+    // Получаем выбранные папки (исключаем файлы)
+    final foldersToDelete = _selectedItems
+        .where((index) =>
+            filesAndFolders[index] is FolderItem ||
+            filesAndFolders[index] is FileItem)
+        .map((index) => filesAndFolders[index] as Abstractfile)
+        .toList();
+
+    if (foldersToDelete.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Подтвердите удаление'),
+          content:
+              Text('Вы точно хотите удалить ${foldersToDelete.length} папок?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Отмена'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _performDeletion(foldersToDelete);
+              },
+              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Выберите папки для удаления')),
+      );
+    }
+  }
+
+  void _performDeletion(List<Abstractfile> folders) {
+    for (final folder in folders) {
+      _storageListBloc.add(
+        DeleteFolderEvent(
+          folderName: folder.name,
+          currentPath: widget.path,
+        ),
+      );
+    }
+    _clearSelection();
+  }
 
   @override
   void initState() {
+    // _storageListBloc.add(SyncFromYandexEvent(path: widget.path));
+    // _storageListBloc.add(SyncToYandexEvent(path: widget.path));
+    // _storageListBloc.add(SyncAllEvent(path: widget.path));
     _storageListBloc.add(StorageListLoad(path: widget.path));
     // _loadData(path: widget.path);
     super.initState();
@@ -232,12 +284,14 @@ class _StorageListScreenState extends State<StorageListScreen> {
             StorageListCreateFolder(name: folderName, path: widget.path),
           );
         },
+        onDelete: _isSelectionMode ? _deleteSelectedItems : null,
       ),
 
       body: RefreshIndicator(
         onRefresh: () async {
           // final completer = Completer();
-          _storageListBloc.add(StorageListLoad(path: widget.path));
+          _storageListBloc.add(SyncAllEvent(path: widget.path));
+          // _storageListBloc.add(StorageListLoad(path: widget.path));
           setState(() {});
           // return completer.future;
         },
@@ -245,7 +299,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
           bloc: _storageListBloc,
           builder: (context, state) {
             final theme = Theme.of(context);
-            if (state is StorageListLoaded) {
+            if (state is StorageListLoaded && state.items.isNotEmpty) {
               final items = state.items;
               filesAndFolders = state.items;
               return ListView.builder(
@@ -279,6 +333,16 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   return null;
                 },
               );
+            } else if (state is StorageListLoaded) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('В данном каталоге нет файлов'),
+                  ],
+                ),
+              );
             } else if (state is StorageListLoadingFailure) {
               return Center(
                 child: Column(
@@ -286,6 +350,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text("Errorrrrrr", style: theme.textTheme.titleLarge),
+                    Text(state.exception.toString(),
+                        style: theme.textTheme.titleLarge),
                     TextButton(
                         onPressed: () {
                           _storageListBloc
