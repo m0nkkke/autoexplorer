@@ -5,44 +5,44 @@ import 'package:flutter_svg/flutter_svg.dart';
 class FolderListItem extends StatelessWidget {
   final int index;
   final String title;
-  final String dateCreation;
+  final String filesCount;
   final bool isSelectionMode;
   final bool isSelected;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
   final VoidCallback onTap;
+  final bool isLargeIcons;
 
   const FolderListItem({
-    Key? key,
+    super.key,
     required this.index,
     required this.title,
-    required this.dateCreation,
+    required this.filesCount,
     required this.isSelectionMode,
     required this.isSelected,
-    required this.onLongPress,
+    this.onLongPress,
     required this.onTap,
-  }) : super(key: key);
+    required this.isLargeIcons,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Размер иконок (вид значков)
+    final iconSize = isLargeIcons ? 60.0 : 40.0;
+
     return GestureDetector(
-      
       onLongPress: onLongPress,
       onTap: onTap,
       child: Container(
         color: isSelected ? Colors.lightBlue : Colors.transparent,
         child: ListTile(
           leading: SvgPicture.asset(
-            // ЗДЕСЬ ИКОНКА В ЗАВИСИМОСТИ ОТ ТИПА ФАЙЛА
             'assets/svg/folder_icon.svg',
-            height: 40,
-            width: 40,
+            height: iconSize,
+            width: iconSize,
           ),
-          // НАЗВАНИЕ ФАЙЛА/ПАПКИ
-          title: Text(title, 
-            style: Theme.of(context).textTheme.bodyMedium),
-          // ДАТА СОЗДАНИЯ
-          subtitle: Text(dateCreation, 
-             style: Theme.of(context).textTheme.bodySmall),
+          title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
+          subtitle: Text('Количество файлов: $filesCount',
+              style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
               ? Checkbox(
                   value: isSelected,
@@ -54,6 +54,5 @@ class FolderListItem extends StatelessWidget {
         ),
       ),
     );
-    
   }
 }

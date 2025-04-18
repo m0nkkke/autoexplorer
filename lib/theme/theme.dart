@@ -61,4 +61,15 @@ final mainTheme = ThemeData(
       borderSide: BorderSide(color: Colors.blue),
     ),
   ),
+   // Стиль для ElevatedButton
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.blue, 
+      foregroundColor: Colors.white, 
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ),
+  ),
 );
