@@ -61,6 +61,7 @@ class StorageRepository extends AbstractStorageRepository {
     final path = data['path'];
     int filesCount = 0;
     final name = data['name'];
+    final resourceId = data['resource_id'];
     try {
       final response = await dio.get('', queryParameters: {'path': path});
       filesCount = response.data['_embedded']['total'];
@@ -69,6 +70,7 @@ class StorageRepository extends AbstractStorageRepository {
       debugPrint(e.toString());
     }
     return FolderItem(
+      resourceId: resourceId ?? '',
       name: name ?? '',
       filesCount: filesCount,
       // 0, // Невозможно получить точное число файлов в папке из этого запроса
@@ -89,26 +91,31 @@ class StorageRepository extends AbstractStorageRepository {
     try {
       final response = await dio.get('', queryParameters: {'path': path});
       List<dynamic> result = [];
+
       if (response.statusCode == 200) {
         print('Loading data...');
         debugPrint('Public key: ${response.data['resource_id'].toString()}');
-        // debugPrint(response.data['_embedded'].toString());
-        // debugPrint(response.data['_embedded']['total'].toString());
+
         final items = response.data['_embedded']['items'];
+
+        // Проходим по всем элементам и добавляем их в результат
         for (var item in items) {
           if (item['type'] == 'file') {
-            result.add(_mapFileItem(item));
+            result.add(_mapFileItem(item)); // Добавляем файл
           } else if (item['type'] == 'dir') {
-            result.add(await _mapFolderItem(item));
+            result.add(await _mapFolderItem(item)); // Добавляем папку
           }
         }
+
         return result;
       }
+
       throw Exception('Failed to load FileItems');
     } catch (e) {
       throw Exception('Failed to load FileItems: $e');
     }
   }
+
 
   @override
   Future<void> createFolder(
@@ -172,4 +179,5 @@ class StorageRepository extends AbstractStorageRepository {
       throw Exception('Failed to upload file: $e');
     }
   }
+  
 }

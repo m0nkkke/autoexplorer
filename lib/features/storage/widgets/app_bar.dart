@@ -19,7 +19,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function(String) onCreateFolder;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.storageCount,
     required this.path,
@@ -32,7 +32,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.mode,
     required this.onIconSizeChanged,
     required this.onCreateFolder,
-  }) : super(key: key);
+  });
 
   @override
   _CustomAppBarState createState() => _CustomAppBarState();

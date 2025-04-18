@@ -16,7 +16,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
 
     return Scaffold(
       body: BlocProvider(
@@ -39,7 +39,7 @@ class LoginScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Center(
               child: Form(
-                key: _formKey,
+                key: formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -76,7 +76,7 @@ class LoginScreen extends StatelessWidget {
                           onPressed: state.status == LoginStatus.loading
                               ? null
                               : () {
-                                  if (_formKey.currentState?.validate() ??
+                                  if (formKey.currentState?.validate() ??
                                       false) {
                                     context.read<LoginBloc>().add(
                                           LoginButtonPressed(

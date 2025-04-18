@@ -83,7 +83,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
       child: InteractiveViewer(
         child: isNetwork
             ? Image.network(
-                headers: {"Authorization": "OAuth ${token}"},
+                headers: {"Authorization": "OAuth $token"},
                 imageUrl,
                 fit: BoxFit.contain,
                 loadingBuilder: (context, child, loadingProgress) {

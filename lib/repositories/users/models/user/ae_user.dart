@@ -1,12 +1,12 @@
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 
 class AEUser {
-  final String uid;
+  String uid;
   final String email;
   String accessEdit;
   String regional;
   List<String> accessList; 
-  final String accessSet;
+  String accessSet;
   String firstName;
   int imagesCount;
   String lastName;

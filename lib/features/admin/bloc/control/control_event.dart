@@ -17,3 +17,11 @@ class LoadUsers extends ControlEvent {
   @override
   List<Object?> get props => [];
 }
+
+class GetFolderNameByResourceIdEvent extends ControlEvent {
+  final String resourceId;
+  GetFolderNameByResourceIdEvent(this.resourceId);
+
+  @override
+  List<Object?> get props => [];
+}

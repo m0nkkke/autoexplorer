@@ -10,7 +10,6 @@ import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
-import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -277,6 +276,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                       isLargeIcons: _isLargeIcons,
                     );
                   }
+                  return null;
                 },
               );
             } else if (state is StorageListLoadingFailure) {

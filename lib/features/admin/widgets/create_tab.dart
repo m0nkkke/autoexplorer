@@ -2,7 +2,7 @@ import 'package:autoexplorer/features/admin/widgets/template_list_item.dart';
 import 'package:flutter/material.dart';
 
 class CreateTab extends StatelessWidget {
-  const CreateTab({Key? key}) : super(key: key);
+  const CreateTab({super.key});
 
   @override
  Widget build(BuildContext context) {

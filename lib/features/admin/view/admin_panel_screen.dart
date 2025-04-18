@@ -6,7 +6,7 @@ import '../widgets/control_tab.dart';
 import '../widgets/create_tab.dart';
 
 class AdminPanelScreen extends StatelessWidget {
-  const AdminPanelScreen({Key? key}) : super(key: key);
+  const AdminPanelScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

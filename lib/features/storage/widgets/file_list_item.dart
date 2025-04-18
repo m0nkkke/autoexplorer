@@ -28,7 +28,7 @@ class FileListItem extends StatelessWidget {
     final iconSize = isLargeIcons ? 60.0 : 40.0;
 
     return GestureDetector(
-      onLongPress: onLongPress != null ? onLongPress : null,
+      onLongPress: onLongPress,
       onTap: onTap,
       child: Container(
         color: isSelected ? Colors.lightBlue : Colors.transparent,

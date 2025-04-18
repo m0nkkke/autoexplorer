@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 class DiskTab extends StatefulWidget {
-  const DiskTab({Key? key}) : super(key: key);
+  const DiskTab({super.key});
 
   @override
   State<DiskTab> createState() => _DiskTabState();

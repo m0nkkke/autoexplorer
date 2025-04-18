@@ -8,9 +8,9 @@ class TemplateListItem extends StatelessWidget {
 
   final String templateName;
   const TemplateListItem({
-    Key? key,
+    super.key,
       required this.templateName
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
