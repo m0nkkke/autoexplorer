@@ -4,7 +4,6 @@ class StorageInfo extends StatefulWidget {
 
   final bool connectionStatus;
   final int imagesCount;
-  final int foldersCount;
   final double storagePercentage;
   final double currentStorageSize;
   final double totalStorageSize;
@@ -13,7 +12,6 @@ class StorageInfo extends StatefulWidget {
     super.key, 
     required this.connectionStatus, 
     required this.imagesCount, 
-    required this.foldersCount, 
     required this.storagePercentage, 
     required this.currentStorageSize, 
     required this.totalStorageSize,
@@ -66,7 +64,6 @@ class _StorageInfoState extends State<StorageInfo> {
                 ],
               ),
               Text('Изображений: ${widget.imagesCount} шт.', style: TextStyle(fontSize: 14)),
-              Text('Папок: ${widget.foldersCount} шт.', style: TextStyle(fontSize: 14)),
             ],
           ),
         ],

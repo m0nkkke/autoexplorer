@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
+import 'package:autoexplorer/repositories/storage/models/disk_capacity.dart';
+import 'package:autoexplorer/repositories/storage/models/disk_stat.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path/path.dart' as p;
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
@@ -9,9 +11,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 class StorageRepository extends AbstractStorageRepository {
-  StorageRepository({required this.dio});
-
+  /// для работы с /v1/disk/resources
   final Dio dio;
+  /// для работы с /v1/disk
+  final Dio dioDisk;
+
+  StorageRepository({ required this.dio })
+    : dioDisk = Dio(BaseOptions(
+        // тот же токен и заголовки, что и у dio
+        headers: dio.options.headers,
+        baseUrl: 'https://cloud-api.yandex.net/v1/disk',
+      ));
 
   Future<List<dynamic>> getFileList({String path = '/'}) async {
     try {
@@ -414,5 +424,37 @@ class StorageRepository extends AbstractStorageRepository {
     await syncFromYandexDisk();
     // 2) «Локаль → Яндекс»
     await syncToYandexDisk();
+  }
+
+ /// 1) Получаем общий объём и занятый объём
+  Future<DiskCapacity> getCapacity() async {
+    final resp = await dioDisk.get('/'); // GET https://.../v1/disk/
+    if (resp.statusCode == 200) {
+      final data = resp.data;
+      final total = (data['total_space'] as num).toDouble();
+      final used  = (data['used_space']  as num).toDouble();
+      return DiskCapacity(
+        total / (1024*1024*1024),
+        used  / (1024*1024*1024),
+      );
+    }
+    throw Exception('Capacity error: ${resp.statusCode}');
+  }
+
+  /// 2) Считаем папки в корне и все изображения на диске
+  Future<DiskStats> getDiskStats() async {
+    // 2.2) общее число изображений
+    final resp = await dio.get(
+      '/files', // baseUrl у dio = .../v1/disk/resources
+      queryParameters: {
+        'media_type': 'image',
+        'limit': 99999,
+      },
+    );
+    if (resp.statusCode == 200) {
+      final totalImages = resp.data['items'].length as int;
+      return DiskStats(totalImages);
+    }
+    throw Exception('Files stats error: ${resp.statusCode}');
   }
 }
