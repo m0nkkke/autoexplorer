@@ -1,5 +1,6 @@
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
+import 'package:autoexplorer/repositories/storage/abstract_storage_stats.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
@@ -36,6 +37,9 @@ Future<void> main() async {
     () => StorageRepository(dio: dio),
     instanceName: 'yandex_repository',
   );
+  // GetIt.I.registerLazySingleton<StorageStatsRepository>(
+  //   () => StorageRepository(dio: dio),
+  //   instanceName: 'disk_stats',);
   GetIt.I.registerLazySingleton<AbstractStorageRepository>(
     () => LocalRepository(),
     instanceName: 'local_repository',

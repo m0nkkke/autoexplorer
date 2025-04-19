@@ -51,31 +51,37 @@ class _ControlTabState extends State<ControlTab> {
                 ),
               ),
             ),
-            Expanded(
+ Expanded(
               child: BlocBuilder<ControlBloc, ControlState>(
                 builder: (context, state) {
                   if (state.status == ControlStatus.loading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (state.status == ControlStatus.failure) {
-                    return Center(child: Text('Ошибка: ${state.errorMessage}'));
-                  } else if (state.users.isEmpty) {
-                    return const Center(child: Text('Нет доступных пользователей'));
-                  } else {
-                    return ListView.builder(
-                      itemCount: state.users.length,
-                      itemBuilder: (context, index) {
-                        final user = state.users[index].data()
-                            as Map<String, dynamic>;
-                        final uid = state.users[index].id;
-                        return KeyListItem(
-                          keyUserName: user['firstName'] + ' ' + user['lastName'],
-                          keyArea: user['regional'],
-                          userData: user,
-                          uid: uid,
-                        );
-                      },
-                    );
                   }
+                  if (state.status == ControlStatus.failure) {
+                    return Center(child: Text('Ошибка: ${state.errorMessage}'));
+                  }
+                  if (state.users.isEmpty) {
+                    return const Center(child: Text('Нет доступных пользователей'));
+                  }
+
+                  return ListView.builder(
+                    itemCount: state.users.length,
+                    itemBuilder: (context, index) {
+                      final doc = state.users[index];
+                      final user = doc.data() as Map<String, dynamic>;
+                      final uid = doc.id;
+                      final regionId = user['regional'] as String;
+                      // вот здесь сразу берём имя региона из мапы
+                      final regionName = state.regionNamesMap[regionId] ?? '—';
+
+                      return KeyListItem(
+                        keyUserName: '${user['firstName']} ${user['lastName']}',
+                        keyArea: regionName,
+                        userData: user,
+                        uid: uid,
+                      );
+                    },
+                  );
                 },
               ),
             ),
