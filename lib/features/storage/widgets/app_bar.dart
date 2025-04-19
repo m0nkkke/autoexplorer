@@ -1,8 +1,10 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:flutter/material.dart';
+
 import 'package:autoexplorer/features/storage/widgets/app_bar_menu.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_viewsort.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
-import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -20,18 +22,18 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onDelete;
 
   const CustomAppBar({
-    super.key,
+    Key? key,
     required this.title,
     required this.storageCount,
     required this.path,
     required this.isSelectionMode,
     required this.selectedCount,
     required this.onCancel,
-    required this.onSelectAll,
-    required this.isAllSelected,
-    required this.onSearch,
-    required this.mode,
     required this.onIconSizeChanged,
+    required this.onSelectAll,
+    required this.onSearch,
+    required this.isAllSelected,
+    required this.mode,
     required this.onCreateFolder,
     required this.onDelete,
   }) : super(key: key);

@@ -117,6 +117,7 @@ class LocalRepository extends AbstractStorageRepository {
   Future<List<Map<String, String>>> getFolderIds(String path) {
     // TODO: implement getFolderIds
     throw UnimplementedError();
+  }
 
   // @override
   Future<void> deleteFolder({

@@ -14,7 +14,7 @@ part 'user_edit_state.dart';
 
 class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
   final AbstractUsersRepository _userRepo = GetIt.I<AbstractUsersRepository>();
-  final AbstractStorageRepository _storage = GetIt.I<AbstractStorageRepository>();
+  final AbstractStorageRepository _storage = GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
 
   UserEditBloc(AEUser initialUser)
       : super(UserEditState.fromUser(initialUser)) {
@@ -25,7 +25,7 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
     on<LoadRegionsEvent>((_, emit) async {
       emit(state.copyWith(isRegionsLoading: true));
       try {
-        final list = await _storage.getFileAndFolderModels(path: '/');
+        final list = await _storage.getFileAndFolderModels(path: 'disk:/');
         final map = <String,String>{};
         final folders = <FolderItem>[];
         for (var f in list.whereType<FolderItem>()) {

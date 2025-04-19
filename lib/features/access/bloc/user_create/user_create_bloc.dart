@@ -15,7 +15,7 @@ part 'user_create_state.dart';
 
 class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
   final AbstractUsersRepository _usersRepo = GetIt.I<AbstractUsersRepository>();
-  final AbstractStorageRepository _storageRepo = GetIt.I<AbstractStorageRepository>();
+  final AbstractStorageRepository _storageRepo =  GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
 
   UserCreateBloc()
       : super(const UserCreateState()) {

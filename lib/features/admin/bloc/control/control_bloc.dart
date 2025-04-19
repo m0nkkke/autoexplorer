@@ -11,7 +11,8 @@ part 'control_state.dart';
 
 class ControlBloc extends Bloc<ControlEvent, ControlState> {
   final AbstractUsersRepository _usersRepository = GetIt.I<AbstractUsersRepository>();
-  final AbstractStorageRepository _storageRepository = GetIt.I<AbstractStorageRepository>();
+  final AbstractStorageRepository _storageRepository =  GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
+  
 
   ControlBloc() : super(ControlState()) {
     on<LoadUsers>(_onLoadUsers);
@@ -30,7 +31,7 @@ class ControlBloc extends Bloc<ControlEvent, ControlState> {
     on<GetFolderNameByResourceIdEvent>((event, emit) async {
       try {
         // Получаем все папки и файлы с помощью getFileAndFolderModels
-        final folders = await _storageRepository.getFileAndFolderModels(path: '/'); // Путь к корню
+        final folders = await _storageRepository.getFileAndFolderModels(path: ''); // Путь к корню
 
         // Ищем нужную папку по resource_id
         final folder = folders.firstWhere(
