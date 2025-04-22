@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
@@ -78,49 +79,36 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         filePath: event.filePath,
         uploadPath: event.uploadPath, // это путь относительно applicationData
       );
-
-      // 2) Строим удалённый путь, вырезая всё до applicationData
-      final appDir = await localRepository.getAppDirectory(path: '/');
-      // абсолютный путь локального файла в applicationData
-      final absLocal = p.join(appDir.path, event.uploadPath);
-      // относительный путь от applicationData
-      final rel = p.relative(absLocal, from: appDir.path);
-      // финальный путь для API — с ведущим слэшем
-      final remotePath = '/$rel';
-
-      // 3) Загружаем на Яндекс.Диск
-      try {
-        await yandexRepository.uploadFile(
-          filePath: event.filePath,
-          uploadPath: remotePath,
-        );
-        print('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
-      } catch (e) {
-        print('⚠️ Не удалось загрузить на Я.Диск: $e');
-      }
-
-      // 4) Обновляем UI
+      // 2) Обновляем UI
       add(StorageListLoad(path: event.currentPath));
+
+      if (GetIt.I<ConnectivityService>().hasInternet) {
+        // 3) Строим удалённый путь, вырезая всё до applicationData
+        final appDir = await localRepository.getAppDirectory(path: '/');
+        // абсолютный путь локального файла в applicationData
+        final absLocal = p.join(appDir.path, event.uploadPath);
+        // относительный путь от applicationData
+        final rel = p.relative(absLocal, from: appDir.path);
+        // финальный путь для API — с ведущим слэшем
+        final remotePath = '/$rel';
+
+        // 4) Загружаем на Яндекс.Диск
+        try {
+          await yandexRepository.uploadFile(
+            filePath: event.filePath,
+            uploadPath: remotePath,
+          );
+          print('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
+        } catch (e) {
+          print('⚠️ Не удалось загрузить на Я.Диск: $e');
+        }
+      }
     } catch (e) {
       print('❌ Ошибка в _onStorageListUploadFile: $e');
       emit(StorageListLoadingFailure(exception: e));
     }
   }
 
-  // FutureOr<void> _onStorageListCreateFolder(
-  //     StorageListCreateFolder event, Emitter<StorageListState> emit) async {
-  //   try {
-  //     emit(StorageListLoading());
-  //     print('creating folder ${event.path}');
-  //     print('📁 Creating folder: ${event.name}');
-  //     print('📂 Inside path: ${event.path}');
-  //     await localRepository.createFolder(name: event.name, path: event.path);
-  //     add(StorageListLoad(path: event.path));
-  //   } catch (e) {
-  //     print(e.toString());
-  //     emit(StorageListLoadingFailure(exception: e));
-  //   }
-  // }
   FutureOr<void> _onStorageListCreateFolder(
     StorageListCreateFolder event,
     Emitter<StorageListState> emit,
@@ -147,16 +135,17 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       } else {
         remoteParent = '/';
       }
-
-      // 3) создаём папку на Яндекс.Диске по относительному пути
-      await yandexRepository.createFolder(
-        name: event.name,
-        path: remoteParent, // вот здесь уже /Test999 или /
-      );
-      print('✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
-
-      // 4) обновляем UI
+      // 3) обновляем UI
       add(StorageListLoad(path: event.path));
+
+      if (GetIt.I<ConnectivityService>().hasInternet) {
+        // 4) создаём папку на Яндекс.Диске по относительному пути
+        await yandexRepository.createFolder(
+          name: event.name,
+          path: remoteParent, // вот здесь уже /Test999 или /
+        );
+        print('✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+      }
     } catch (e) {
       print('❌ Ошибка в _onStorageListCreateFolder: $e');
       emit(StorageListLoadingFailure(exception: e));
@@ -213,8 +202,10 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   ) async {
     try {
       emit(StorageListLoading());
-      // единый вызов
-      await yandexRepository.syncAll(path: event.path);
+      if (GetIt.I<ConnectivityService>().hasInternet) {
+        // единый вызов
+        await yandexRepository.syncAll(path: event.path);
+      }
       // обновляем UI
       add(StorageListLoad(path: event.path));
     } catch (e) {
