@@ -1,4 +1,3 @@
-import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
@@ -17,7 +16,7 @@ import 'package:get_it/get_it.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(); 
   print("te1");
   await dotenv.load();
   print("te");
@@ -37,13 +36,11 @@ Future<void> main() async {
     () => StorageRepository(dio: dio),
     instanceName: 'yandex_repository',
   );
+  
   GetIt.I.registerLazySingleton<AbstractStorageRepository>(
     () => LocalRepository(),
     instanceName: 'local_repository',
   );
-
-  GetIt.I
-      .registerLazySingleton<ConnectivityService>(() => ConnectivityService());
 
   GetIt.I.registerLazySingleton<AbstractUsersRepository>(
       () => UsersRepository(firestore: firestore));
@@ -51,8 +48,8 @@ Future<void> main() async {
 
   GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
 
-  final _storageListBloc = GetIt.I<StorageListBloc>();
-  _storageListBloc.add(SyncAllEvent(path: '/'));
+  final storageListBloc = GetIt.I<StorageListBloc>();
+  storageListBloc.add(SyncAllEvent(path: '/'));
 
   runApp(const AutoExplorerApp());
 }
