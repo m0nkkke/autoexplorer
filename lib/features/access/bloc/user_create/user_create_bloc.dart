@@ -42,7 +42,7 @@ class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
       LoadCreateRegionsEvent _, Emitter<UserCreateState> emit) async {
     emit(state.copyWith(isRegionsLoading: true));
     try {
-      final list = await _storageRepo.getFileAndFolderModels(path: '/');
+      final list = await _storageRepo.getFileAndFolderModels(path: '');
       final folders = list.whereType<FolderItem>().toList();
       final map = { for (var f in folders) f.name: f.resourceId };
       emit(state.copyWith(

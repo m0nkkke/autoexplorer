@@ -3,7 +3,6 @@ import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
-import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:get_it/get_it.dart';
 

@@ -120,16 +120,35 @@ class UserKeyCreateScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Участки
-                  RootsInfo(
-                    title: 'Участок',
-                    items: state.areasIdsMap.keys.toList(),
-                    selectedItems: state.selectedAreas,
-                    onChanged: (set) => ctx
-                        .read<UserCreateBloc>()
-                        .add(OnCreateAreaChangedEvent(set)),
-                    folderIdsMap: state.areasIdsMap,
-                    isLoading: state.isAreasLoading,
-                  ),
+                  if (state.areasIdsMap.isEmpty) 
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SizedBox(
+                        height: 150,
+                        child: const Center(
+                          child: Text(
+                            'Нет участков',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    RootsInfo(
+                      title: 'Участок',
+                      items: state.areasIdsMap.keys.toList(),
+                      selectedItems: state.selectedAreas,
+                      onChanged: (set) => ctx
+                          .read<UserCreateBloc>()
+                          .add(OnCreateAreaChangedEvent(set)),
+                      folderIdsMap: state.areasIdsMap,
+                      isLoading: state.isAreasLoading,
+                    ),
+
 
                   const SizedBox(height: 24),
 

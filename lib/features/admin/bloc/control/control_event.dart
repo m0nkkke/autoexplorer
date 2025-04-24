@@ -20,7 +20,7 @@ class LoadUsers extends ControlEvent {
 
 class GetFolderNameByResourceIdEvent extends ControlEvent {
   final String resourceId;
-  GetFolderNameByResourceIdEvent(this.resourceId);
+  const GetFolderNameByResourceIdEvent(this.resourceId);
 
   @override
   List<Object?> get props => [];

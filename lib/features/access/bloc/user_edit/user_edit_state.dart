@@ -1,4 +1,3 @@
-// lib/features/access/bloc/user_edit_state.dart
 part of 'user_edit_bloc.dart';
 
 class UserEditState extends Equatable {
@@ -53,7 +52,6 @@ class UserEditState extends Equatable {
     this.selectedAreas = const {},
   });
 
-    // Метод для получения текущего времени в формате строки
   String getCurrentTimeString() {
     final now = DateTime.now();
     final formatter = DateFormat('yyyy-dd-MM HH:mm:ss');
@@ -107,7 +105,6 @@ class UserEditState extends Equatable {
     }
   }
 
-  /// Your existing copyWith(…) method below
   UserEditState copyWith({
     String? firstName,
     String? lastName,

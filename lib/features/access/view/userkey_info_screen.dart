@@ -43,10 +43,6 @@ class UserKeyInfoScreen extends StatelessWidget {
                     lastName: state.lastName,
                     firstName: state.firstName,
                     middleName: state.middleName,
-                    isNew: false,
-                    onSaveField: (field, value) => ctx
-                        .read<UserEditBloc>()
-                        .add(UpdateFieldEvent(field, value)),
                   ),
                   const Divider(),
                   const SizedBox(height: 10),
@@ -92,15 +88,33 @@ class UserKeyInfoScreen extends StatelessWidget {
                           .add(OnRegionChangedEvent(newName)),
                     ),
                     const SizedBox(height: 10),
-                    RootsInfo(
-                      title: 'Участок',
-                      items: state.areasIdsMap.keys.toList(),
-                      selectedItems: state.selectedAreas,
-                      onChanged: (newSet) =>
-                          ctx.read<UserEditBloc>().add(OnAreaChangedEvent(newSet)),
-                      folderIdsMap: state.areasIdsMap,
-                      isLoading: state.isAreasLoading,
-                    ),
+                    if (state.areasIdsMap.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SizedBox(
+                          height: 150, // та же высота, что и в RootsInfo
+                          child: const Center(
+                            child: Text(
+                              'Нет участков',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      RootsInfo(
+                        title: 'Участок',
+                        items: state.areasIdsMap.keys.toList(),
+                        selectedItems: state.selectedAreas,
+                        onChanged: (newSet) =>
+                            ctx.read<UserEditBloc>().add(OnAreaChangedEvent(newSet)),
+                        folderIdsMap: state.areasIdsMap,
+                        isLoading: state.isAreasLoading,
+                      ),
                   ],
                   const SizedBox(height: 20),
 

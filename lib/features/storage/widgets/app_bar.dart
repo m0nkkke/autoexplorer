@@ -8,7 +8,6 @@ import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
-  final String storageCount;
   final String path;
   final bool isSelectionMode;
   final int selectedCount;
@@ -22,9 +21,8 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onDelete;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
-    required this.storageCount,
     required this.path,
     required this.isSelectionMode,
     required this.selectedCount,
@@ -36,7 +34,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.mode,
     required this.onCreateFolder,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   _CustomAppBarState createState() => _CustomAppBarState();
@@ -126,10 +124,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
         ),
         Text(
-          widget.storageCount,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        Text(
           widget.path,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
@@ -151,10 +145,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
               widget.title,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-          ),
-          Text(
-            widget.storageCount,
-            style: Theme.of(context).textTheme.bodyMedium,
           ),
           Text(
             widget.path,

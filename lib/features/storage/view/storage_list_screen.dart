@@ -38,9 +38,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
   final _storageListBloc = StorageListBloc();
 
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
-  static const String storageCount = 'Хранится 1540 папок | заполнено 50%';
-  static const String objectTitle = 'Участок 1';
-  static const String dateCreation = '03.03.2025 16:43:00';
+
   //
 
   // МЕТОДЫ ДЕЙСТВИЙ НА ЭКРАНЕ
@@ -267,7 +265,6 @@ class _StorageListScreenState extends State<StorageListScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: widget.title,
-        storageCount: storageCount,
         path: viewPath,
         isSelectionMode: _isSelectionMode,
         selectedCount: _selectedItems.length,
