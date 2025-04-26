@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,6 +29,7 @@ class LocalRepository extends AbstractStorageRepository {
 
   @override
   Future<List> getFileAndFolderModels({String path = 'applicationData'}) async {
+    debugPrint("====== ИСПОЛЬЗУЕТСЯ ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ===========");
     final dir = await getAppDirectory(path: path);
     final List<dynamic> folderItems = [];
 
@@ -112,7 +114,7 @@ class LocalRepository extends AbstractStorageRepository {
 
     return appDir;
   }
-  
+
   @override
   Future<List<Map<String, String>>> getFolderIds(String path) {
     // TODO: implement getFolderIds

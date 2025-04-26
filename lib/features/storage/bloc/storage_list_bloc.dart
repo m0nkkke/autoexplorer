@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
+import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
@@ -9,31 +12,32 @@ import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 // import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:get_it/get_it.dart';
+import 'package:path_provider/path_provider.dart';
 part 'storage_list_event.dart';
 part 'storage_list_state.dart';
 
 class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
-
   bool _accessInitialized = false;
-  late UserRole           _role;
-  late List<String>       _accessList;
+  late UserRole _role;
+  late List<String> _accessList;
 
   /// resourceId → path корневых папок (все регионалы)
-  final Map<String,String> _rootMap = {};
+  final Map<String, String> _rootMap = {};
 
   /// resourceId → path подпапок первого уровня внутри регионала
-  final Map<String,String> _allowedPaths = {};
+  final Map<String, String> _allowedPaths = {};
 
   /// resourceId региона из БД
   late String _userRegionalId;
+
   /// настоящий путь к папке‑региона (disk:/РегионX)
   String? _userRegionalPath;
 
   bool _regionInitialized = false;
-
 
   StorageListBloc() : super(StorageListInitial()) {
     on<StorageListLoad>(_onStorageListLoad);
@@ -41,10 +45,39 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     on<StorageListUploadFile>(_onStorageListUploadFile);
     on<LoadImageUrl>(_onLoadImageUrl);
     on<ResetImageLoadingState>(_onResetImageLoadingState);
-    on<SyncFromYandexEvent>(_onSyncFromYandex);
+    // on<SyncFromYandexEvent>(_onSyncFromYandex);
     on<SyncToYandexEvent>(_onSyncToYandex);
     on<DeleteFolderEvent>(_onDeleteFolder);
-    on<SyncAllEvent>(_onSyncAll);
+    on<SyncAllEvent>(_onSyncAreasFromYandex);
+
+    GetIt.I<ConnectivityService>().addListener(_onChangeConnectionHandler);
+  }
+
+  Future<void> _onChangeConnectionHandler() async {
+    if (GetIt.I<ConnectivityService>().hasInternet) {
+      await _initAccess();
+      await yandexRepository.syncRegionalAndAreasStructure(
+        userRegionalId: _userRegionalId,
+        accessList: _accessList,
+        isAdmin: _role == UserRole.admin,
+      );
+    }
+  }
+
+  Future<void> _onSyncAreasFromYandex(
+    SyncAllEvent event,
+    Emitter<StorageListState> emit,
+  ) async {
+    if (GetIt.I<ConnectivityService>().hasInternet) {
+      await _initAccess();
+      emit(StorageListLoading());
+      await yandexRepository.syncRegionalAndAreasStructure(
+        userRegionalId: _userRegionalId,
+        accessList: _accessList,
+        isAdmin: _role == UserRole.admin,
+      );
+      add(StorageListLoad(path: event.path));
+    }
   }
 
   FutureOr<void> _onResetImageLoadingState(
@@ -99,20 +132,25 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       // 1) Копируем файл в локальное хранилище
       await localRepository.uploadFile(
         filePath: event.filePath,
-        uploadPath: event.uploadPath, // это путь относительно applicationData
+        uploadPath: event.uploadPath,
       );
+      final appDir = await localRepository.getAppDirectory(path: '/');
+      // абсолютный путь локального файла в applicationData
+      final absLocal = p.join(appDir.path, event.uploadPath);
+      // относительный путь от applicationData
+      final rel = p.relative(absLocal, from: appDir.path);
+      // финальный путь для API — с ведущим слэшем
+      final remotePath = '/$rel';
+      debugPrint("==============================");
+      debugPrint(event.uploadPath);
+      debugPrint(remotePath);
+      debugPrint("==============================");
+
       // 2) Обновляем UI
       add(StorageListLoad(path: event.currentPath));
 
       if (GetIt.I<ConnectivityService>().hasInternet) {
         // 3) Строим удалённый путь, вырезая всё до applicationData
-        final appDir = await localRepository.getAppDirectory(path: '/');
-        // абсолютный путь локального файла в applicationData
-        final absLocal = p.join(appDir.path, event.uploadPath);
-        // относительный путь от applicationData
-        final rel = p.relative(absLocal, from: appDir.path);
-        // финальный путь для API — с ведущим слэшем
-        final remotePath = '/$rel';
 
         // 4) Загружаем на Яндекс.Диск
         try {
@@ -124,6 +162,13 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         } catch (e) {
           print('⚠️ Не удалось загрузить на Я.Диск: $e');
         }
+      } else {
+        final logEntry = FileJSON(
+          type: 'file',
+          uploadPath: event.uploadPath,
+          remotePath: remotePath,
+        );
+        await _appendToJsonLog(logEntry);
       }
     } catch (e) {
       print('❌ Ошибка в _onStorageListUploadFile: $e');
@@ -167,6 +212,13 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           path: remoteParent, // вот здесь уже /Test999 или /
         );
         print('✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+      } else {
+        final logEntry = FileJSON(
+          type: 'folder',
+          uploadPath: event.name,
+          remotePath: remoteParent,
+        );
+        await _appendToJsonLog(logEntry);
       }
     } catch (e) {
       print('❌ Ошибка в _onStorageListCreateFolder: $e');
@@ -175,126 +227,136 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   }
 
   /// Один раз подтягиваем роль и accessList
-Future<void> _initAccess() async {
-  final fb = FirebaseAuth.instance.currentUser;
-  if (fb == null) throw Exception('Не авторизованный пользователь');
+  Future<void> _initAccess() async {
+    final fb = FirebaseAuth.instance.currentUser;
+    if (fb == null) throw Exception('Не авторизованный пользователь');
 
-  // 1) Загружаем данные юзера
-  final u = await usersRepository.getUserByUid(fb.uid);
-  _role           = u!.role;
-  _accessList     = u.accessList;
-  _userRegionalId = u.regional; // resourceId
+    // 1) Загружаем данные юзера
+    final u = await usersRepository.getUserByUid(fb.uid);
+    _role = u!.role;
+    _accessList = u.accessList;
+    _userRegionalId = u.regional; // resourceId
 
-  // 2) Загружаем **корень** яндекс‑диска, чтобы построить _rootMap
-  final rootItems = await yandexRepository.getFileAndFolderModels(path: '');
-  final roots = rootItems.whereType<FolderItem>().toList();
+    // 2) Загружаем **корень** яндекс‑диска, чтобы построить _rootMap
+    final rootItems = await yandexRepository.getFileAndFolderModels(path: '');
+    final roots = rootItems.whereType<FolderItem>().toList();
 
-  if (_role == UserRole.admin) {
+    if (_role == UserRole.admin) {
+      _accessInitialized = true;
+      return;
+    }
+
+    _rootMap
+      ..clear()
+      ..addEntries(roots.map((f) => MapEntry(f.resourceId, f.path)));
+
+    // 3) Один раз вычисляем реальный путь региона
+    final rp = _rootMap[_userRegionalId];
+    if (rp == null) {
+      throw Exception('Регион пользователя не найден');
+    }
+    _userRegionalPath = rp;
+
     _accessInitialized = true;
-    return;
   }
 
-  _rootMap
-    ..clear()
-    ..addEntries(roots.map((f) => MapEntry(f.resourceId, f.path)));
+// FutureOr<void> _onStorageListLoad(
+//   StorageListLoad event,
+//   Emitter<StorageListState> emit,
+// ) async {
+//   emit(StorageListLoading());
 
+//   if (!_accessInitialized) {
+//     await _initAccess();
+//   }
 
-  // 3) Один раз вычисляем реальный путь региона
-  final rp = _rootMap[_userRegionalId];
-  if (rp == null) {
-    throw Exception('Регион пользователя не найден');
-  }
-  _userRegionalPath = rp;
+//   // 1) Грузим именно ту папку, в которую просят зайти
+//   final repoPath = event.path == '/'
+//       ? ''
+//       : event.path.startsWith('disk:')
+//           ? event.path
+//           : 'disk:/${event.path}';
+//   final items =
+//       await yandexRepository.getFileAndFolderModels(path: repoPath);
 
-  _accessInitialized = true;
-}
+//   List<dynamic> filtered;
 
+//   // --- A) Корень: просто показываем всё ---
+//   if (event.path == '/' || event.path == 'disk:/') {
+//     filtered = items.whereType<FolderItem>().toList();
 
+//     // сбрасываем флаг, чтобы при первом заходе в регион “allowedPaths” собрался
+//     _regionInitialized = false;
 
-FutureOr<void> _onStorageListLoad(
-  StorageListLoad event,
-  Emitter<StorageListState> emit,
-) async {
-  emit(StorageListLoading());
+//   // --- B) Первый заход в регионалог _userRegionalPath ---
+//   } else if (!_regionInitialized && event.path == _userRegionalPath) {
+//     if (_role == UserRole.admin) {
+//       filtered = items;
+//     } else {
+//       // строим allowedPaths из подпапок первого уровня
+//       _allowedPaths
+//         ..clear()
+//         ..addEntries(items
+//           .whereType<FolderItem>()
+//           .where((f) => _accessList.contains(f.resourceId))
+//           .map((f) => MapEntry(f.resourceId, f.path)));
 
-  if (!_accessInitialized) {
-    await _initAccess();
-  }
+//       filtered = items
+//           .where((it) =>
+//               it is FolderItem && _allowedPaths.containsKey(it.resourceId))
+//           .toList();
+//     }
+//     _regionInitialized = true;
 
-  // 1) Грузим именно ту папку, в которую просят зайти
-  final repoPath = event.path == '/'
-      ? ''
-      : event.path.startsWith('disk:')
-          ? event.path
-          : 'disk:/${event.path}';
-  final items =
-      await yandexRepository.getFileAndFolderModels(path: repoPath);
+//   // --- C) Любое глубокое вложение внутри региона ---
+//   } else {
+//     if (_role == UserRole.admin) {
+//       // filtered = items;
+//     } else {
+//       // не давать уйти за пределы своего региона
+//       if (!event.path.startsWith(_userRegionalPath!)) {
+//         emit(StorageListLoadingFailure(
+//             exception: 'Нет доступа к ${event.path}'));
+//         return;
+//       }
+//       // // показываем только те элементы, чей путь лежит внутри любого из allowedPaths
+//       // filtered = items.where((it) {
+//       //   final pth = (it as dynamic).path as String;
+//       //   return _allowedPaths.values.any((base) => pth.startsWith(base));
+//       // }).toList();
+//     }
+//   }
 
-  List<dynamic> filtered;
+//   emit(StorageListLoaded(items: items));
+// }
 
-  // --- A) Корень: просто показываем всё ---
-  if (event.path == '/' || event.path == 'disk:/') {
-    filtered = items.whereType<FolderItem>().toList();
-
-    // сбрасываем флаг, чтобы при первом заходе в регион “allowedPaths” собрался
-    _regionInitialized = false;
-
-  // --- B) Первый заход в регионалог _userRegionalPath ---
-  } else if (!_regionInitialized && event.path == _userRegionalPath) {
-    if (_role == UserRole.admin) {
-      filtered = items;
-    } else {
-      // строим allowedPaths из подпапок первого уровня
-      _allowedPaths
-        ..clear()
-        ..addEntries(items
-          .whereType<FolderItem>()
-          .where((f) => _accessList.contains(f.resourceId))
-          .map((f) => MapEntry(f.resourceId, f.path)));
-
-      filtered = items
-          .where((it) =>
-              it is FolderItem && _allowedPaths.containsKey(it.resourceId))
-          .toList();
-    }
-    _regionInitialized = true;
-
-  // --- C) Любое глубокое вложение внутри региона ---
-  } else {
-    if (_role == UserRole.admin) {
-      // filtered = items;
-    } else {
-      // не давать уйти за пределы своего региона
-      if (!event.path.startsWith(_userRegionalPath!)) {
-        emit(StorageListLoadingFailure(
-            exception: 'Нет доступа к ${event.path}'));
-        return;
+  FutureOr<void> _onStorageListLoad(
+      StorageListLoad event, Emitter<StorageListState> emit) async {
+    try {
+      late dynamic role;
+      try {
+        role = _role;
+      } catch (e) {
+        print("===== catch role =====");
+        await _initAccess();
+        role = _role;
       }
-      // // показываем только те элементы, чей путь лежит внутри любого из allowedPaths
-      // filtered = items.where((it) {
-      //   final pth = (it as dynamic).path as String;
-      //   return _allowedPaths.values.any((base) => pth.startsWith(base));
-      // }).toList();
+      late dynamic itemsList;
+      print(role);
+      if (role == UserRole.worker) {
+        itemsList =
+            await localRepository.getFileAndFolderModels(path: event.path);
+      } else {
+        itemsList =
+            await yandexRepository.getFileAndFolderModels(path: event.path);
+      }
+      print(itemsList.toString());
+      emit(StorageListLoaded(items: itemsList));
+    } catch (e) {
+      print(e.toString());
+      emit(StorageListLoadingFailure(exception: e));
     }
   }
-
-  emit(StorageListLoaded(items: items));
-}
-
-
-
-  // FutureOr<void> _onStorageListLoad(
-  //     StorageListLoad event, Emitter<StorageListState> emit) async {
-  //   try {
-  //     final itemsList =
-  //         await localRepository.getFileAndFolderModels(path: event.path);
-  //     print(itemsList.toString());
-  //     emit(StorageListLoaded(items: itemsList));
-  //   } catch (e) {
-  //     print(e.toString());
-  //     emit(StorageListLoadingFailure(exception: e));
-  //   }
-  // }
 
   // Обработчик события синхронизации с Яндекс Диском
   FutureOr<void> _onSyncFromYandex(
@@ -360,11 +422,34 @@ FutureOr<void> _onStorageListLoad(
     }
   }
 
+  Future<File> _getLogFile() async {
+    // 1. Берём корневую директорию документов приложения:
+    final baseDir = await getApplicationDocumentsDirectory();
+    // 2. Формируем путь к файлу createLog.json прямо в baseDir,
+    //    то есть «рядом» с папкой applicationData
+    final logFile = File(p.join(baseDir.path, 'createLog.json'));
+    // 3. Если файла нет — создаём и инициализируем пустым массивом
+    if (!await logFile.exists()) {
+      await logFile.create(recursive: true);
+      await logFile.writeAsString('[]', flush: true);
+    }
+    return logFile;
+  }
+
+  Future<void> _appendToJsonLog(FileJSON entry) async {
+    final logFile = await _getLogFile();
+    final content = await logFile.readAsString();
+    final List<dynamic> array = jsonDecode(content);
+    array.add(entry.toJson());
+    await logFile.writeAsString(jsonEncode(array), flush: true);
+  }
+
   final LocalRepository localRepository =
       GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
           as LocalRepository;
   final StorageRepository yandexRepository =
       GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository')
           as StorageRepository;
-  final AbstractUsersRepository usersRepository = GetIt.I<AbstractUsersRepository>();
+  final AbstractUsersRepository usersRepository =
+      GetIt.I<AbstractUsersRepository>();
 }

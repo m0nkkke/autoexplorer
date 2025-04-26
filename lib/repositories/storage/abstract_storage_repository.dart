@@ -6,4 +6,6 @@ abstract class AbstractStorageRepository {
     required String uploadPath,
   });
   Future<String> getImageDownloadUrl(String filePath);
+
+  getAppDirectory({required String path}) {}
 }
