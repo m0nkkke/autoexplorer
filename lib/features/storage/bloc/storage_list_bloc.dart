@@ -46,21 +46,25 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     on<LoadImageUrl>(_onLoadImageUrl);
     on<ResetImageLoadingState>(_onResetImageLoadingState);
     // on<SyncFromYandexEvent>(_onSyncFromYandex);
-    on<SyncToYandexEvent>(_onSyncToYandex);
+    // on<SyncToYandexEvent>(_onSyncToYandex);
     on<DeleteFolderEvent>(_onDeleteFolder);
-    on<SyncAllEvent>(_onSyncAreasFromYandex);
+    // on<SyncAllEvent>(_onSyncAreasFromYandex);
 
     GetIt.I<ConnectivityService>().addListener(_onChangeConnectionHandler);
   }
 
   Future<void> _onChangeConnectionHandler() async {
     if (GetIt.I<ConnectivityService>().hasInternet) {
-      await _initAccess();
-      await yandexRepository.syncRegionalAndAreasStructure(
-        userRegionalId: _userRegionalId,
-        accessList: _accessList,
-        isAdmin: _role == UserRole.admin,
-      );
+      try {
+        await _initAccess();
+        await yandexRepository.syncRegionalAndAreasStructure(
+          userRegionalId: _userRegionalId,
+          accessList: _accessList,
+          isAdmin: _role == UserRole.admin,
+        );
+      } catch (e) {
+        print(e);
+      }
     }
   }
 
@@ -334,12 +338,21 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       StorageListLoad event, Emitter<StorageListState> emit) async {
     try {
       late dynamic role;
-      try {
-        role = _role;
-      } catch (e) {
-        print("===== catch role =====");
-        await _initAccess();
-        role = _role;
+      if (GetIt.I<ConnectivityService>().hasInternet) {
+        try {
+          try {
+            role = _role;
+          } catch (e) {
+            print("===== catch role =====");
+            await _initAccess();
+            role = _role;
+          }
+        } catch (e) {
+          print(e);
+          role = UserRole.worker;
+        }
+      } else {
+        role = UserRole.worker;
       }
       late dynamic itemsList;
       print(role);

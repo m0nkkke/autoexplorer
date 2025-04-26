@@ -50,8 +50,8 @@ Future<void> main() async {
   GetIt.I.registerSingleton<ConnectivityService>(ConnectivityService());
   GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
 
-  final storageListBloc = GetIt.I<StorageListBloc>();
-  storageListBloc.add(SyncAllEvent(path: '/'));
+  // final storageListBloc = GetIt.I<StorageListBloc>();
+  // storageListBloc.add(SyncAllEvent(path: '/'));
 
   runApp(const AutoExplorerApp());
 }

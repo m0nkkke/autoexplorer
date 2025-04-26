@@ -111,6 +111,8 @@ class StorageRepository extends AbstractStorageRepository {
   @override
   Future<List<dynamic>> getFileAndFolderModels({String path = 'disk:/'}) async {
     try {
+      print("============");
+      print(path);
       // Убедимся, что путь начинается с disk:/
       final cleanPath = path.startsWith('disk:/') ? path : 'disk:/$path';
 
@@ -644,7 +646,7 @@ class StorageRepository extends AbstractStorageRepository {
 
     // 2) Выбираем только те регионы, к которым есть доступ
     final allowedRegions = isAdmin
-        ? allRegions
+        ? []
         : allRegions.where((r) => r.resourceId == userRegionalId).toList();
 
     if (allowedRegions.isEmpty && !isAdmin) {

@@ -17,7 +17,7 @@ class DiskBloc extends Bloc<DiskEvent, DiskState> {
       DiskLoadFoldersEvent event, Emitter<DiskState> emit) async {
     try {
       final itemsList =
-          await storageRepository.getFileAndFolderModels(path: '/');
+          await storageRepository.getFileAndFolderModels(path: 'disk:/');
       final folders = itemsList.whereType<FolderItem>().toList();
 
       emit(DiskLoaded(folders));
