@@ -13,15 +13,16 @@ import 'package:flutter/foundation.dart';
 class StorageRepository extends AbstractStorageRepository {
   /// для работы с /v1/disk/resources
   final Dio dio;
+
   /// для работы с /v1/disk
   final Dio dioDisk;
 
-  StorageRepository({ required this.dio })
-    : dioDisk = Dio(BaseOptions(
-        // тот же токен и заголовки, что и у dio
-        headers: dio.options.headers,
-        baseUrl: 'https://cloud-api.yandex.net/v1/disk',
-      ));
+  StorageRepository({required this.dio})
+      : dioDisk = Dio(BaseOptions(
+          // тот же токен и заголовки, что и у dio
+          headers: dio.options.headers,
+          baseUrl: 'https://cloud-api.yandex.net/v1/disk',
+        ));
 
   Future<List<dynamic>> getFileList({String path = '/'}) async {
     try {
@@ -85,7 +86,7 @@ class StorageRepository extends AbstractStorageRepository {
       return FolderItem(
         name: cleanName,
         filesCount: filesCount,
-        path: path.replaceFirst('disk:/', ''), 
+        path: path.replaceFirst('disk:/', ''),
         resourceId: resourceId,
       );
     } catch (e) {
@@ -93,7 +94,7 @@ class StorageRepository extends AbstractStorageRepository {
       return FolderItem(
         name: cleanName,
         filesCount: 0,
-        path: path.replaceFirst('disk:/', ''), 
+        path: path.replaceFirst('disk:/', ''),
         resourceId: 'missing',
       );
     }
@@ -426,16 +427,16 @@ class StorageRepository extends AbstractStorageRepository {
     await syncToYandexDisk();
   }
 
- /// 1) Получаем общий объём и занятый объём
+  /// 1) Получаем общий объём и занятый объём
   Future<DiskCapacity> getCapacity() async {
     final resp = await dioDisk.get('/'); // GET https://.../v1/disk/
     if (resp.statusCode == 200) {
       final data = resp.data;
       final total = (data['total_space'] as num).toDouble();
-      final used  = (data['used_space']  as num).toDouble();
+      final used = (data['used_space'] as num).toDouble();
       return DiskCapacity(
-        total / (1024*1024*1024),
-        used  / (1024*1024*1024),
+        total / (1024 * 1024 * 1024),
+        used / (1024 * 1024 * 1024),
       );
     }
     throw Exception('Capacity error: ${resp.statusCode}');
@@ -456,5 +457,230 @@ class StorageRepository extends AbstractStorageRepository {
       return DiskStats(totalImages);
     }
     throw Exception('Files stats error: ${resp.statusCode}');
+  }
+
+  // Future<void> syncFromYandexDiskSelective({
+  //   required String userRegionalId,
+  //   required List<String> accessList,
+  // }) async {
+  //   try {
+  //     // 1) Сначала подгружаем все корневые папки на Я.Диске
+  //     final rootItems = await getFileAndFolderModels(path: 'disk:/');
+  //     // 2) Находим папку региона по её resourceId
+  //     final regionFolder = rootItems.whereType<FolderItem>().firstWhere(
+  //         (f) => f.resourceId == userRegionalId,
+  //         orElse: () => throw Exception('Региональная папка не найдена'));
+
+  //     // 3) Получаем содержимое этой папки региона
+  //     final regionContents =
+  //         await getFileAndFolderModels(path: regionFolder.path);
+
+  //     // 4) Отфильтровываем только те элементы (папки и файлы),
+  //     //    resourceId которых есть в вашем accessList
+  //     // final allowedItems = regionContents
+  //     //     .where((it) => accessList.contains(
+  //     //         (it is FolderItem ? it.resourceId : (it as FileItem).resourceId)))
+  //     //     .toList();
+  //     final allowedFolders = regionContents
+  //         .whereType<FolderItem>() // только папки
+  //         .where((f) =>
+  //             accessList.contains(f.resourceId)) // чьё resourceId в accessList
+  //         .toList();
+
+  //     // 5) Готовим локальный репозиторий и корневую папку
+  //     final localRepo =
+  //         GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+  //             as LocalRepository;
+  //     final localRoot = await localRepo.getAppDirectory(path: '/');
+
+  //     // 6) Синхронизируем каждый разрешённый элемент:
+  //     for (var folder in allowedFolders) {
+  //       // рекурсивно зайдёт в папку и скачает и папки, и файлы внутри неё
+  //       await _syncYandexFolder(folder, localRoot);
+  //     }
+  //     // for (var item in allowedItems) {
+  //     //   if (item is FolderItem) {
+  //     //     // синхронизирует папку и всю её вложенность
+  //     //     await _syncYandexFolder(item, localRoot);
+  //     //   } else if (item is FileItem) {
+  //     //     // синхронизирует одиночный файл в директорию localRoot
+  //     //     await _syncYandexFile(item, localRoot);
+  //     //   }
+  //     // }
+  //   } catch (e) {
+  //     debugPrint('❌ Ошибка выборочной синхронизации: $e');
+  //     rethrow;
+  //   }
+  // }
+  // Future<List<dynamic>> listFolderByResourceId(String resourceId) async {
+  //   try {
+  //     // 1) Запросим метаданные + вложения одной командой
+  //     final resp = await dioDisk.get(
+  //       '/resources',
+  //       queryParameters: {
+  //         'resource_id': resourceId,
+  //         // при желании можно добавить 'limit': '1000'
+  //       },
+  //     );
+
+  //     // 2) Посмотрим, что в ответе и куда мы пишем
+  //     debugPrint('▶️ Request URI: ${resp.requestOptions.uri}');
+  //     debugPrint('▶️ Status code: ${resp.statusCode}');
+  //     debugPrint('▶️ Body: ${resp.data}');
+
+  //     if (resp.statusCode != 200) {
+  //       throw Exception('Yandex Disk API returned ${resp.statusCode}');
+  //     }
+
+  //     // 3) Забираем список детей
+  //     final itemsJson =
+  //         (resp.data['_embedded']?['items'] ?? []) as List<dynamic>;
+  //     final result = <dynamic>[];
+  //     for (final raw in itemsJson) {
+  //       final item = raw as Map<String, dynamic>;
+  //       if (item['type'] == 'dir') {
+  //         result.add(await _mapFolderItem(item));
+  //       } else {
+  //         result.add(_mapFileItem(item));
+  //       }
+  //     }
+  //     return result;
+  //   } on DioException catch (e) {
+  //     debugPrint('❌ DioException URI: ${e.requestOptions.uri}');
+  //     debugPrint('❌ Status: ${e.response?.statusCode}');
+  //     debugPrint('❌ Response body: ${e.response?.data}');
+  //     rethrow;
+  //   }
+  // }
+
+  // Future<void> syncFromYandexDiskSelective({
+  //   required String userRegionalId,
+  //   required List<String> accessList,
+  // }) async {
+  //   // 1) Ищем папку регионала в корне
+  //   final rootItems = await getFileAndFolderModels(path: 'disk:/');
+  //   final regionFolder = rootItems.whereType<FolderItem>().firstWhere(
+  //       (f) => f.resourceId == userRegionalId,
+  //       orElse: () => throw Exception('Регион не найден'));
+
+  //   // 2) Готовим локальный root/appDirectory и создаём папку регионала
+  //   final locRepo =
+  //       GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+  //           as LocalRepository;
+  //   final appDir = await locRepo.getAppDirectory(path: '/');
+  //   final regionLocalDir = Directory(p.join(appDir.path, regionFolder.name));
+  //   if (!await regionLocalDir.exists()) {
+  //     await regionLocalDir.create(recursive: true);
+  //   }
+
+  //   // 3) Получаем сразу содержимое регионала по resource_id
+  //   final regionContents = await listFolderByResourceId(
+  //     userRegionalId,
+  //   );
+
+  //   // 4) Фильтруем только папки-участки из accessList
+  //   final allowedFolders = regionContents
+  //       .whereType<FolderItem>()
+  //       .where((f) => accessList.contains(f.resourceId))
+  //       .toList();
+
+  //   // 5) Рекурсивно синхронизируем каждую разрешённую папку внутрь региона
+  //   for (var folder in allowedFolders) {
+  //     await _syncYandexFolder(folder, regionLocalDir);
+  //   }
+  // }
+  /// Синхронизировать только те регионы и участки, к которым у пользователя есть доступ
+  // Future<void> syncFromYandexDiskByAccess({
+  //   required String userRegionalId,
+  //   required List<String> accessList,
+  //   required bool isAdmin,
+  // }) async {
+  //   // 1. Берём ВСЕ регионалы из корня
+  //   final rootItems = await getFileAndFolderModels(path: 'disk:/');
+  //   final allRegionals = rootItems.whereType<FolderItem>().toList();
+
+  //   // 2. Фильтруем регионалы: либо все (админ), либо только свой
+  //   final allowedRegionals = isAdmin
+  //       ? allRegionals
+  //       : allRegionals.where((r) => r.resourceId == userRegionalId).toList();
+
+  //   // 3. Подготавливаем локальный репозиторий и корень
+  //   final locRepo =
+  //       GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+  //           as LocalRepository;
+  //   final appDir = await locRepo.getAppDirectory(path: '/');
+
+  //   for (final regional in allowedRegionals) {
+  //     // 3.1. Создаем локальную папку регионала
+  //     final regionLocalDir = Directory(p.join(appDir.path, regional.name));
+  //     if (!await regionLocalDir.exists()) {
+  //       await regionLocalDir.create(recursive: true);
+  //     }
+
+  //     // 3.2. Получаем всех «детей» этого регионала
+  //     final regionalContents =
+  //         await getFileAndFolderModels(path: regional.path);
+
+  //     // 3.3. Оставляем только папки-участки из accessList
+  //     final allowedAreas = regionalContents
+  //         .whereType<FolderItem>()
+  //         .where((area) => accessList.contains(area.resourceId))
+  //         .toList();
+
+  //     // 3.4. Рекурсивно синхронизируем каждый допущенный участок
+  //     for (final area in allowedAreas) {
+  //       await _syncYandexFolder(area, regionLocalDir);
+  //     }
+  //   }
+  // }
+  Future<void> syncRegionalAndAreasStructure({
+    required String userRegionalId,
+    required List<String> accessList,
+    required bool isAdmin,
+  }) async {
+    // 1) Получаем все “региональные” папки из корня
+    final rootItems = await getFileAndFolderModels(path: 'disk:/');
+    final allRegions = rootItems.whereType<FolderItem>().toList();
+
+    // 2) Выбираем только те регионы, к которым есть доступ
+    final allowedRegions = isAdmin
+        ? allRegions
+        : allRegions.where((r) => r.resourceId == userRegionalId).toList();
+
+    if (allowedRegions.isEmpty && !isAdmin) {
+      throw Exception('Регион для пользователя не найден');
+    }
+
+    // 3) Берём локальный корень applicationData
+    final localRepo =
+        GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+            as LocalRepository;
+    final appDir = await localRepo.getAppDirectory(path: '/');
+
+    // 4) Пробегаемся по каждому разрешённому региону
+    for (final region in allowedRegions) {
+      // 4.1) Создаём папку региона
+      final regionLocalDir = Directory(p.join(appDir.path, region.name));
+      if (!await regionLocalDir.exists()) {
+        await regionLocalDir.create(recursive: true);
+      }
+
+      // 4.2) Запрашиваем вложенные элементы регионала
+      final regionContents = await getFileAndFolderModels(path: region.path);
+
+      // 4.3) Оставляем только папки-участки из accessList
+      final allowedAreas = regionContents
+          .whereType<FolderItem>()
+          .where((area) => accessList.contains(area.resourceId))
+          .toList();
+
+      // 4.4) Создаём на диске **только** папки участков (без рекурсии!)
+      for (final area in allowedAreas) {
+        final areaDir = Directory(p.join(regionLocalDir.path, area.name));
+        if (!await areaDir.exists()) {
+          await areaDir.create(recursive: true);
+        }
+      }
+    }
   }
 }

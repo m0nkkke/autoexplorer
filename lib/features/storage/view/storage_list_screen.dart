@@ -36,6 +36,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
   //
 
   final _storageListBloc = StorageListBloc();
+  // final _storageListBloc = GetIt.I<StorageListBloc>();
 
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
 
