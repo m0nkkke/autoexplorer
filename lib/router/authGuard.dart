@@ -38,7 +38,7 @@ class AuthGuard extends NavigatorObserver {
           if(userRole == UserRole.admin) {
             navigator?.pushNamedAndRemoveUntil('/admin', (route) => false);
           } else {
-            navigator?.pushNamedAndRemoveUntil('/', (route) => false);
+            navigator?.pushNamedAndRemoveUntil('/storage', (route) => false);
           }
           return;
         }
