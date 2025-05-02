@@ -1,5 +1,6 @@
 import 'package:autoexplorer/features/admin/bloc/control/control_bloc.dart';
 import 'package:autoexplorer/features/admin/widgets/key_list_item.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -42,7 +43,7 @@ class _ControlTabState extends State<ControlTab> {
                   },
                   icon: const Icon(Icons.add_box,
                       color: Colors.lightBlue, size: 32),
-                  label: const Text('Создать новый ключ доступа'),
+                  label: Text(S.of(context).createNewAccessKey),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.black,
@@ -51,17 +52,20 @@ class _ControlTabState extends State<ControlTab> {
                 ),
               ),
             ),
- Expanded(
+            Expanded(
               child: BlocBuilder<ControlBloc, ControlState>(
                 builder: (context, state) {
                   if (state.status == ControlStatus.loading) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (state.status == ControlStatus.failure) {
-                    return Center(child: Text('Ошибка: ${state.errorMessage}'));
+                    return Center(
+                        child: Text(S
+                            .of(context)
+                            .errorWithMessage(state.errorMessage.toString())));
                   }
                   if (state.users.isEmpty) {
-                    return const Center(child: Text('Нет доступных пользователей'));
+                    return Center(child: Text(S.of(context).noAvailableUsers));
                   }
 
                   return ListView.builder(

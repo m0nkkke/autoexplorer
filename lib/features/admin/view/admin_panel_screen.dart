@@ -4,6 +4,7 @@ import 'package:autoexplorer/features/admin/widgets/storage_info.dart';
 import 'package:autoexplorer/features/admin/widgets/disk_tab.dart';
 import 'package:autoexplorer/features/admin/widgets/control_tab.dart';
 import 'package:autoexplorer/features/admin/widgets/create_tab.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,7 +20,7 @@ class AdminPanelScreen extends StatelessWidget {
         child: Scaffold(
           appBar: AppBar(
             title: Text(
-              'Админ‑панель',
+              S.of(context).adminPanelTitle,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             actions: [AppBarActions()],
@@ -39,28 +40,30 @@ class AdminPanelScreen extends StatelessWidget {
                       if (state.status == StorageInfoStatus.failure) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Text('Ошибка: ${state.errorMessage}'),
+                          child: Text(S
+                              .of(context)
+                              .errorWithMessage(state.errorMessage.toString())),
                         );
                       }
                       // success
                       return StorageInfo(
-                        connectionStatus:    state.connectionStatus,
-                        imagesCount:         state.imagesCount,
-                        storagePercentage:   state.storagePercentage,
-                        currentStorageSize:  state.currentStorageSize,
-                        totalStorageSize:    state.totalStorageSize,
+                        connectionStatus: state.connectionStatus,
+                        imagesCount: state.imagesCount,
+                        storagePercentage: state.storagePercentage,
+                        currentStorageSize: state.currentStorageSize,
+                        totalStorageSize: state.totalStorageSize,
                       );
                     },
                   ),
                   // и только потом таббар
-                  const TabBar(
+                  TabBar(
                     labelColor: Colors.blue,
                     unselectedLabelColor: Colors.black,
                     indicatorColor: Colors.blue,
                     tabs: [
-                      Tab(text: 'Диск'),
-                      Tab(text: 'Контроль'),
-                      Tab(text: 'Создание'),
+                      Tab(text: S.of(context).diskTabTitle),
+                      Tab(text: S.of(context).controlTabTitle),
+                      Tab(text: S.of(context).creationTabTitle),
                     ],
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:autoexplorer/features/access/widgets/access_info.dart';
 import 'package:autoexplorer/features/access/widgets/region_selector.dart';
 import 'package:autoexplorer/features/access/widgets/roots_info.dart';
 import 'package:autoexplorer/features/access/widgets/user_info.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,13 +19,13 @@ class UserKeyInfoScreen extends StatelessWidget {
     final raw = args['userData'] as Map<String, dynamic>;
 
     return BlocProvider(
-      create: (_) => UserEditBloc(AEUser.fromFirestore(raw, uid))
-        ..add(LoadRegionsEvent()),
+      create: (_) =>
+          UserEditBloc(AEUser.fromFirestore(raw, uid))..add(LoadRegionsEvent()),
       child: BlocConsumer<UserEditBloc, UserEditState>(
         listener: (ctx, state) {
           if (state.saved) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(content: Text('Изменения сохранены')));
+                SnackBar(content: Text(S.of(context).changeSaved)));
           } else if (state.error != null) {
             ScaffoldMessenger.of(ctx)
                 .showSnackBar(SnackBar(content: Text(state.error!)));
@@ -32,7 +33,7 @@ class UserKeyInfoScreen extends StatelessWidget {
         },
         builder: (ctx, state) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Админ‑панель')),
+            appBar: AppBar(title: Text(S.of(context).adminPanelTitle)),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -63,22 +64,21 @@ class UserKeyInfoScreen extends StatelessWidget {
                       state.isAreasLoading ||
                       state.areasIdsMap.isEmpty) ...[
                     SizedBox(
-                      height: 300, 
+                      height: 300,
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             CircularProgressIndicator(),
                             SizedBox(height: 16),
-                            Text('Загрузка данных'),
+                            Text(S.of(context).loadingData),
                           ],
                         ),
                       ),
                     ),
-                  ] else ...
-                  [
+                  ] else ...[
                     RegionSelector(
-                      title: 'Регионал',
+                      title: S.of(context).regionalTitle,
                       regions: state.regionalIdsMap.keys.toList(),
                       selectedRegion: state.regionalIdsMap.entries
                           .firstWhere((e) => e.value == state.regional)
@@ -97,9 +97,9 @@ class UserKeyInfoScreen extends StatelessWidget {
                         ),
                         child: SizedBox(
                           height: 150, // та же высота, что и в RootsInfo
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'Нет участков',
+                              S.of(context).noAreas,
                               style: TextStyle(fontSize: 16),
                             ),
                           ),
@@ -107,11 +107,12 @@ class UserKeyInfoScreen extends StatelessWidget {
                       )
                     else
                       RootsInfo(
-                        title: 'Участок',
+                        title: S.of(context).areaTitle,
                         items: state.areasIdsMap.keys.toList(),
                         selectedItems: state.selectedAreas,
-                        onChanged: (newSet) =>
-                            ctx.read<UserEditBloc>().add(OnAreaChangedEvent(newSet)),
+                        onChanged: (newSet) => ctx
+                            .read<UserEditBloc>()
+                            .add(OnAreaChangedEvent(newSet)),
                         folderIdsMap: state.areasIdsMap,
                         isLoading: state.isAreasLoading,
                       ),
@@ -129,7 +130,7 @@ class UserKeyInfoScreen extends StatelessWidget {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Сохранить изменения'),
+                          : Text(S.of(context).saveChanges),
                     ),
                   ),
                 ],

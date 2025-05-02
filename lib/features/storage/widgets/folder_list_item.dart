@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -41,7 +42,7 @@ class FolderListItem extends StatelessWidget {
             width: iconSize,
           ),
           title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          subtitle: Text('Количество файлов: $filesCount',
+          subtitle: Text(S.of(context).filesCount(filesCount),
               style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
               ? Checkbox(

@@ -2,6 +2,7 @@ import 'package:autoexplorer/features/admin/bloc/control/disk_bloc.dart';
 import 'package:autoexplorer/features/storage/view/storage_list_screen.dart';
 import 'package:autoexplorer/features/storage/widgets/folder_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,7 +64,7 @@ class _DiskTabState extends State<DiskTab> {
                   },
                   icon: const Icon(Icons.add_box,
                       color: Colors.lightBlue, size: 32),
-                  label: const Text('Добавить новый регионал'),
+                  label: Text(S.of(context).addNewRegional),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.black,
@@ -92,7 +93,7 @@ class _DiskTabState extends State<DiskTab> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text("Disk Error"),
+                Text(S.of(context).errorLoading),
               ],
             ),
           );
@@ -102,7 +103,8 @@ class _DiskTabState extends State<DiskTab> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text("Загрузка данных", style: theme.textTheme.titleLarge),
+              Text(S.of(context).loadingData,
+                  style: theme.textTheme.titleLarge),
               SizedBox(
                 height: 30,
               ),

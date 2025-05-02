@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class ShowCreateDialog extends StatelessWidget {
@@ -8,17 +9,17 @@ class ShowCreateDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     TextEditingController controller = TextEditingController();
     return AlertDialog(
-      title: const Text('Создать папку'),
+      title: Text(S.of(context).createFolder),
       content: TextField(
         controller: controller,
-        decoration: const InputDecoration(
-          hintText: "Название папки",
+        decoration: InputDecoration(
+          hintText: S.of(context).folderName,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Отмена'),
+          child: Text(S.of(context).cancelButton),
         ),
         TextButton(
           onPressed: () {
@@ -26,7 +27,7 @@ class ShowCreateDialog extends StatelessWidget {
             // Логика создания папки
             Navigator.of(context).pop(folderName);
           },
-          child: const Text('Ок'),
+          child: Text('ОК'),
         ),
       ],
     );

@@ -7,6 +7,7 @@ import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
 import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
@@ -205,27 +206,28 @@ class _StorageListScreenState extends State<StorageListScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Подтвердите удаление'),
-          content:
-              Text('Вы точно хотите удалить ${foldersToDelete.length} папок?'),
+          title: Text(S.of(context).confrimDelete),
+          content: Text(
+              S.of(context).areYouSureToDeleteNFolders(foldersToDelete.length)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(S.of(context).cancelButton),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _performDeletion(foldersToDelete);
               },
-              child: const Text('Удалить', style: TextStyle(color: Colors.red)),
+              child: Text(S.of(context).deleteButton,
+                  style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Выберите папки для удаления')),
+        SnackBar(content: Text(S.of(context).selectFoldersToDelete)),
       );
     }
   }
@@ -337,7 +339,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('В данном каталоге нет файлов'),
+                    Text(S.of(context).noFilesHere),
                   ],
                 ),
               );
@@ -347,7 +349,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text("Errorrrrrr", style: theme.textTheme.titleLarge),
+                    Text(S.of(context).errorLoading,
+                        style: theme.textTheme.titleLarge),
                     Text(state.exception.toString(),
                         style: theme.textTheme.titleLarge),
                     TextButton(
@@ -355,7 +358,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                           _storageListBloc
                               .add(StorageListLoad(path: widget.path));
                         },
-                        child: Text("Try again later"))
+                        child: Text(S.of(context).tryAgainLater))
                   ],
                 ),
               );
@@ -364,7 +367,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Загрузка данных", style: theme.textTheme.titleLarge),
+                    Text(S.of(context).loadingData,
+                        style: theme.textTheme.titleLarge),
                     SizedBox(
                       height: 30,
                     ),

@@ -1,6 +1,7 @@
 import 'package:autoexplorer/features/access/bloc/user_create/user_create_bloc.dart';
 import 'package:autoexplorer/features/access/widgets/region_selector.dart';
 import 'package:autoexplorer/features/access/widgets/roots_info.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,25 +12,26 @@ class UserKeyCreateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => UserCreateBloc(
-      )..add(LoadCreateRegionsEvent()),
+      create: (_) => UserCreateBloc()..add(LoadCreateRegionsEvent()),
       child: BlocConsumer<UserCreateBloc, UserCreateState>(
         listener: (ctx, state) {
           if (state.status == CreateStatus.success) {
             Navigator.pop(ctx, true);
             ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(content: Text('Пользователь создан')),
+              SnackBar(content: Text(S.of(context).userSuccessfullyCreated)),
             );
           }
           if (state.status == CreateStatus.failure) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? 'Ошибка')),
+              SnackBar(
+                  content:
+                      Text(state.errorMessage ?? S.of(context).errorLoading)),
             );
           }
         },
         builder: (ctx, state) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Создать пользователя')),
+            appBar: AppBar(title: Text(S.of(context).createNewUser)),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -37,7 +39,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                 children: [
                   // ФИО + Email + Password + Role
                   _buildTextField(
-                    label: 'Имя',
+                    label: S.of(context).firstName,
                     value: state.firstName,
                     onChanged: (v) => ctx
                         .read<UserCreateBloc>()
@@ -45,7 +47,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
-                    label: 'Фамилия',
+                    label: S.of(context).lastName,
                     value: state.lastName,
                     onChanged: (v) => ctx
                         .read<UserCreateBloc>()
@@ -53,7 +55,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
-                    label: 'Отчество',
+                    label: S.of(context).middleName,
                     value: state.middleName,
                     onChanged: (v) => ctx
                         .read<UserCreateBloc>()
@@ -69,7 +71,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
-                    label: 'Пароль',
+                    label: S.of(context).password,
                     value: state.password,
                     obscure: true,
                     onChanged: (v) => ctx
@@ -78,20 +80,20 @@ class UserKeyCreateScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ListTile(
-                    title: const Text('Роль'),
+                    title: Text(S.of(context).userRole),
                     trailing: DropdownButton<UserRole>(
                       value: state.role,
                       onChanged: (v) => ctx
                           .read<UserCreateBloc>()
                           .add(UpdateCreateFieldEvent('role', v)),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: UserRole.worker,
-                          child: Text('Работник'),
+                          child: Text(S.of(context).userRoleWorker),
                         ),
                         DropdownMenuItem(
                           value: UserRole.admin,
-                          child: Text('Администратор'),
+                          child: Text(S.of(context).userRoleAdmin),
                         ),
                       ],
                     ),
@@ -105,7 +107,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                     const Center(child: CircularProgressIndicator())
                   else
                     RegionSelector(
-                      title: 'Регионал',
+                      title: S.of(context).regionalTitle,
                       regions: state.regionalIdsMap.keys.toList(),
                       selectedRegion: state.regional.isEmpty
                           ? null
@@ -120,7 +122,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Участки
-                  if (state.areasIdsMap.isEmpty) 
+                  if (state.areasIdsMap.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -129,9 +131,9 @@ class UserKeyCreateScreen extends StatelessWidget {
                       ),
                       child: SizedBox(
                         height: 150,
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'Нет участков',
+                            S.of(context).noAreas,
                             style: TextStyle(fontSize: 16),
                           ),
                         ),
@@ -139,7 +141,7 @@ class UserKeyCreateScreen extends StatelessWidget {
                     )
                   else
                     RootsInfo(
-                      title: 'Участок',
+                      title: S.of(context).areaTitle,
                       items: state.areasIdsMap.keys.toList(),
                       selectedItems: state.selectedAreas,
                       onChanged: (set) => ctx
@@ -148,7 +150,6 @@ class UserKeyCreateScreen extends StatelessWidget {
                       folderIdsMap: state.areasIdsMap,
                       isLoading: state.isAreasLoading,
                     ),
-
 
                   const SizedBox(height: 24),
 
@@ -160,9 +161,8 @@ class UserKeyCreateScreen extends StatelessWidget {
                               .read<UserCreateBloc>()
                               .add(SubmitCreateEvent()),
                       child: state.status == CreateStatus.loading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white)
-                          : const Text('Создать'),
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(S.of(context).createButton),
                     ),
                   ),
                 ],
@@ -182,7 +182,8 @@ class UserKeyCreateScreen extends StatelessWidget {
   }) {
     return TextFormField(
       initialValue: value,
-      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      decoration:
+          InputDecoration(labelText: label, border: const OutlineInputBorder()),
       obscureText: obscure,
       onChanged: onChanged,
     );

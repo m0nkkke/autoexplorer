@@ -1,4 +1,5 @@
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -10,37 +11,61 @@ class AppBarMenu extends StatelessWidget {
 
   AppBarMenu({super.key, required this.onSearch, required this.path});
 
-  // Заполнение пунктов меню
-  final List<_MenuItem> _menuItems = [
-    _MenuItem(AppBarMenuOption.createFolder, Icons.add, 'Новая папка'),
-    _MenuItem(AppBarMenuOption.search, Icons.search, 'Поиск'),
-    _MenuItem(AppBarMenuOption.refresh, Icons.refresh, 'Обновить'),
-    _MenuItem(AppBarMenuOption.switchAccount, Icons.vpn_key, 'Сменить'),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<int>(
+    // Список опций с иконками и локализованными текстами
+    final items = <PopupMenuEntry<AppBarMenuOption>>[
+      PopupMenuItem(
+        value: AppBarMenuOption.createFolder,
+        child: Row(
+          children: [
+            Icon(Icons.create_new_folder, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).createFolderMenu),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.search,
+        child: Row(
+          children: [
+            Icon(Icons.search, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).searchMenu),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.refresh,
+        child: Row(
+          children: [
+            Icon(Icons.refresh, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).refreshMenu),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.switchAccount,
+        child: Row(
+          children: [
+            Icon(Icons.vpn_key, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).switchAccount),
+          ],
+        ),
+      ),
+    ];
+
+    return PopupMenuButton<AppBarMenuOption>(
       icon: const Icon(Icons.more_vert),
-      onSelected: (value) => _onMenuItemSelected(value, context),
-      itemBuilder: (context) => _menuItems
-          .map((item) => PopupMenuItem<int>(
-                value: item.option.index,
-                child: Row(
-                  children: [
-                    Icon(item.icon, color: Colors.black54),
-                    const SizedBox(width: 8),
-                    Text(item.text),
-                  ],
-                ),
-              ))
-          .toList(),
+      onSelected: (option) => _onMenuItemSelected(option, context),
+      itemBuilder: (_) => items,
     );
   }
 
   // Обработка выбранного пункта меню
-  void _onMenuItemSelected(int value, BuildContext context) {
-    final option = AppBarMenuOption.values[value];
+  void _onMenuItemSelected(AppBarMenuOption option, BuildContext context) {
     switch (option) {
       case AppBarMenuOption.createFolder:
         ShowCreateDialog.showCreateFolderDialog(context);
@@ -49,11 +74,11 @@ class AppBarMenu extends StatelessWidget {
         onSearch();
         break;
       case AppBarMenuOption.refresh:
-        Navigator.of(context).pushNamed('/storage');
+        Navigator.of(context).pushReplacementNamed('/storage');
         break;
       case AppBarMenuOption.switchAccount:
-        FirebaseAuth.instance.signOut(); // НЕ ЗАБЫТЬ ПОМЕНЯТЬ И СДЕЛАТЬ ЧЕРЕЗ БЛОК
-        Navigator.of(context).pushNamed('/');
+        FirebaseAuth.instance.signOut(); // ЗАМЕНИТЬ
+        Navigator.of(context).pushReplacementNamed('/');
         break;
     }
   }

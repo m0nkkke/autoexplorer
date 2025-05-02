@@ -1,5 +1,6 @@
 import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
@@ -13,6 +14,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
 
 Future<void> main() async {
@@ -68,6 +70,14 @@ class AutoExplorerApp extends StatelessWidget {
       navigatorObservers: [AuthGuard()],
       navigatorKey: navigatorKey,
       initialRoute: '/',
+      locale: Locale('ru'),
+      localizationsDelegates: [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
     );
   }
 }

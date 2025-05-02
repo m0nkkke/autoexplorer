@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 import 'package:autoexplorer/features/storage/widgets/app_bar_menu.dart';
@@ -169,13 +170,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
               widget.onSelectAll(value ?? false);
             },
           ),
-          label: const Text('Выделить все'),
+          label: Text(S.of(context).selectAll),
         ),
         if (widget.onDelete != null)
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: widget.onDelete,
-            tooltip: 'Удалить выбранное',
+            tooltip: S.of(context).deleteSelected,
           ),
       ];
     } else if (widget.mode == AppBarMode.search) {

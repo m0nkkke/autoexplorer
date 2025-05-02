@@ -4,6 +4,7 @@ import 'package:autoexplorer/features/login/bloc/login_state.dart';
 import 'package:autoexplorer/features/login/widgets/input_field.dart';
 import 'package:autoexplorer/features/login/widgets/login_button.dart';
 import 'package:autoexplorer/features/login/widgets/logo_widget.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,9 @@ class LoginScreen extends StatelessWidget {
               }
             } else if (state.status == LoginStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage ?? 'Ошибка входа')),
+                SnackBar(
+                    content:
+                        Text(state.errorMessage ?? S.of(context).errorLogin)),
               );
             }
           },
@@ -47,24 +50,24 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 32),
                     InputField(
                       labelText: 'Email',
-                      hintText: 'Например: example@email.com',
+                      hintText: S.of(context).emailExample,
                       controller: emailController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите email';
+                          return S.of(context).pleaseEnterEmail;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
                     InputField(
-                      labelText: 'Пароль',
-                      hintText: 'Например: 123qwe',
+                      labelText: S.of(context).password,
+                      hintText: S.of(context).passwordExample,
                       controller: passwordController,
                       isPassword: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Пожалуйста, введите пароль';
+                          return S.of(context).pleaseEnterPassword;
                         }
                         return null;
                       },

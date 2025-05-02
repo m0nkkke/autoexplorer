@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:autoexplorer/features/admin/bloc/control/control_bloc.dart';
@@ -18,7 +19,7 @@ class KeyListItem extends StatelessWidget {
 
   void _onTap(BuildContext context) {
     Navigator.of(context).pushNamed(
-      '/access', 
+      '/access',
       arguments: {
         'userData': userData,
         'uid': uid,
@@ -26,26 +27,26 @@ class KeyListItem extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context) { 
+  void _showDeleteDialog(BuildContext context) {
     showDialog(
-      context: context, 
-      builder: (BuildContext dialogContext) { 
+      context: context,
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text("Удалить пользователя?"),
-          content: Text("Вы уверены, что хотите удалить пользователя $keyUserName?"),
+          title: Text(S.of(context).areYouSure),
+          content: Text(S.of(context).areYouSureWithParam(keyUserName)),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text("Отмена"),
+              child: Text(S.of(context).cancelButton),
             ),
             TextButton(
               onPressed: () {
                 context.read<ControlBloc>().add(DeleteUserEvent(uid));
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text("Удалить"),
+              child: Text(S.of(context).deleteButton),
             ),
           ],
         );
@@ -53,15 +54,14 @@ class KeyListItem extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _onTap(context),
-      onLongPress: () => _showDeleteDialog(context),  
+      onLongPress: () => _showDeleteDialog(context),
       child: ListTile(
         leading: Icon(
-          Icons.account_circle, 
+          Icons.account_circle,
           size: 40,
           color: const Color.fromARGB(255, 223, 168, 0),
         ),

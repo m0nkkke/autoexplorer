@@ -9,8 +9,8 @@ class LogoWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 200, 
-          height: 150, 
+          width: 200,
+          height: 150,
           alignment: Alignment.center,
           child: Image.asset(
             'assets/img/logo.png',

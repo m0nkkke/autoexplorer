@@ -1,6 +1,6 @@
 name: autoexplorer
 description: "Simple explorer-project"
-publish_to: 'none' 
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
@@ -20,12 +22,11 @@ dependencies:
   firebase_core: ^3.12.1
   firebase_auth: ^5.5.1
   cloud_firestore: ^5.6.5
-  intl: ^0.20.2
+  intl: 0.19.0
   path_provider: ^2.1.2
   flutter_dotenv: ^5.0.2
   connectivity_plus: ^6.1.4
   internet_connection_checker: ^1.0.0+1
-  
 
 dev_dependencies:
   flutter_test:
@@ -56,3 +57,5 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/img/favicon.png"
+flutter_intl:
+  enabled: true

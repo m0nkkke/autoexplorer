@@ -1,7 +1,7 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class StorageInfo extends StatefulWidget {
-
   final bool connectionStatus;
   final int imagesCount;
   final double storagePercentage;
@@ -9,13 +9,12 @@ class StorageInfo extends StatefulWidget {
   final double totalStorageSize;
 
   const StorageInfo({
-    super.key, 
-    required this.connectionStatus, 
-    required this.imagesCount, 
-    required this.storagePercentage, 
-    required this.currentStorageSize, 
+    super.key,
+    required this.connectionStatus,
+    required this.imagesCount,
+    required this.storagePercentage,
+    required this.currentStorageSize,
     required this.totalStorageSize,
-
   });
 
   @override
@@ -43,10 +42,15 @@ class _StorageInfoState extends State<StorageInfo> {
                   strokeWidth: 6,
                 ),
               ),
-              Column(children: [
-                Text('${widget.storagePercentage.toStringAsFixed(0)}%', style: TextStyle(fontSize: 16)),
-                Text('${widget.currentStorageSize.toStringAsFixed(0)}/${widget.totalStorageSize.toStringAsFixed(0)} ГБ', style: TextStyle(fontSize: 10)),
-              ],)
+              Column(
+                children: [
+                  Text('${widget.storagePercentage.toStringAsFixed(0)}%',
+                      style: TextStyle(fontSize: 16)),
+                  Text(
+                      '${widget.currentStorageSize.toStringAsFixed(0)}/${widget.totalStorageSize.toStringAsFixed(0)} GB',
+                      style: TextStyle(fontSize: 10)),
+                ],
+              )
             ],
           ),
           const SizedBox(width: 12),
@@ -55,15 +59,23 @@ class _StorageInfoState extends State<StorageInfo> {
             children: [
               Row(
                 children: [
-                  Icon(widget.connectionStatus ? Icons.check_circle : Icons.cancel, 
-                  color: widget.connectionStatus ? Colors.green : Colors.red, 
-                  size: 18),
+                  Icon(
+                      widget.connectionStatus
+                          ? Icons.check_circle
+                          : Icons.cancel,
+                      color:
+                          widget.connectionStatus ? Colors.green : Colors.red,
+                      size: 18),
                   SizedBox(width: 4),
-                  Text(widget.connectionStatus ? 'Диск подключен' : 'Диск не подключен',
-                  style: TextStyle(fontSize: 14)),
+                  Text(
+                      widget.connectionStatus
+                          ? S.of(context).diskStatusSuccess
+                          : S.of(context).diskStatusFailed,
+                      style: TextStyle(fontSize: 14)),
                 ],
               ),
-              Text('Изображений: ${widget.imagesCount} шт.', style: TextStyle(fontSize: 14)),
+              Text(S.of(context).imagesCount(widget.imagesCount),
+                  style: TextStyle(fontSize: 14)),
             ],
           ),
         ],

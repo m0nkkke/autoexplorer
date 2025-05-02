@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class UserInfoWidget extends StatelessWidget {
@@ -17,14 +18,14 @@ class UserInfoWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Контроль доступа и учётной записи',
+        Text(
+          S.of(context).accessControl,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        _buildStaticInfoRow(label: 'Фамилия', value: lastName),
-        _buildStaticInfoRow(label: 'Имя',      value: firstName),
-        _buildStaticInfoRow(label: 'Отчество', value: middleName),
+        _buildStaticInfoRow(label: S.of(context).lastName, value: lastName),
+        _buildStaticInfoRow(label: S.of(context).firstName, value: firstName),
+        _buildStaticInfoRow(label: S.of(context).middleName, value: middleName),
       ],
     );
   }
