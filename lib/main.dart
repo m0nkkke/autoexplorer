@@ -1,6 +1,8 @@
 import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/repositories/notifications/abstract_notifications_repository.dart';
+import 'package:autoexplorer/repositories/notifications/notifications_repository.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
@@ -12,8 +14,10 @@ import 'package:autoexplorer/theme/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
 
@@ -32,28 +36,19 @@ Future<void> main() async {
       'Authorization': 'OAuth $token',
     },
   ));
+  
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  GetIt.I.registerLazySingleton<AbstractStorageRepository>(
-    () => StorageRepository(dio: dio),
-    instanceName: 'yandex_repository',
-  );
-
-  GetIt.I.registerLazySingleton<AbstractStorageRepository>(
-    () => LocalRepository(),
-    instanceName: 'local_repository',
-  );
-
-  GetIt.I.registerLazySingleton<AbstractUsersRepository>(
-      () => UsersRepository(firestore: firestore));
+  GetIt.I.registerLazySingleton<AbstractStorageRepository>( () => StorageRepository(dio: dio), instanceName: 'yandex_repository', );
+  GetIt.I.registerLazySingleton<AbstractStorageRepository>( () => LocalRepository(), instanceName: 'local_repository', );
+  GetIt.I.registerLazySingleton<AbstractUsersRepository>( () => UsersRepository(firestore: firestore));
   GetIt.I.registerSingleton<String>(token, instanceName: "yandex_token");
 
   GetIt.I.registerSingleton<ConnectivityService>(ConnectivityService());
   GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
 
-  // final storageListBloc = GetIt.I<StorageListBloc>();
-  // storageListBloc.add(SyncAllEvent(path: '/'));
+  GetIt.I.registerLazySingleton<NotificationsRepositoryI>( () => NotificationsRepository(localNotifications: FlutterLocalNotificationsPlugin(), firebaseMessaging: FirebaseMessaging.instance));
 
   runApp(const AutoExplorerApp());
 }
@@ -70,7 +65,6 @@ class AutoExplorerApp extends StatelessWidget {
       navigatorObservers: [AuthGuard()],
       navigatorKey: navigatorKey,
       initialRoute: '/',
-      locale: Locale('ru'),
       localizationsDelegates: [
         S.delegate,
         GlobalMaterialLocalizations.delegate,

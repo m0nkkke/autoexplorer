@@ -8,6 +8,7 @@ import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/repositories/notifications/abstract_notifications_repository.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
@@ -42,6 +43,14 @@ class _StorageListScreenState extends State<StorageListScreen> {
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
 
   //
+
+  Future<void> _initNotifications() async {
+    final repository = GetIt.I<NotificationsRepositoryI>();
+    final result = await repository.requestPermisison();
+    if (result) {
+      repository.getToken().then((token) => print('TOKEN PUSH: $token' ?? '...'));
+    }
+  }
 
   // МЕТОДЫ ДЕЙСТВИЙ НА ЭКРАНЕ
   void _showImageSourceActionSheet() {
@@ -250,6 +259,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
     // _storageListBloc.add(SyncToYandexEvent(path: widget.path));
     // _storageListBloc.add(SyncAllEvent(path: widget.path));
     _storageListBloc.add(StorageListLoad(path: widget.path));
+    _initNotifications();
     // _loadData(path: widget.path);
     super.initState();
   }
