@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464216100441",
+    "project_id": "autoexplorer-19425",
+    "storage_bucket": "autoexplorer-19425.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464216100441:android:7ee9982b6ffcc3923f6b48",
+        "android_client_info": {
+          "package_name": "com.example.autoexplorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUuR9VqA3tHAcc4iEPtU07SawyUI7otko"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

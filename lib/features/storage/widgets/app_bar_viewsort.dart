@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 enum SortOption { name, date }
@@ -50,17 +51,16 @@ class _AppBarViewsortState extends State<AppBarViewsort> {
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        _buildSectionHeader('Вид значков'),
-        _buildMenuItem('small', 'Мелкий'),
-        _buildMenuItem('large', 'Крупный'),
+        _buildSectionHeader(S.of(context).iconsViewMode),
+        _buildMenuItem('small', S.of(context).iconsViewModeSmall),
+        _buildMenuItem('large', S.of(context).iconsViewModeLarge),
         const PopupMenuDivider(),
-        _buildSectionHeader('Сортировка'),
-        _buildMenuItem('name', 'Сортировка по имени'),
-        _buildMenuItem('date', 'Сортировка по дате создания'),
+        _buildSectionHeader(S.of(context).sortModeTitle),
+        _buildMenuItem('name', S.of(context).sortByName),
+        _buildMenuItem('date', S.of(context).sortByDate),
       ],
     );
   }
-
 
 // Методы для построения элементов
   PopupMenuItem<String> _buildMenuItem(String value, String text) {

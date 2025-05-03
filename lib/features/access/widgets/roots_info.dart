@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 class RootsInfo extends StatefulWidget {
   final String title;
-  final List<String> items;
-  final Set<String> selectedItems;
-  final ValueChanged<Set<String>> onChanged;
+  final List<String> items; // Список названий папок для отображения
+  final Set<String> selectedItems; // Список ID выбранных участков
+  final Map<String, String> folderIdsMap; // Словарь {название папки: id}
+  final ValueChanged<Set<String>> onChanged; // Коллбек для передачи id
+  final bool isLoading; // Флаг загрузки
 
   const RootsInfo({
     super.key,
@@ -12,6 +14,8 @@ class RootsInfo extends StatefulWidget {
     required this.items,
     required this.selectedItems,
     required this.onChanged,
+    required this.folderIdsMap,
+    required this.isLoading, // Принимаем флаг загрузки
   });
 
   @override
@@ -19,13 +23,13 @@ class RootsInfo extends StatefulWidget {
 }
 
 class _RootsInfoState extends State<RootsInfo> {
-  late Set<String> selectedItems;
+  late Set<String> selectedItems; // Состояние выбранных элементов
   late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    selectedItems = Set.from(widget.selectedItems);
+    selectedItems = Set.from(widget.selectedItems); // Инициализируем состоянием
     _scrollController = ScrollController();
   }
 
@@ -38,11 +42,12 @@ class _RootsInfoState extends State<RootsInfo> {
   void _onItemChanged(String item, bool? isSelected) {
     setState(() {
       if (isSelected == true) {
-        selectedItems.add(item);
+        selectedItems.add(widget.folderIdsMap[item]!); // Добавляем ID папки в список выбранных
       } else {
-        selectedItems.remove(item);
+        selectedItems.remove(widget.folderIdsMap[item]!); // Убираем ID папки из списка
       }
-      widget.onChanged(selectedItems);
+
+      widget.onChanged(selectedItems); // Отправляем только ID выбранных папок
     });
   }
 
@@ -66,30 +71,33 @@ class _RootsInfoState extends State<RootsInfo> {
           ),
           child: SizedBox(
             height: 150,
-            child: Scrollbar(
-              controller: _scrollController, 
-              thumbVisibility: true, 
-              child: SingleChildScrollView(
-                controller: _scrollController, 
-                child: Column(
-                  children: widget.items.map((item) {
-                    return CheckboxListTile(
-                      value: selectedItems.contains(item),
-                      onChanged: (bool? value) => _onItemChanged(item, value),
-                      title: Text(
-                        item,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 16,
-                        ),
+            child: widget.isLoading // Проверяем флаг загрузки
+                ? Center(child: CircularProgressIndicator()) // Показываем индикатор загрузки
+                : Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      child: Column(
+                        children: widget.items.map((item) {
+                          final isSelected = selectedItems.contains(widget.folderIdsMap[item]);
+                          return CheckboxListTile(
+                            value: isSelected, // Проверяем, выбран ли элемент по ID
+                            onChanged: (bool? value) => _onItemChanged(item, value),
+                            title: Text(
+                              item, // Отображаем только название папки
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 16,
+                              ),
+                            ),
+                            controlAffinity: ListTileControlAffinity.trailing,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }).toList(),
                       ),
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+                    ),
+                  ),
           ),
         ),
       ],

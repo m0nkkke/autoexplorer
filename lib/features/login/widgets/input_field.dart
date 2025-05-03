@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class InputField extends StatelessWidget {
@@ -5,7 +6,7 @@ class InputField extends StatelessWidget {
   final String hintText;
   final bool isPassword;
   final TextEditingController controller;
-  final String? Function(String?)? validator; 
+  final String? Function(String?)? validator;
 
   const InputField({
     super.key,
@@ -36,13 +37,12 @@ class InputField extends StatelessWidget {
               borderSide: const BorderSide(color: Colors.blue),
             ),
             suffixIcon: Tooltip(
-              message: 'Чтобы получить ключ, свяжитесь с начальником',
+              message: S.of(context).helpKey,
               waitDuration: const Duration(milliseconds: 500),
               showDuration: const Duration(seconds: 2),
               child: IconButton(
                 icon: const Icon(Icons.help_outline, color: Colors.blue),
-                onPressed: () {
-                },
+                onPressed: () {},
               ),
             ),
           ),
