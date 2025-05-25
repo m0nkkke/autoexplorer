@@ -75,13 +75,19 @@ class AppBarMenu extends StatelessWidget {
         onSearch();
         break;
       case AppBarMenuOption.refresh:
-        Navigator.of(context).pushReplacementNamed('/storage');
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/storage',
+          (Route<dynamic> route) => false,
+        );
         break;
       case AppBarMenuOption.switchAccount:
         FirebaseAuth.instance.signOut(); // ЗАМЕНИТЬ
         globalAccessList = null;
         globalRole = null;
-        Navigator.of(context).pushReplacementNamed('/');
+       Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (Route<dynamic> route) => false,
+        );
         break;
     }
   }

@@ -16,7 +16,7 @@ class AdminPanelScreen extends StatelessWidget {
     return BlocProvider<StorageInfoBloc>(
       create: (_) => StorageInfoBloc()..add(LoadStorageInfo()),
       child: DefaultTabController(
-        length: 3,
+        length: 2,
         child: Scaffold(
           appBar: AppBar(
             title: Text(
@@ -63,7 +63,7 @@ class AdminPanelScreen extends StatelessWidget {
                     tabs: [
                       Tab(text: S.of(context).diskTabTitle),
                       Tab(text: S.of(context).controlTabTitle),
-                      Tab(text: S.of(context).creationTabTitle),
+                      // Tab(text: S.of(context).creationTabTitle),
                     ],
                   ),
                 ],
@@ -74,7 +74,7 @@ class AdminPanelScreen extends StatelessWidget {
             children: [
               DiskTab(),
               ControlTab(),
-              CreateTab(),
+              // CreateTab(),
             ],
           ),
         ),
