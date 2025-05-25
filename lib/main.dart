@@ -7,12 +7,14 @@ import 'package:autoexplorer/repositories/storage/abstract_storage_repository.da
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:autoexplorer/repositories/users/users_repository.dart';
 import 'package:autoexplorer/router/authGuard.dart';
 import 'package:autoexplorer/router/router.dart';
 import 'package:autoexplorer/theme/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -36,19 +38,28 @@ Future<void> main() async {
       'Authorization': 'OAuth $token',
     },
   ));
-  
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  GetIt.I.registerLazySingleton<AbstractStorageRepository>( () => StorageRepository(dio: dio), instanceName: 'yandex_repository', );
-  GetIt.I.registerLazySingleton<AbstractStorageRepository>( () => LocalRepository(), instanceName: 'local_repository', );
-  GetIt.I.registerLazySingleton<AbstractUsersRepository>( () => UsersRepository(firestore: firestore));
+  GetIt.I.registerLazySingleton<AbstractStorageRepository>(
+    () => StorageRepository(dio: dio),
+    instanceName: 'yandex_repository',
+  );
+  GetIt.I.registerLazySingleton<AbstractStorageRepository>(
+    () => LocalRepository(),
+    instanceName: 'local_repository',
+  );
+  GetIt.I.registerLazySingleton<AbstractUsersRepository>(
+      () => UsersRepository(firestore: firestore));
   GetIt.I.registerSingleton<String>(token, instanceName: "yandex_token");
 
   GetIt.I.registerSingleton<ConnectivityService>(ConnectivityService());
   GetIt.I.registerSingleton<StorageListBloc>(StorageListBloc());
 
-  GetIt.I.registerLazySingleton<NotificationsRepositoryI>( () => NotificationsRepository(localNotifications: FlutterLocalNotificationsPlugin(), firebaseMessaging: FirebaseMessaging.instance));
+  GetIt.I.registerLazySingleton<NotificationsRepositoryI>(() =>
+      NotificationsRepository(
+          localNotifications: FlutterLocalNotificationsPlugin(),
+          firebaseMessaging: FirebaseMessaging.instance));
 
   runApp(const AutoExplorerApp());
 }

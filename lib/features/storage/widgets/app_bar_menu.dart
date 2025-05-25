@@ -1,5 +1,6 @@
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -78,6 +79,8 @@ class AppBarMenu extends StatelessWidget {
         break;
       case AppBarMenuOption.switchAccount:
         FirebaseAuth.instance.signOut(); // ЗАМЕНИТЬ
+        globalAccessList = null;
+        globalRole = null;
         Navigator.of(context).pushReplacementNamed('/');
         break;
     }

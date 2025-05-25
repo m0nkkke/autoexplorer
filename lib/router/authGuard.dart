@@ -1,3 +1,4 @@
+import 'package:autoexplorer/global.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 class AuthGuard extends NavigatorObserver {
-  final AbstractUsersRepository _usersRepository = GetIt.I<AbstractUsersRepository>();
+  final AbstractUsersRepository _usersRepository =
+      GetIt.I<AbstractUsersRepository>();
   bool _initialAuthCheckDone = false;
 
   @override
@@ -34,8 +36,10 @@ class AuthGuard extends NavigatorObserver {
       if (user != null && routeName == '/') {
         final userData = await _usersRepository.getUserByUid(user.uid);
         final userRole = userData?.role;
+        globalRole = userRole;
         if (userData != null) {
-          if(userRole == UserRole.admin) {
+          globalAccessList = null;
+          if (userRole == UserRole.admin) {
             navigator?.pushNamedAndRemoveUntil('/admin', (route) => false);
           } else {
             navigator?.pushNamedAndRemoveUntil('/storage', (route) => false);
@@ -55,7 +59,9 @@ class AuthGuard extends NavigatorObserver {
 
       if (routeName == '/admin' && userRole != UserRole.admin) {
         navigator?.pushNamedAndRemoveUntil('/storage', (route) => false);
-      } else if (routeName != '/' && routeName != '/admin' && userRole == null) {
+      } else if (routeName != '/' &&
+          routeName != '/admin' &&
+          userRole == null) {
         navigator?.pushNamedAndRemoveUntil('/', (route) => false);
       }
     }

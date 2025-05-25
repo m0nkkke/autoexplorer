@@ -8,11 +8,15 @@ import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:autoexplorer/repositories/notifications/abstract_notifications_repository.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
+import 'package:autoexplorer/repositories/users/users_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -48,7 +52,9 @@ class _StorageListScreenState extends State<StorageListScreen> {
     final repository = GetIt.I<NotificationsRepositoryI>();
     final result = await repository.requestPermisison();
     if (result) {
-      repository.getToken().then((token) => print('TOKEN PUSH: $token' ?? '...'));
+      repository
+          .getToken()
+          .then((token) => print('TOKEN PUSH: $token' ?? '...'));
     }
   }
 
@@ -257,8 +263,16 @@ class _StorageListScreenState extends State<StorageListScreen> {
   void initState() {
     // _storageListBloc.add(SyncFromYandexEvent(path: widget.path));
     // _storageListBloc.add(SyncToYandexEvent(path: widget.path));
-    // _storageListBloc.add(SyncAllEvent(path: widget.path));
-    _storageListBloc.add(StorageListLoad(path: widget.path));
+    print("INIT STATE storage_view");
+
+    print("globalRole");
+    print(globalRole);
+    if (widget.path == '/') {
+      _storageListBloc.add(SyncAllEvent(path: widget.path));
+    } else {
+      _storageListBloc.add(StorageListLoad(path: widget.path));
+    }
+    print(widget.path);
     _initNotifications();
     // _loadData(path: widget.path);
     super.initState();
