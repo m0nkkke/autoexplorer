@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:autoexplorer/connectivityService.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/file_json.dart';
@@ -48,7 +49,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     // on<SyncFromYandexEvent>(_onSyncFromYandex);
     // on<SyncToYandexEvent>(_onSyncToYandex);
     on<DeleteFolderEvent>(_onDeleteFolder);
-    // on<SyncAllEvent>(_onSyncAreasFromYandex);
+    on<SyncAllEvent>(_onSyncAreasFromYandex);
 
     GetIt.I<ConnectivityService>().addListener(_onChangeConnectionHandler);
   }
@@ -75,11 +76,13 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     if (GetIt.I<ConnectivityService>().hasInternet) {
       await _initAccess();
       emit(StorageListLoading());
-      await yandexRepository.syncRegionalAndAreasStructure(
-        userRegionalId: _userRegionalId,
-        accessList: _accessList,
-        isAdmin: _role == UserRole.admin,
-      );
+      if (globalRole == UserRole.worker) {
+        await yandexRepository.syncRegionalAndAreasStructure(
+          userRegionalId: _userRegionalId,
+          accessList: _accessList,
+          isAdmin: _role == UserRole.admin,
+        );
+      }
       add(StorageListLoad(path: event.path));
     }
   }
@@ -232,6 +235,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
 
   /// Один раз подтягиваем роль и accessList
   Future<void> _initAccess() async {
+    print("============= Вызов initAccess =============");
     final fb = FirebaseAuth.instance.currentUser;
     if (fb == null) throw Exception('Не авторизованный пользователь');
 
@@ -239,7 +243,16 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     final u = await usersRepository.getUserByUid(fb.uid);
     _role = u!.role;
     _accessList = u.accessList;
+    globalAccessList = u.accessList;
+    globalRole = u.role;
     _userRegionalId = u.regional; // resourceId
+
+    print("globalRole");
+    print(globalRole);
+    print("globalAccessList");
+    print(globalAccessList);
+    print("_userRegionalId");
+    print(_userRegionalId);
 
     // 2) Загружаем **корень** яндекс‑диска, чтобы построить _rootMap
     final rootItems = await yandexRepository.getFileAndFolderModels(path: '');
@@ -336,37 +349,69 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
 
   FutureOr<void> _onStorageListLoad(
       StorageListLoad event, Emitter<StorageListState> emit) async {
+    // try {
+    //   late dynamic role;
+    //   if (GetIt.I<ConnectivityService>().hasInternet) {
+    //     try {
+    //       try {
+    //         role = _role;
+    //       } catch (e) {
+    //         print("===== catch role =====");
+    //         await _initAccess();
+    //         role = _role;
+    //       }
+    //     } catch (e) {
+    //       print(e);
+    //       role = UserRole.worker;
+    //     }
+    //   } else {
+    //     role = UserRole.worker;
+    //   }
+    //   late dynamic itemsList;
+    //   print(role);
+    //   if (role == UserRole.worker) {
+    //     itemsList =
+    //         await localRepository.getFileAndFolderModels(path: event.path);
+    //   } else {
+    //     itemsList =
+    //         await yandexRepository.getFileAndFolderModels(path: event.path);
+    //   }
+    //   print(itemsList.toString());
+    //   emit(StorageListLoaded(items: itemsList));
+    // } catch (e) {
+    //   print(e.toString());
+    //   emit(StorageListLoadingFailure(exception: e));
+    // }
+    print("============= Вызов _onStorageListLoad =============");
     try {
-      late dynamic role;
-      if (GetIt.I<ConnectivityService>().hasInternet) {
-        try {
-          try {
-            role = _role;
-          } catch (e) {
-            print("===== catch role =====");
-            await _initAccess();
-            role = _role;
-          }
-        } catch (e) {
-          print(e);
-          role = UserRole.worker;
-        }
-      } else {
-        role = UserRole.worker;
+      // 1. Берём роль из глобальной переменной, по умолчанию — worker
+      final role = globalRole;
+      print("========= запуск onStorageListLoad ==========");
+      print(globalRole.toString());
+      print(globalAccessList.toString());
+
+      // 2. Проверяем наличие интернета
+      final hasInternet = GetIt.I<ConnectivityService>().hasInternet;
+      if ((globalAccessList == [] || globalRole == null) && hasInternet) {
+        print("===== catch role =====");
+        await _initAccess();
       }
-      late dynamic itemsList;
-      print(role);
-      if (role == UserRole.worker) {
-        itemsList =
-            await localRepository.getFileAndFolderModels(path: event.path);
-      } else {
-        itemsList =
-            await yandexRepository.getFileAndFolderModels(path: event.path);
-      }
-      print(itemsList.toString());
+      // 3. В зависимости от роли и соединения выбираем источник данных
+      final itemsList = (hasInternet && globalRole == UserRole.admin)
+          // для админа/менеджера (role != worker) и при интернет-соединении — из Yandex
+          ? await yandexRepository.getFileAndFolderModels(
+              path: event.path, // если метод принимает список доступа
+            )
+          // иначе — локально
+          : await localRepository.getFileAndFolderModels(
+              path: event.path,
+            );
+
+      // 4. Эмитим состояние с полученным списком
       emit(StorageListLoaded(items: itemsList));
-    } catch (e) {
-      print(e.toString());
+    } catch (e, stack) {
+      // Логируем ошибку и эмитим состояние Failure
+      print('StorageListLoad error: $e\n$stack');
       emit(StorageListLoadingFailure(exception: e));
     }
   }

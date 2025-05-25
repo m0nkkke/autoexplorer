@@ -1,4 +1,5 @@
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:flutter/material.dart';
 
 enum AppBarMenuOption { change }
@@ -54,6 +55,9 @@ class AppBarActions extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(context).pushNamed('/');
+
+              globalAccessList = null;
+              globalRole = null;
             },
             child: Text(S.of(context).switchAccount),
           ),
