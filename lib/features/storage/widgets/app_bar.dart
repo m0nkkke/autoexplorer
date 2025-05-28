@@ -172,12 +172,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
           label: Text(S.of(context).selectAll),
         ),
-        if (widget.onDelete != null)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: widget.onDelete,
-            tooltip: S.of(context).deleteSelected,
-          ),
+        // if (widget.onDelete != null)
+        //   IconButton(
+        //     icon: const Icon(Icons.delete),
+        //     onPressed: widget.onDelete,
+        //     tooltip: S.of(context).deleteSelected,
+        //   ),
       ];
     } else if (widget.mode == AppBarMode.search) {
       return [];

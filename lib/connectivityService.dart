@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -66,60 +68,63 @@ class ConnectivityService extends ChangeNotifier {
 
   /// Пробегаем по всем записям из JSON-лога,
   /// отправляем каждую на Яндекс.Диск и удаляем из лога при успехе.
-  Future<void> _syncLog() async {
-    print("================");
-    print("метод _syncLog");
-    final logFile = await _getLogFile();
-    final content = await logFile.readAsString();
-    final List<dynamic> array = jsonDecode(content);
+Future<void> _syncLog() async {
+  print("================");
+  print("метод _syncLog");
+  final logFile = await _getLogFile();
+  final content = await logFile.readAsString();
+  final List<dynamic> array = jsonDecode(content);
 
-    if (array.isEmpty) return;
+  if (array.isEmpty) return;
 
-    // Получаем репозитории через GetIt
-    final localRepo =
-        GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository');
-    final yandexRepo =
-        GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository')
-            as StorageRepository;
+  final localRepo =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository');
+  final yandexRepo =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository')
+          as StorageRepository;
 
-    // Корневая папка applicationData
-    final appDir = await localRepo.getAppDirectory(path: '/');
+  final appDir = await localRepo.getAppDirectory(path: '/');
 
-    // Итерируем поверх копии, чтобы удалять элементы из оригинального списка
-    for (final raw in List<dynamic>.from(array)) {
-      final entry = FileJSON.fromJson(raw as Map<String, dynamic>);
-      try {
-        if (entry.type == 'file') {
-          print("================");
-          print("file");
-          // собираем полный локальный путь к файлу
-          // final localPath = p.join(appDir.path, entry.uploadPath);
-          await yandexRepo.uploadFile(
-            filePath: entry.uploadPath,
-            uploadPath: entry.remotePath,
-          );
-        } else {
-          // для папки: имя и родительская директория
-          // final name = p.basename(entry.remotePath);
-          // final parent = p.dirname(entry.remotePath);
-          print("================");
-          print("folder");
-          await yandexRepo.createFolder(
-            name: entry.uploadPath,
-            path: entry.remotePath,
-            // path: parent == '.' ? '/' : parent,
-          );
-        }
+  // Здесь будем накапливать число успешно загруженных файлов
+  int uploadedFilesCount = 0;
+  final user = FirebaseAuth.instance.currentUser;
 
-        // при успехе — удаляем из списка и перезаписываем файл
-        array.remove(raw);
-        await logFile.writeAsString(jsonEncode(array), flush: true);
-      } catch (e) {
-        // если конкретная запись не ушла — пропускаем её,
-        // дальше будут другие, и при повторном восстановлении сети
-        // этот же код попробует ещё раз.
-        continue;
+  for (final raw in List<dynamic>.from(array)) {
+    final entry = FileJSON.fromJson(raw as Map<String, dynamic>);
+    try {
+      if (entry.type == 'file') {
+        await yandexRepo.uploadFile(
+          filePath: entry.uploadPath,
+          uploadPath: entry.remotePath,
+        );
+        uploadedFilesCount++;
+      } else {
+        await yandexRepo.createFolder(
+          name: entry.uploadPath,
+          path: entry.remotePath,
+        );
       }
+
+      // Успешно обработали запись — убираем из лога
+      array.remove(raw);
+      await logFile.writeAsString(jsonEncode(array), flush: true);
+    } catch (e) {
+      // на неудачу не реагируем, оставляем запись
+      continue;
     }
   }
+
+  // Если были загружены файлы, обновляем Firestore
+  if (uploadedFilesCount > 0) {
+    print('обновление инфы');
+    // final docRef = FirebaseFirestore.instance
+    //     .collection('users')    // <-- замените на вашу коллекцию
+    //     .doc('${user?.uid}');        // <-- или получите docId динамически
+
+    // await docRef.update({
+    //   'lastUpload': FieldValue.serverTimestamp().ToString(),
+    //   'imagesCount': FieldValue.increment(uploadedFilesCount),
+    // });
+  }
+}
 }

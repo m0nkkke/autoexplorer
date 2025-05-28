@@ -1,4 +1,6 @@
 # === Flutter / Dart ===
+.dart
+/dart
 .dart_tool/                   # кэш публтулов, сборка
 .flutter-plugins              # список плагинов
 .flutter-plugins-dependencies # зависимости плагинов
@@ -10,6 +12,8 @@
 # pubspec.lock
 
 # === Android ===
+/android
+/build
 **/android/local.properties   # путь до SDK, пароль keystore и т.п.
 /android/.gradle/             # кэш Gradle
 /android/app/*.keystore       # если есть приватные keystore-файлы

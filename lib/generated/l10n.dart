@@ -565,35 +565,35 @@ class S {
     );
   }
 
-  /// `Images created:`
+  /// `Images created`
   String get imagesCreated {
     return Intl.message(
-      'Images created:',
+      'Images created',
       name: 'imagesCreated',
       desc: '',
       args: [],
     );
   }
 
-  /// `Last upload:`
+  /// `Last upload`
   String get lastUpload {
-    return Intl.message('Last upload:', name: 'lastUpload', desc: '', args: []);
+    return Intl.message('Last upload', name: 'lastUpload', desc: '', args: []);
   }
 
-  /// `Access granted:`
+  /// `Access granted`
   String get accessGranted {
     return Intl.message(
-      'Access granted:',
+      'Access granted',
       name: 'accessGranted',
       desc: '',
       args: [],
     );
   }
 
-  /// `Access edited:`
+  /// `Access edited`
   String get accessModified {
     return Intl.message(
-      'Access edited:',
+      'Access edited',
       name: 'accessModified',
       desc: '',
       args: [],

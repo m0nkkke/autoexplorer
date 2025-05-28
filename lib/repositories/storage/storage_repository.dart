@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/disk_capacity.dart';
 import 'package:autoexplorer/repositories/storage/models/disk_stat.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
@@ -241,7 +244,18 @@ class StorageRepository extends AbstractStorageRepository {
       if (uploadResponse.statusCode != 201) {
         throw Exception('Ошибка загрузки: ${uploadResponse.statusCode}');
       }
-
+      final user = FirebaseAuth.instance.currentUser;
+      final nowUtc = DateTime.now().toUtc();
+      final mskTime = nowUtc.add(Duration(hours: 3));
+      final formatter = DateFormat('dd-MM-yyyy HH:mm');
+      final formatted = formatter.format(mskTime);
+      final docRef = FirebaseFirestore.instance
+        .collection('users')    // <-- замените на вашу коллекцию
+        .doc('${user?.uid}');        // <-- или получите docId динамически
+      await docRef.update({
+        'lastUpload': formatted,
+        'imagesCount': FieldValue.increment(1),
+      });
       debugPrint('✅ Файл загружен: $cleanPath');
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
