@@ -15,7 +15,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(state.copyWith(status: LoginStatus.loading));
 
     try {
-      final user = await _usersRepository.signInUser(event.emailKey, event.password);
+      final user =
+          await _usersRepository.signInUser(event.emailKey, event.password);
 
       if (user == null) {
         emit(state.copyWith(
@@ -32,7 +33,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     } catch (e) {
       emit(state.copyWith(
         status: LoginStatus.failure,
-        errorMessage: e.toString(),
+        errorMessage:
+            'Ошибка подключения. Вероятно, нет интернета или плохая связь',
       ));
     }
   }

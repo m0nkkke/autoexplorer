@@ -1,11 +1,8 @@
-import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/global.dart';
-import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
 
@@ -15,12 +12,12 @@ class AppBarMenu extends StatelessWidget {
   final Function(String) onCreateFolder;
   final VoidCallback onRefresh;
 
-
   const AppBarMenu({
     super.key,
     required this.onSearch,
     required this.path,
-    required this.onCreateFolder, required this.onRefresh,
+    required this.onCreateFolder,
+    required this.onRefresh,
   });
 
   @override

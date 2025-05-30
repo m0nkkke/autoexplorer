@@ -12,7 +12,6 @@ import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
 import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/global.dart';
 import 'package:autoexplorer/repositories/notifications/abstract_notifications_repository.dart';
-import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
@@ -56,9 +55,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
     final repository = GetIt.I<NotificationsRepositoryI>();
     final result = await repository.requestPermisison();
     if (result) {
-      repository
-          .getToken()
-          .then((token) => print('TOKEN PUSH: $token' ?? '...'));
+      repository.getToken().then((token) => debugPrint('TOKEN PUSH: $token'));
     }
   }
 
@@ -165,18 +162,6 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
   // ЗАГРУЗКА СОДЕРЖИМОГО ДИСКА
   List<dynamic> filesAndFolders = [];
-  Future<void> _loadData({String path = '/'}) async {
-    try {
-      final results = await GetIt.I<AbstractStorageRepository>()
-          .getFileAndFolderModels(path: path);
-      setState(() {
-        filesAndFolders = results;
-      });
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
-  //
 
   // ДОБАВИТЬ ФОТО В ПАПКУ
   final ImagePicker _picker = ImagePicker();
@@ -185,7 +170,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       File file = File(image.path);
-      print('Выбрано изображение: ${file.path}');
+      debugPrint('Выбрано изображение: ${file.path}');
 
       // Генерируем уникальное имя файла
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -270,16 +255,16 @@ class _StorageListScreenState extends State<StorageListScreen> {
   void initState() {
     // _storageListBloc.add(SyncFromYandexEvent(path: widget.path));
     // _storageListBloc.add(SyncToYandexEvent(path: widget.path));
-    print("INIT STATE storage_view");
+    debugPrint("INIT STATE storage_view");
 
-    print("globalRole");
-    print(globalRole);
+    debugPrint("globalRole");
+    debugPrint(globalRole.toString());
     if (widget.path == '/' && GetIt.I<ConnectivityService>().hasInternet) {
       _storageListBloc.add(SyncAllEvent(path: widget.path));
     } else {
       _storageListBloc.add(StorageListLoad(path: widget.path));
     }
-    print(widget.path);
+    debugPrint(widget.path);
     _initNotifications();
     // _loadData(path: widget.path);
     super.initState();
@@ -360,7 +345,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   if (item is FileItem) {
-                    print('File item found: ${item.name}');
+                    debugPrint('File item found: ${item.name}');
                     final displayDate = formatDate(item.creationDate);
                     return FileListItem(
                       title: item.name,
@@ -405,7 +390,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   children: [
                     Text(S.of(context).errorLoading,
                         style: theme.textTheme.titleLarge),
-                    Text(state.exception.toString(),
+                    Text(state.errorMessage.toString(),
                         style: theme.textTheme.titleLarge),
                     TextButton(
                         onPressed: () {

@@ -56,7 +56,6 @@ class AuthGuard extends NavigatorObserver {
     if (user != null) {
       final userData = await _usersRepository.getUserByUid(user.uid);
       final userRole = userData?.role;
-      print('CHECKER+++++++++++++++++++++++++++++++++++++');
       if (routeName == '/admin' && userRole != UserRole.admin) {
         navigator?.pushNamedAndRemoveUntil('/storage', (route) => false);
       } else if (routeName != '/' &&

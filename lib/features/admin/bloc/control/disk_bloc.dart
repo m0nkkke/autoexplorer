@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'disk_state.dart';
@@ -22,7 +23,7 @@ class DiskBloc extends Bloc<DiskEvent, DiskState> {
 
       emit(DiskLoaded(folders));
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       emit(DiskError(e));
     }
   }
@@ -35,7 +36,7 @@ class DiskBloc extends Bloc<DiskEvent, DiskState> {
       await storageRepository.createFolder(name: event.folderName, path: '/');
       add(DiskLoadFoldersEvent());
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       emit(DiskError(e));
     }
   }

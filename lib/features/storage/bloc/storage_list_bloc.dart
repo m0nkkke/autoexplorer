@@ -11,7 +11,6 @@ import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
-// import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -47,8 +46,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     on<StorageListUploadFile>(_onStorageListUploadFile);
     on<LoadImageUrl>(_onLoadImageUrl);
     on<ResetImageLoadingState>(_onResetImageLoadingState);
-    // on<SyncFromYandexEvent>(_onSyncFromYandex);
-    // on<SyncToYandexEvent>(_onSyncToYandex);
     on<DeleteFolderEvent>(_onDeleteFolder);
     on<SyncAllEvent>(_onSyncAreasFromYandex);
 
@@ -65,7 +62,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           isAdmin: _role == UserRole.admin,
         );
       } catch (e) {
-        print(e);
+        debugPrint(e.toString());
       }
     }
   }
@@ -93,8 +90,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     try {
       emit(StorageListLoaded(items: event.currentItems));
     } catch (e) {
-      print(e.toString());
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint(e.toString());
+      emit(StorageListLoadingFailure(errorMessage: e.toString()));
     }
   }
 
@@ -151,9 +148,9 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
             filePath: event.filePath,
             uploadPath: remotePath,
           );
-          print('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
+          debugPrint('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
         } catch (e) {
-          print('⚠️ Не удалось загрузить на Я.Диск: $e');
+          debugPrint('⚠️ Не удалось загрузить на Я.Диск: $e');
         }
       } else {
         final logEntry = FileJSON(
@@ -164,8 +161,9 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         await _appendToJsonLog(logEntry);
       }
     } catch (e) {
-      print('❌ Ошибка в _onStorageListUploadFile: $e');
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint('❌ Ошибка в _onStorageListUploadFile: $e');
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось загрузить данные.'));
     }
   }
 
@@ -204,7 +202,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           name: event.name,
           path: remoteParent, // вот здесь уже /Test999 или /
         );
-        print('✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+        debugPrint(
+            '✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
       } else {
         final logEntry = FileJSON(
           type: 'folder',
@@ -214,31 +213,25 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         await _appendToJsonLog(logEntry);
       }
     } catch (e) {
-      print('❌ Ошибка в _onStorageListCreateFolder: $e');
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint('❌ Ошибка в _onStorageListCreateFolder: $e');
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось загрузить данные.'));
     }
   }
 
   /// Один раз подтягиваем роль и accessList
   Future<void> _initAccess() async {
-    print("============= Вызов initAccess =============");
+    debugPrint("============= Вызов initAccess =============");
     final fb = FirebaseAuth.instance.currentUser;
     if (fb == null) throw Exception('Не авторизованный пользователь');
 
-    // 1) Загружаем данные юзера
+    // 1) Загружаем данные
     final u = await usersRepository.getUserByUid(fb.uid);
     _role = u!.role;
     _accessList = u.accessList;
     globalAccessList = u.accessList;
     globalRole = u.role;
-    _userRegionalId = u.regional; // resourceId
-
-    print("globalRole");
-    print(globalRole);
-    print("globalAccessList");
-    print(globalAccessList);
-    print("_userRegionalId");
-    print(_userRegionalId);
+    _userRegionalId = u.regional;
 
     // 2) Загружаем **корень** яндекс‑диска, чтобы построить _rootMap
     final rootItems = await yandexRepository.getFileAndFolderModels(path: '');
@@ -276,9 +269,9 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       final itemsList = (hasInternet && globalRole == UserRole.admin)
           ? await yandexRepository.getFileAndFolderModels(
               path: event.path,
-              // searchQuery: event.searchQuery,
-              // sortBy: event.sortBy,
-              // ascending: event.ascending,
+              searchQuery: event.searchQuery,
+              sortBy: event.sortBy,
+              ascending: event.ascending,
             )
           : await localRepository.getFileAndFolderModels(
               path: event.path,
@@ -289,7 +282,9 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
 
       emit(StorageListLoaded(items: itemsList));
     } catch (e, st) {
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint(e.toString());
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось загрузить данные.'));
     }
   }
 
@@ -302,9 +297,10 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       // add(StorageListLoad(
       //     path: event.path)); // Обновление UI после синхронизации
     } catch (e) {
-      print('==========onSyncFromYandex=========');
-      print(e);
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint('==========onSyncFromYandex=========');
+      debugPrint(e.toString());
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось синхронизировать данные.'));
     }
   }
 
@@ -318,9 +314,10 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       add(StorageListLoad(
           path: event.path)); // Обновление UI после синхронизации
     } catch (e) {
-      print('=========onSyncToYandex==========');
-      print(e);
-      emit(StorageListLoadingFailure(exception: e));
+      debugPrint('=========onSyncToYandex==========');
+      debugPrint(e.toString());
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось синхронизировать данные.'));
     }
   }
 
@@ -334,7 +331,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       );
       add(StorageListLoad(path: event.currentPath));
     } catch (e) {
-      emit(StorageListLoadingFailure(exception: e));
+      emit(StorageListLoadingFailure(
+          errorMessage: 'Не удалось удалить данные.'));
     }
   }
 

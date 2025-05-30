@@ -32,19 +32,10 @@ class StorageRepository extends AbstractStorageRepository {
 
   Future<List<dynamic>> getFileList({String path = '/'}) async {
     try {
-      print('====================================');
-      print('=====getFileList========');
-      print('====================================');
-      print('path: $path');
-      print('====================================');
-
       final response = await dio.get('', queryParameters: {
         'path': path,
-        // 'limit': 1000,
       });
       if (response.statusCode == 200) {
-        print('Изображений: ${response.data['total']}');
-        print(response.data['_embedded']['items']);
         return response.data['_embedded']['items'];
       } else {
         throw Exception('Failed to load FileItems: ${response.statusCode}');
@@ -96,7 +87,6 @@ class StorageRepository extends AbstractStorageRepository {
         resourceId: resourceId,
       );
     } catch (e) {
-      debugPrint('⚠️ Ошибка получения информации о папке: $e');
       return FolderItem(
         name: cleanName,
         filesCount: 0,
@@ -111,7 +101,7 @@ class StorageRepository extends AbstractStorageRepository {
     final response =
         await dio.get('/download', queryParameters: {'path': filePath});
     debugPrint(response.data.toString());
-    return response.data['href']; // Временная ссылка
+    return response.data['href'];
   }
 
   /// принимает:
@@ -126,7 +116,6 @@ class StorageRepository extends AbstractStorageRepository {
     bool ascending = true,
   }) async {
     try {
-      // Убедимся, что путь корректен
       final cleanPath = path.startsWith('disk:/') ? path : 'disk:/$path';
       final response = await dio.get(
         '',
@@ -145,12 +134,10 @@ class StorageRepository extends AbstractStorageRepository {
       for (final raw in items) {
         final type = raw['type'] as String;
         final name = raw['name'] as String;
-        // В API Яндекс.Диска есть поля created и modified, например:
         final dateString =
             raw['created'] as String? ?? raw['modified'] as String;
         final date = DateTime.parse(dateString);
 
-        // Мапим на наши модели
         final dynamic model =
             (type == 'file') ? _mapFileItem(raw) : await _mapFolderItem(raw);
 
@@ -182,7 +169,7 @@ class StorageRepository extends AbstractStorageRepository {
   @override
   Future<void> createFolder({
     required String name,
-    required String path, // например "/" или "/Test999"
+    required String path,
   }) async {
     // 1) Собираем чистый POSIX-путь: "/Test999/666" или "/444" для корня
     final fullPath = p.join(path, name);
@@ -377,7 +364,7 @@ class StorageRepository extends AbstractStorageRepository {
       if (e.response?.statusCode == 404) {
         return false; // Папки нет
       }
-      rethrow; // Другие ошибки (например, 403, 500)
+      rethrow; // Другие ошибки
     }
   }
 
@@ -392,7 +379,7 @@ class StorageRepository extends AbstractStorageRepository {
     debugPrint('📁 Папка создана на Яндекс.Диске: $parentPath/$folderName');
   }
 
-  /// Основной метод «локал → яндекс»
+  /// Основной метод «локал -> яндекс»
   Future<void> syncToYandexDisk() async {
     final locRepo = GetIt.I<AbstractStorageRepository>(
       instanceName: 'local_repository',

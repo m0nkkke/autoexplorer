@@ -22,12 +22,12 @@ class StorageListLoaded extends StorageListState {
 }
 
 class StorageListLoadingFailure extends StorageListState {
+  final String errorMessage;
+
+  StorageListLoadingFailure({required this.errorMessage});
+
   @override
-  List<Object?> get props => [];
-
-  final Object? exception;
-
-  StorageListLoadingFailure({required this.exception});
+  List<Object?> get props => [errorMessage];
 }
 
 class ImageViewerInitial extends StorageListState {

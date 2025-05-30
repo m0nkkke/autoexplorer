@@ -8,9 +8,6 @@ class FileItem extends Abstractfile {
     required this.imageURL,
   });
 
-  // final String name;
   final String creationDate;
-
-  // final String path;
   final String imageURL;
 }

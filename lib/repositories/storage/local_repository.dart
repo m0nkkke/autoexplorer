@@ -14,15 +14,12 @@ class LocalRepository extends AbstractStorageRepository {
     final dir = await getAppDirectory();
     String finalpath;
 
-    print('📦 Base dir for path="$path": ${dir.path}');
     if (path != '/') {
       finalpath = p.join(path, name);
     } else {
       finalpath = p.join(dir.path, name);
     }
-    print(finalpath);
     final folder = Directory(finalpath);
-    print('📁 Will create folder at: ${folder.path}');
     if (!(await folder.exists())) {
       await folder.create(recursive: true);
     }
@@ -110,7 +107,6 @@ class LocalRepository extends AbstractStorageRepository {
 
   @override
   Future<String> getImageDownloadUrl(String filePath) {
-    // TODO: implement getImageDownloadUrl
     throw UnimplementedError();
   }
 
@@ -147,7 +143,6 @@ class LocalRepository extends AbstractStorageRepository {
     return appDir;
   }
 
-  // @override
   Future<void> deleteFolder({
     required String name,
     required String path,
@@ -160,7 +155,6 @@ class LocalRepository extends AbstractStorageRepository {
       final file = File(entityPath);
       if (await file.exists()) {
         await file.delete();
-        print('🗑 Файл удалён: \$entityPath');
         return;
       }
 
@@ -168,13 +162,11 @@ class LocalRepository extends AbstractStorageRepository {
       final folder = Directory(entityPath);
       if (await folder.exists()) {
         await folder.delete(recursive: true);
-        print('🗑 Папка удалена: \$entityPath');
         return;
       }
 
       throw Exception('Файл или папка не существуют: \$entityPath');
     } catch (e) {
-      print('❌ Ошибка удаления: \$e');
       rethrow;
     }
   }

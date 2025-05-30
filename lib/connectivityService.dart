@@ -5,7 +5,6 @@ import 'package:autoexplorer/repositories/storage/abstract_storage_repository.da
 import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -41,8 +40,6 @@ class ConnectivityService extends ChangeNotifier {
 
       // если только что восстановили интернет — запускаем _syncLog()
       if (!wasOnline && _hasInternet) {
-        print("================");
-        print("подключили интернет");
         await _syncLog();
       }
     }
@@ -68,8 +65,6 @@ class ConnectivityService extends ChangeNotifier {
   /// Пробегаем по всем записям из JSON-лога,
   /// отправляем каждую на Яндекс.Диск и удаляем из лога при успехе.
   Future<void> _syncLog() async {
-    print("================");
-    print("метод _syncLog");
     final logFile = await _getLogFile();
     final content = await logFile.readAsString();
     final List<dynamic> array = jsonDecode(content);
@@ -84,10 +79,6 @@ class ConnectivityService extends ChangeNotifier {
 
     final appDir = await localRepo.getAppDirectory(path: '/');
 
-    // Здесь будем накапливать число успешно загруженных файлов
-    int uploadedFilesCount = 0;
-    final user = FirebaseAuth.instance.currentUser;
-
     for (final raw in List<dynamic>.from(array)) {
       final entry = FileJSON.fromJson(raw as Map<String, dynamic>);
       try {
@@ -96,7 +87,6 @@ class ConnectivityService extends ChangeNotifier {
             filePath: entry.uploadPath,
             uploadPath: entry.remotePath,
           );
-          uploadedFilesCount++;
         } else {
           await yandexRepo.createFolder(
             name: entry.uploadPath,
@@ -111,19 +101,6 @@ class ConnectivityService extends ChangeNotifier {
         // на неудачу не реагируем, оставляем запись
         continue;
       }
-    }
-
-    // Если были загружены файлы, обновляем Firestore
-    if (uploadedFilesCount > 0) {
-      print('обновление инфы');
-      // final docRef = FirebaseFirestore.instance
-      //     .collection('users')    // <-- замените на вашу коллекцию
-      //     .doc('${user?.uid}');        // <-- или получите docId динамически
-
-      // await docRef.update({
-      //   'lastUpload': FieldValue.serverTimestamp().ToString(),
-      //   'imagesCount': FieldValue.increment(uploadedFilesCount),
-      // });
     }
   }
 }
