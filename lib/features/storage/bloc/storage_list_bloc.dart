@@ -7,6 +7,7 @@ import 'package:autoexplorer/repositories/storage/abstract_storage_repository.da
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
+import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
@@ -113,21 +114,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       emit(ImageLoadError());
     }
   }
-
-  // FutureOr<void> _onStorageListUploadFile(
-  //     StorageListUploadFile event, Emitter<StorageListState> emit) async {
-  //   try {
-  //     emit(StorageListLoading());
-  //     await localRepository.uploadFile(
-  //       filePath: event.filePath,
-  //       uploadPath: event.uploadPath,
-  //     );
-  //     add(StorageListLoad(path: event.currentPath));
-  //   } catch (e) {
-  //     print(e.toString());
-  //     emit(StorageListLoadingFailure(exception: e));
-  //   }
-  // }
 
   FutureOr<void> _onStorageListUploadFile(
     StorageListUploadFile event,
@@ -277,141 +263,32 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     _accessInitialized = true;
   }
 
-// FutureOr<void> _onStorageListLoad(
-//   StorageListLoad event,
-//   Emitter<StorageListState> emit,
-// ) async {
-//   emit(StorageListLoading());
-
-//   if (!_accessInitialized) {
-//     await _initAccess();
-//   }
-
-//   // 1) Грузим именно ту папку, в которую просят зайти
-//   final repoPath = event.path == '/'
-//       ? ''
-//       : event.path.startsWith('disk:')
-//           ? event.path
-//           : 'disk:/${event.path}';
-//   final items =
-//       await yandexRepository.getFileAndFolderModels(path: repoPath);
-
-//   List<dynamic> filtered;
-
-//   // --- A) Корень: просто показываем всё ---
-//   if (event.path == '/' || event.path == 'disk:/') {
-//     filtered = items.whereType<FolderItem>().toList();
-
-//     // сбрасываем флаг, чтобы при первом заходе в регион “allowedPaths” собрался
-//     _regionInitialized = false;
-
-//   // --- B) Первый заход в регионалог _userRegionalPath ---
-//   } else if (!_regionInitialized && event.path == _userRegionalPath) {
-//     if (_role == UserRole.admin) {
-//       filtered = items;
-//     } else {
-//       // строим allowedPaths из подпапок первого уровня
-//       _allowedPaths
-//         ..clear()
-//         ..addEntries(items
-//           .whereType<FolderItem>()
-//           .where((f) => _accessList.contains(f.resourceId))
-//           .map((f) => MapEntry(f.resourceId, f.path)));
-
-//       filtered = items
-//           .where((it) =>
-//               it is FolderItem && _allowedPaths.containsKey(it.resourceId))
-//           .toList();
-//     }
-//     _regionInitialized = true;
-
-//   // --- C) Любое глубокое вложение внутри региона ---
-//   } else {
-//     if (_role == UserRole.admin) {
-//       // filtered = items;
-//     } else {
-//       // не давать уйти за пределы своего региона
-//       if (!event.path.startsWith(_userRegionalPath!)) {
-//         emit(StorageListLoadingFailure(
-//             exception: 'Нет доступа к ${event.path}'));
-//         return;
-//       }
-//       // // показываем только те элементы, чей путь лежит внутри любого из allowedPaths
-//       // filtered = items.where((it) {
-//       //   final pth = (it as dynamic).path as String;
-//       //   return _allowedPaths.values.any((base) => pth.startsWith(base));
-//       // }).toList();
-//     }
-//   }
-
-//   emit(StorageListLoaded(items: items));
-// }
-
   FutureOr<void> _onStorageListLoad(
-      StorageListLoad event, Emitter<StorageListState> emit) async {
-    // try {
-    //   late dynamic role;
-    //   if (GetIt.I<ConnectivityService>().hasInternet) {
-    //     try {
-    //       try {
-    //         role = _role;
-    //       } catch (e) {
-    //         print("===== catch role =====");
-    //         await _initAccess();
-    //         role = _role;
-    //       }
-    //     } catch (e) {
-    //       print(e);
-    //       role = UserRole.worker;
-    //     }
-    //   } else {
-    //     role = UserRole.worker;
-    //   }
-    //   late dynamic itemsList;
-    //   print(role);
-    //   if (role == UserRole.worker) {
-    //     itemsList =
-    //         await localRepository.getFileAndFolderModels(path: event.path);
-    //   } else {
-    //     itemsList =
-    //         await yandexRepository.getFileAndFolderModels(path: event.path);
-    //   }
-    //   print(itemsList.toString());
-    //   emit(StorageListLoaded(items: itemsList));
-    // } catch (e) {
-    //   print(e.toString());
-    //   emit(StorageListLoadingFailure(exception: e));
-    // }
-    print("============= Вызов _onStorageListLoad =============");
+    StorageListLoad event,
+    Emitter<StorageListState> emit,
+  ) async {
     try {
-      // 1. Берём роль из глобальной переменной, по умолчанию — worker
-      final role = globalRole;
-      print("========= запуск onStorageListLoad ==========");
-      print(globalRole.toString());
-      print(globalAccessList.toString());
-
-      // 2. Проверяем наличие интернета
       final hasInternet = GetIt.I<ConnectivityService>().hasInternet;
       if ((globalAccessList == [] || globalRole == null) && hasInternet) {
-        print("===== catch role =====");
         await _initAccess();
       }
-      // 3. В зависимости от роли и соединения выбираем источник данных
+
       final itemsList = (hasInternet && globalRole == UserRole.admin)
-          // для админа/менеджера (role != worker) и при интернет-соединении — из Yandex
           ? await yandexRepository.getFileAndFolderModels(
-              path: event.path, // если метод принимает список доступа
+              path: event.path,
+              // searchQuery: event.searchQuery,
+              // sortBy: event.sortBy,
+              // ascending: event.ascending,
             )
-          // иначе — локально
           : await localRepository.getFileAndFolderModels(
               path: event.path,
+              searchQuery: event.searchQuery,
+              sortBy: event.sortBy,
+              ascending: event.ascending,
             );
 
-      // 4. Эмитим состояние с полученным списком
       emit(StorageListLoaded(items: itemsList));
-    } catch (e, stack) {
-      // Логируем ошибку и эмитим состояние Failure
-      print('StorageListLoad error: $e\n$stack');
+    } catch (e, st) {
       emit(StorageListLoadingFailure(exception: e));
     }
   }
@@ -442,25 +319,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           path: event.path)); // Обновление UI после синхронизации
     } catch (e) {
       print('=========onSyncToYandex==========');
-      print(e);
-      emit(StorageListLoadingFailure(exception: e));
-    }
-  }
-
-  FutureOr<void> _onSyncAll(
-    SyncAllEvent event,
-    Emitter<StorageListState> emit,
-  ) async {
-    try {
-      emit(StorageListLoading());
-      if (GetIt.I<ConnectivityService>().hasInternet) {
-        // единый вызов
-        await yandexRepository.syncAll(path: event.path);
-      }
-      // обновляем UI
-      add(StorageListLoad(path: event.path));
-    } catch (e) {
-      print('=========onSyncAll==========');
       print(e);
       emit(StorageListLoadingFailure(exception: e));
     }

@@ -52,7 +52,7 @@ class _DiskTabState extends State<DiskTab> {
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     final folderName =
-                        await ShowCreateDialog.showCreateFolderDialog(context);
+                        await ShowCreateDialog.showCreateFolderDialog(context, currentPath: '/');
                     if (folderName != null) {
                       // Вызов логики создания папки
                       _disk_bloc

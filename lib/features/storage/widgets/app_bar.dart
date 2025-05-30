@@ -1,11 +1,16 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
+import 'package:autoexplorer/repositories/storage/models/sortby.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:flutter/material.dart';
 
 import 'package:autoexplorer/features/storage/widgets/app_bar_menu.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_viewsort.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
@@ -14,11 +19,15 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final int selectedCount;
   final VoidCallback onCancel;
   final Function(bool) onIconSizeChanged;
+  final void Function(SortOption sortBy, bool ascending) onSortChanged;
   final Function(bool) onSelectAll;
   final VoidCallback onSearch;
+  final void Function(String) onSearchChanged;
+  final TextEditingController searchController;
   final bool isAllSelected;
   final AppBarMode mode;
   final Function(String) onCreateFolder;
+  final VoidCallback refreshItems;
   final VoidCallback? onDelete;
 
   const CustomAppBar({
@@ -35,6 +44,10 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.mode,
     required this.onCreateFolder,
     required this.onDelete,
+    required this.refreshItems,
+    required this.onSortChanged,
+    required this.onSearchChanged,
+    required this.searchController,
   });
 
   @override
@@ -47,8 +60,6 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  final TextEditingController _searchController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -82,12 +93,16 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   // Поисковая строка
   Widget _buildSearchField() {
-    return TextField(
-      controller: _searchController,
-      decoration: const InputDecoration(
-        hintText: 'Поиск...',
-        border: InputBorder.none,
-        focusedBorder: InputBorder.none,
+    return SizedBox(
+      width: 200, // подгоните под нужный вам размер
+      child: TextField(
+        controller: widget.searchController,
+        decoration: const InputDecoration(
+          hintText: 'Поиск...',
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+        ),
+        onChanged: widget.onSearchChanged, // туда летит каждый новый запрос
       ),
     );
   }
@@ -159,32 +174,37 @@ class _CustomAppBarState extends State<CustomAppBar> {
   // Кнопки действий
   List<Widget> _buildActions() {
     if (widget.mode == AppBarMode.selection) {
+      final isWorker = globalRole == UserRole.worker;
       return [
-        TextButton.icon(
-          onPressed: () {
-            widget.onSelectAll(!widget.isAllSelected);
-          },
-          icon: Checkbox(
-            value: widget.isAllSelected,
-            onChanged: (value) {
-              widget.onSelectAll(value ?? false);
+        if (!isWorker)
+          TextButton.icon(
+            onPressed: () {
+              widget.onSelectAll(!widget.isAllSelected);
             },
+            icon: Checkbox(
+              value: widget.isAllSelected,
+              onChanged: (value) {
+                widget.onSelectAll(value ?? false);
+              },
+            ),
+            label: Text(S.of(context).selectAll),
           ),
-          label: Text(S.of(context).selectAll),
-        ),
-        // if (widget.onDelete != null)
-        //   IconButton(
-        //     icon: const Icon(Icons.delete),
-        //     onPressed: widget.onDelete,
-        //     tooltip: S.of(context).deleteSelected,
-        //   ),
       ];
     } else if (widget.mode == AppBarMode.search) {
       return [];
     } else {
       return [
-        AppBarViewsort(onIconSizeChanged: widget.onIconSizeChanged),
-        AppBarMenu(onSearch: widget.onSearch, path: widget.path),
+        AppBarViewsort(
+            onIconSizeChanged: widget.onIconSizeChanged,
+            onSortChanged: widget.onSortChanged),
+        AppBarMenu(
+          onSearch: widget.onSearch,
+          path: widget.path,
+          onCreateFolder: widget.onCreateFolder,
+          onRefresh: () {
+            widget.refreshItems;
+          },
+        ),
       ];
     }
   }
@@ -205,7 +225,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
               IconButton(
                 onPressed: () async {
                   final folderName =
-                      await ShowCreateDialog.showCreateFolderDialog(context);
+                      await ShowCreateDialog.showCreateFolderDialog(context,
+                          currentPath: widget.path);
                   if (folderName != null) {
                     widget.onCreateFolder(folderName);
                   }

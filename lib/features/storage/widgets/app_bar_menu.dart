@@ -1,26 +1,36 @@
+import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/global.dart';
+import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
 
 class AppBarMenu extends StatelessWidget {
   final VoidCallback onSearch;
-  final path;
+  final String path;
+  final Function(String) onCreateFolder;
+  final VoidCallback onRefresh;
 
-  AppBarMenu({super.key, required this.onSearch, required this.path});
+
+  const AppBarMenu({
+    super.key,
+    required this.onSearch,
+    required this.path,
+    required this.onCreateFolder, required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Список опций с иконками и локализованными текстами
     final items = <PopupMenuEntry<AppBarMenuOption>>[
       PopupMenuItem(
         value: AppBarMenuOption.createFolder,
         child: Row(
           children: [
-            Icon(Icons.create_new_folder, color: Colors.black54),
+            const Icon(Icons.create_new_folder, color: Colors.black54),
             const SizedBox(width: 8),
             Text(S.of(context).createFolderMenu),
           ],
@@ -30,7 +40,7 @@ class AppBarMenu extends StatelessWidget {
         value: AppBarMenuOption.search,
         child: Row(
           children: [
-            Icon(Icons.search, color: Colors.black54),
+            const Icon(Icons.search, color: Colors.black54),
             const SizedBox(width: 8),
             Text(S.of(context).searchMenu),
           ],
@@ -40,7 +50,7 @@ class AppBarMenu extends StatelessWidget {
         value: AppBarMenuOption.refresh,
         child: Row(
           children: [
-            Icon(Icons.refresh, color: Colors.black54),
+            const Icon(Icons.refresh, color: Colors.black54),
             const SizedBox(width: 8),
             Text(S.of(context).refreshMenu),
           ],
@@ -50,7 +60,7 @@ class AppBarMenu extends StatelessWidget {
         value: AppBarMenuOption.switchAccount,
         child: Row(
           children: [
-            Icon(Icons.vpn_key, color: Colors.black54),
+            const Icon(Icons.vpn_key, color: Colors.black54),
             const SizedBox(width: 8),
             Text(S.of(context).switchAccount),
           ],
@@ -65,39 +75,36 @@ class AppBarMenu extends StatelessWidget {
     );
   }
 
-  // Обработка выбранного пункта меню
-  void _onMenuItemSelected(AppBarMenuOption option, BuildContext context) {
+  Future<void> _onMenuItemSelected(
+      AppBarMenuOption option, BuildContext context) async {
     switch (option) {
       case AppBarMenuOption.createFolder:
-        ShowCreateDialog.showCreateFolderDialog(context);
+        final folderName = await ShowCreateDialog.showCreateFolderDialog(
+          context,
+          currentPath: path,
+        );
+        if (folderName != null) {
+          onCreateFolder(folderName);
+        }
         break;
+
       case AppBarMenuOption.search:
         onSearch();
         break;
+
       case AppBarMenuOption.refresh:
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/storage',
-          (Route<dynamic> route) => false,
-        );
+        onRefresh();
         break;
+
       case AppBarMenuOption.switchAccount:
-        FirebaseAuth.instance.signOut(); // ЗАМЕНИТЬ
+        await FirebaseAuth.instance.signOut();
         globalAccessList = null;
         globalRole = null;
-       Navigator.of(context).pushNamedAndRemoveUntil(
+        Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
-          (Route<dynamic> route) => false,
+          (route) => false,
         );
         break;
     }
   }
-}
-
-// Вспомогательный класс для представления элементов меню
-class _MenuItem {
-  final AppBarMenuOption option;
-  final IconData icon;
-  final String text;
-
-  _MenuItem(this.option, this.icon, this.text);
 }

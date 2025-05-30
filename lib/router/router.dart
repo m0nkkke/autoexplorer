@@ -11,7 +11,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 final routes = {
   '/': (context) => LoginScreen(),
-  '/file': (context) => StorageListScreen(title: 'Участок 1'),
+  '/file': (context) => StorageListScreen(title: 'Участок'),
   '/storage': (context) => StorageListScreen(title: 'Серверное хранилище'),
   '/admin': (context) => AdminPanelScreen(),
   '/access': (context) => UserKeyInfoScreen(),

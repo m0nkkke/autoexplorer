@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
-import 'package:flutter/material.dart';
+import 'package:autoexplorer/repositories/storage/models/item_wrapper.dart';
+import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:path/path.dart' as p;
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:path_provider/path_provider.dart';
@@ -27,41 +28,71 @@ class LocalRepository extends AbstractStorageRepository {
     }
   }
 
+  /// принимает:
+  ///  - [searchQuery] — если не null/пусто, то фильтрует по вхождению в название
+  ///  - [sortBy] — SortBy.name или SortBy.date
+  ///  - [ascending] — true = по возрастанию, false = по убыванию
   @override
-  Future<List> getFileAndFolderModels({String path = 'applicationData'}) async {
-    debugPrint("====== ИСПОЛЬЗУЕТСЯ ЛОКАЛЬНОЕ ХРАНИЛИЩЕ ===========");
+  Future<List<dynamic>> getFileAndFolderModels({
+    String path = 'applicationData',
+    String? searchQuery,
+    SortBy sortBy = SortBy.name,
+    bool ascending = true,
+  }) async {
     final dir = await getAppDirectory(path: path);
-    final List<dynamic> folderItems = [];
+    final List<ItemWrapper> wrapped = [];
 
-    // Получаем список всех элементов в директории
-    final dirList = await dir.list().toList();
-
-    for (var entity in dirList) {
+    final entities = await dir.list().toList();
+    for (final entity in entities) {
       final name = p.basename(entity.path);
+      final stat = await entity.stat();
+      final DateTime date = stat.modified;
+
       if (entity is Directory) {
-        // Если это папка, подсчитываем количество файлов в ней
         final filesCount = await _getFilesCountInDirectory(entity.path);
-        folderItems.add(FolderItem(
-          resourceId: '',
+        wrapped.add(ItemWrapper(
           name: name,
-          filesCount: filesCount,
-          path: entity.path,
+          date: date,
+          item: FolderItem(
+            resourceId: '',
+            name: name,
+            filesCount: filesCount,
+            path: entity.path,
+          ),
         ));
       } else if (entity is File) {
-        final stat = await entity.stat();
-        final creationDate =
-            stat.modified.toIso8601String(); // или .changed для создания
-
-        folderItems.add(FileItem(
+        wrapped.add(ItemWrapper(
           name: name,
-          creationDate: creationDate,
-          path: entity.path,
-          imageURL: entity.path, // локальный путь как URL
+          date: date,
+          item: FileItem(
+            name: name,
+            creationDate: date.toIso8601String(),
+            path: entity.path,
+            imageURL: entity.path,
+          ),
         ));
       }
     }
 
-    return folderItems;
+    // 1) Фильтрация
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      final q = searchQuery.toLowerCase();
+      wrapped.retainWhere((w) => w.name.toLowerCase().contains(q));
+    }
+
+    // 2) Сортировка
+    wrapped.sort((a, b) {
+      int cmp;
+      if (sortBy == SortBy.name) {
+        cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      } else {
+        cmp = a.date.compareTo(b.date);
+      }
+      return ascending ? cmp : -cmp;
+    });
+
+    // 3) Отворачиваем обратно в модели
+    return wrapped.map((w) => w.item).toList();
   }
 
   Future<int> _getFilesCountInDirectory(String path) async {
@@ -102,6 +133,7 @@ class LocalRepository extends AbstractStorageRepository {
     }
   }
 
+  @override
   Future<Directory> getAppDirectory({String? path}) async {
     final baseDir = await getApplicationDocumentsDirectory();
     if (path == '/') path = null;
@@ -113,12 +145,6 @@ class LocalRepository extends AbstractStorageRepository {
     }
 
     return appDir;
-  }
-
-  @override
-  Future<List<Map<String, String>>> getFolderIds(String path) {
-    // TODO: implement getFolderIds
-    throw UnimplementedError();
   }
 
   // @override

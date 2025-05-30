@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/features/storage/view/image_view_screen.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/app_bar_mode.dart';
+import 'package:autoexplorer/features/storage/widgets/app_bar_viewsort.dart';
 import 'package:autoexplorer/features/storage/widgets/bottom_action_bar.dart';
 import 'package:autoexplorer/features/storage/widgets/file_list_item.dart';
 import 'package:autoexplorer/features/storage/widgets/image_source_sheet.dart';
@@ -14,12 +16,11 @@ import 'package:autoexplorer/repositories/storage/abstract_storage_repository.da
 import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
-import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
-import 'package:autoexplorer/repositories/users/users_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 import '../widgets/folder_list_item.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -39,6 +40,9 @@ class _StorageListScreenState extends State<StorageListScreen> {
   bool _isSelectionMode = false;
   bool _isLargeIcons = false;
   AppBarMode _appBarMode = AppBarMode.normal;
+  SortBy _sortBy = SortBy.name;
+  bool _ascending = true;
+  final _searchController = TextEditingController();
   //
 
   final _storageListBloc = StorageListBloc();
@@ -152,6 +156,11 @@ class _StorageListScreenState extends State<StorageListScreen> {
       _appBarMode = AppBarMode.normal;
     });
   }
+
+  String formatDate(String iso) {
+    final dt = DateTime.parse(iso);
+    return DateFormat('dd.MM.yyyy HH:mm').format(dt);
+  }
   //
 
   // ЗАГРУЗКА СОДЕРЖИМОГО ДИСКА
@@ -172,13 +181,6 @@ class _StorageListScreenState extends State<StorageListScreen> {
   // ДОБАВИТЬ ФОТО В ПАПКУ
   final ImagePicker _picker = ImagePicker();
 
-  // Future<void> _pickImage(ImageSource source) async {
-  //   final XFile? image = await _picker.pickImage(source: source);
-  //   if (image != null) {
-  //     File file = File(image.path);
-  //     print('Выбрано изображение: ${file.path}');
-  //   }
-  // }
   Future<void> _pickImage(ImageSource source) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
@@ -206,6 +208,11 @@ class _StorageListScreenState extends State<StorageListScreen> {
         ),
       );
     }
+  }
+
+  void refreshItems() {
+    _storageListBloc.add(SyncAllEvent(path: widget.path));
+    setState(() {});
   }
 
   void _deleteSelectedItems() {
@@ -267,7 +274,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
     print("globalRole");
     print(globalRole);
-    if (widget.path == '/') {
+    if (widget.path == '/' && GetIt.I<ConnectivityService>().hasInternet) {
       _storageListBloc.add(SyncAllEvent(path: widget.path));
     } else {
       _storageListBloc.add(StorageListLoad(path: widget.path));
@@ -301,23 +308,45 @@ class _StorageListScreenState extends State<StorageListScreen> {
         onSelectAll: _onSelectAll,
         isAllSelected: _selectedItems.length == filesAndFolders.length,
         onSearch: _onSearch,
+        searchController: _searchController,
+        onSearchChanged: (query) {
+          final sq = query.trim().isEmpty ? null : query.trim();
+          _storageListBloc.add(StorageListLoad(
+            path: widget.path,
+            sortBy: _sortBy,
+            ascending: _ascending,
+            searchQuery: sq,
+          ));
+        },
         mode: _appBarMode,
         onIconSizeChanged: _updateIconSize,
+        onSortChanged: (sortOption, ascending) {
+          setState(() {
+            _sortBy = sortOption == SortOption.name ? SortBy.name : SortBy.date;
+            _ascending = ascending;
+          });
+          _storageListBloc.add(StorageListLoad(
+            path: widget.path,
+            sortBy: _sortBy,
+            ascending: _ascending,
+            // сохраняем текущий поисковый текст
+            searchQuery: _searchController.text.trim().isEmpty
+                ? null
+                : _searchController.text.trim(),
+          ));
+        },
         onCreateFolder: (folderName) {
           _storageListBloc.add(
             StorageListCreateFolder(name: folderName, path: widget.path),
           );
         },
         onDelete: _isSelectionMode ? _deleteSelectedItems : null,
+        refreshItems: refreshItems,
       ),
 
       body: RefreshIndicator(
         onRefresh: () async {
-          // final completer = Completer();
-          _storageListBloc.add(SyncAllEvent(path: widget.path));
-          // _storageListBloc.add(StorageListLoad(path: widget.path));
-          setState(() {});
-          // return completer.future;
+          refreshItems();
         },
         child: BlocBuilder<StorageListBloc, StorageListState>(
           bloc: _storageListBloc,
@@ -332,9 +361,10 @@ class _StorageListScreenState extends State<StorageListScreen> {
                   final item = items[index];
                   if (item is FileItem) {
                     print('File item found: ${item.name}');
+                    final displayDate = formatDate(item.creationDate);
                     return FileListItem(
                       title: item.name,
-                      creationDate: item.creationDate,
+                      creationDate: displayDate,
                       isSelectionMode: _isSelectionMode,
                       index: index,
                       isSelected: _selectedItems.contains(index),
@@ -422,41 +452,6 @@ class _StorageListScreenState extends State<StorageListScreen> {
                 )
               : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildFileList(List<dynamic> filesAndFolders) {
-    return ListView.builder(
-      itemCount: filesAndFolders.length,
-      itemBuilder: (context, index) {
-        final item = filesAndFolders[index];
-        if (item is FileItem) {
-          print('File item found: ${item.name}');
-          return FileListItem(
-            title: item.name,
-            creationDate: item.creationDate,
-            isSelectionMode: _isSelectionMode,
-            index: index,
-            isSelected: _selectedItems.contains(index),
-            onLongPress: () => _onLongPress(index),
-            onTap: () => _onTap(index),
-            isLargeIcons: _isLargeIcons,
-          );
-        } else if (item is FolderItem) {
-          return FolderListItem(
-            title: item.name,
-            filesCount: item.filesCount.toString(),
-            isSelectionMode: _isSelectionMode,
-            index: index,
-            isSelected: _selectedItems.contains(index),
-            onLongPress: () => _onLongPress(index),
-            onTap: () => _onTap(index),
-            isLargeIcons: _isLargeIcons,
-          );
-        } else {
-          return Container();
-        }
-      },
     );
   }
 }

@@ -4,8 +4,16 @@ abstract class StorageListEvent {}
 
 class StorageListLoad extends StorageListEvent {
   final String path;
+  final SortBy sortBy;
+  final bool ascending;
+  final String? searchQuery;
 
-  StorageListLoad({required this.path});
+  StorageListLoad({
+    required this.path,
+    this.sortBy = SortBy.name,
+    this.ascending = true,
+    this.searchQuery,
+  });
 }
 
 class StorageListCreateFolder extends StorageListEvent {

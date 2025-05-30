@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/disk_capacity.dart';
 import 'package:autoexplorer/repositories/storage/models/disk_stat.dart';
+import 'package:autoexplorer/repositories/storage/models/item_wrapper.dart';
+import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
@@ -111,91 +114,113 @@ class StorageRepository extends AbstractStorageRepository {
     return response.data['href']; // Временная ссылка
   }
 
+  /// принимает:
+  ///  - [searchQuery] — если не null/пусто, то фильтрует по вхождению в название
+  ///  - [sortBy] — SortBy.name или SortBy.date
+  ///  - [ascending] — true = по возрастанию, false = по убыванию
   @override
-  Future<List<dynamic>> getFileAndFolderModels({String path = 'disk:/'}) async {
+  Future<List<dynamic>> getFileAndFolderModels({
+    String path = 'disk:/',
+    String? searchQuery,
+    SortBy sortBy = SortBy.name,
+    bool ascending = true,
+  }) async {
     try {
-      print("============");
-      print(path);
-      // Убедимся, что путь начинается с disk:/
+      // Убедимся, что путь корректен
       final cleanPath = path.startsWith('disk:/') ? path : 'disk:/$path';
+      final response = await dio.get(
+        '',
+        queryParameters: {'path': cleanPath},
+      );
 
-      final response = await dio.get('', queryParameters: {'path': cleanPath});
-
-      if (response.statusCode == 200) {
-        final items = response.data['_embedded']['items'];
-        final result = <dynamic>[];
-
-        for (var item in items) {
-          if (item['type'] == 'file') {
-            result.add(_mapFileItem(item));
-          } else if (item['type'] == 'dir') {
-            result.add(await _mapFolderItem(item));
-          }
-        }
-        return result;
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Failed to load items from Yandex: ${response.statusCode}');
       }
-      throw Exception('Failed to load items');
+
+      final items = response.data['_embedded']['items'] as List<dynamic>;
+
+      // 1) Заворачиваем все в промежуточные объекты с именем и датой
+      final List<ItemWrapper> wrapped = [];
+      for (final raw in items) {
+        final type = raw['type'] as String;
+        final name = raw['name'] as String;
+        // В API Яндекс.Диска есть поля created и modified, например:
+        final dateString =
+            raw['created'] as String? ?? raw['modified'] as String;
+        final date = DateTime.parse(dateString);
+
+        // Мапим на наши модели
+        final dynamic model =
+            (type == 'file') ? _mapFileItem(raw) : await _mapFolderItem(raw);
+
+        wrapped.add(ItemWrapper(name: name, date: date, item: model));
+      }
+
+      // 2) Фильтрация
+      if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+        final q = searchQuery.toLowerCase();
+        wrapped.retainWhere((w) => w.name.toLowerCase().contains(q));
+      }
+
+      // 3) Сортировка
+      wrapped.sort((a, b) {
+        final cmp = (sortBy == SortBy.name)
+            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+            : a.date.compareTo(b.date);
+        return ascending ? cmp : -cmp;
+      });
+
+      // 4) Отворачиваем в чистый список моделей
+      return wrapped.map((w) => w.item).toList();
     } catch (e) {
-      debugPrint('❌ Ошибка получения списка файлов: $e');
+      debugPrint('❌ Ошибка получения списка с Яндекса: $e');
       rethrow;
     }
   }
 
-  // @override
-  // Future<void> createFolder({
-  //   required String name,
-  //   required String path,
-  // }) async {
-  //   try {
-  //     String fullPath;
-
-  //     // Формируем полный путь
-  //     if (path != '/' && path != 'disk:/') {
-  //       fullPath = '$path/$name';
-  //     } else {
-  //       fullPath = 'disk:/$name';
-  //     }
-
-  //     // Проверяем, существует ли папка
-  //     final exists = await checkIfFolderExistsOnYandex(fullPath);
-  //     if (exists) {
-  //       debugPrint('Папка уже существует: $fullPath');
-  //       return;
-  //     }
-
-  //     // Создаём папку, если её нет
-  //     final response = await dio.put('', queryParameters: {'path': fullPath});
-
-  //     if (response.statusCode == 201) {
-  //       debugPrint('✅ Папка создана: $fullPath');
-  //     } else {
-  //       throw Exception('Ошибка создания папки: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     debugPrint('❌ Ошибка при создании папки: $e');
-  //     rethrow;
-  //   }
-  // }
   @override
   Future<void> createFolder({
     required String name,
-    required String path, // что‑то вроде "/" или "/Test999"
+    required String path, // например "/" или "/Test999"
   }) async {
-    // 1) Собираем чистый POSIX‑путь: "/Test999/666" или "/444" для корня
+    // 1) Собираем чистый POSIX-путь: "/Test999/666" или "/444" для корня
     final fullPath = p.join(path, name);
 
     try {
-      // 2) Отправляем запрос без дополнительного кодирования
-      final response = await dio.put(
+      // 2) Создаём папку (или проверяем, что она уже есть)
+      final createResp = await dio.put(
         '',
         queryParameters: {'path': fullPath},
       );
 
-      // 3) 201 — создано, 409 — уже есть (тоже ок)
-      if (response.statusCode == 201 || response.statusCode == 409) {
-        debugPrint('✅ Папка создана: $fullPath');
+      if (createResp.statusCode == 201 || createResp.statusCode == 409) {
+        debugPrint('✅ Папка создана (или уже есть): $fullPath');
+
+        // 3) Запрашиваем метаданные ресурса, чтобы получить resource_id
+        final metaResp = await dio.get(
+          '',
+          queryParameters: {'path': fullPath},
+        );
+
+        // 4) Парсим из ответа поле resource_id (или resourceId)
+        final data = metaResp.data as Map<String, dynamic>;
+        final resourceId = data['resource_id'] ?? data['resourceId'];
+
+        if (resourceId is String) {
+          final user = FirebaseAuth.instance.currentUser;
+          final docRef = FirebaseFirestore.instance
+              .collection('users')
+              .doc('${user?.uid}');
+          await docRef.update({
+            'accessList': FieldValue.arrayUnion([resourceId]),
+          });
+        } else {
+          throw StateError('Не удалось получить resource_id из ответа: $data');
+        }
       } else {
-        debugPrint('⚠️ Unexpected status ${response.statusCode}: $fullPath');
+        throw StateError(
+            'Unexpected status ${createResp.statusCode} при создании папки $fullPath');
       }
     } on DioException catch (e) {
       debugPrint('❌ Ошибка при создании папки: ${e.message}');
@@ -203,66 +228,70 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
+  Future<Uint8List?> _compressImage(String filePath) =>
+      FlutterImageCompress.compressWithFile(
+        filePath,
+        minWidth: 1024,
+        minHeight: 768,
+        quality: 80,
+      );
+
   @override
   Future<void> uploadFile({
     required String filePath,
     required String uploadPath,
   }) async {
     try {
-      // Нормализуем путь (убираем 'disk:/' если есть)
       final cleanPath = uploadPath.replaceFirst('disk:/', '');
 
-      // 1. Получаем URL для загрузки с флагом перезаписи
-      final uploadUrlResponse = await dio.get(
+      // 1) Получаем ссылку на загрузку
+      final urlResp = await dio.get(
         '/upload',
-        queryParameters: {
-          'path': cleanPath,
-          'overwrite': 'true', // Разрешаем перезапись
-        },
+        queryParameters: {'path': cleanPath, 'overwrite': 'true'},
       );
+      if (urlResp.statusCode != 200) {
+        throw Exception('Не удалось получить URL: ${urlResp.statusCode}');
+      }
+      final uploadUrl = urlResp.data['href'] as String;
 
-      if (uploadUrlResponse.statusCode != 200) {
-        throw Exception(
-            'Не удалось получить URL для загрузки: ${uploadUrlResponse.statusCode}');
+      // 2) Пытаемся сжать, если это изображение
+      Uint8List data;
+      if (['.jpg', '.jpeg', '.png']
+          .any((ext) => filePath.toLowerCase().endsWith(ext))) {
+        final compressed = await _compressImage(filePath);
+        data = compressed ?? await File(filePath).readAsBytes();
+      } else {
+        data = await File(filePath).readAsBytes();
       }
 
-      final uploadUrl = uploadUrlResponse.data['href'];
-
-      // 2. Загружаем файл с явным указанием перезаписи
-      final file = File(filePath);
-      final uploadResponse = await dio.put(
+      // 3) Загружаем
+      final uploadResp = await dio.put(
         uploadUrl,
-        data: await file.readAsBytes(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'Content-Length': (await file.stat()).size,
-          },
-        ),
+        data: data,
+        options: Options(headers: {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': data.length,
+        }),
       );
-
-      if (uploadResponse.statusCode != 201) {
-        throw Exception('Ошибка загрузки: ${uploadResponse.statusCode}');
+      if (uploadResp.statusCode != 201) {
+        throw Exception('Ошибка загрузки: ${uploadResp.statusCode}');
       }
+
+      // 4) Обновляем Firestore
       final user = FirebaseAuth.instance.currentUser;
-      final nowUtc = DateTime.now().toUtc();
-      final mskTime = nowUtc.add(Duration(hours: 3));
-      final formatter = DateFormat('dd-MM-yyyy HH:mm');
-      final formatted = formatter.format(mskTime);
-      final docRef = FirebaseFirestore.instance
-        .collection('users')    // <-- замените на вашу коллекцию
-        .doc('${user?.uid}');        // <-- или получите docId динамически
+      final mskTime = DateTime.now().toUtc().add(const Duration(hours: 3));
+      final formatted = DateFormat('dd-MM-yyyy HH:mm').format(mskTime);
+      final docRef =
+          FirebaseFirestore.instance.collection('users').doc(user!.uid);
       await docRef.update({
         'lastUpload': formatted,
         'imagesCount': FieldValue.increment(1),
       });
-      debugPrint('✅ Файл загружен: $cleanPath');
+
+      debugPrint('✅ Загружено и сжато: $cleanPath');
     } on DioException catch (e) {
-      if (e.response?.statusCode == 409) {
-        debugPrint('⚠️ Файл уже существует: $uploadPath');
-        return; // Пропускаем существующие файлы
-      }
-      debugPrint('❌ Ошибка загрузки файла ($uploadPath): ${e.message}');
+      if (e.response?.statusCode == 409) return;
+      debugPrint('❌ Ошибка: ${e.message}');
       rethrow;
     }
   }
@@ -435,7 +464,6 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
-  @override
   Future<void> syncAll({String path = '/'}) async {
     // 1) «Яндекс → локаль»
     await syncFromYandexDisk();
@@ -475,180 +503,6 @@ class StorageRepository extends AbstractStorageRepository {
     throw Exception('Files stats error: ${resp.statusCode}');
   }
 
-  // Future<void> syncFromYandexDiskSelective({
-  //   required String userRegionalId,
-  //   required List<String> accessList,
-  // }) async {
-  //   try {
-  //     // 1) Сначала подгружаем все корневые папки на Я.Диске
-  //     final rootItems = await getFileAndFolderModels(path: 'disk:/');
-  //     // 2) Находим папку региона по её resourceId
-  //     final regionFolder = rootItems.whereType<FolderItem>().firstWhere(
-  //         (f) => f.resourceId == userRegionalId,
-  //         orElse: () => throw Exception('Региональная папка не найдена'));
-
-  //     // 3) Получаем содержимое этой папки региона
-  //     final regionContents =
-  //         await getFileAndFolderModels(path: regionFolder.path);
-
-  //     // 4) Отфильтровываем только те элементы (папки и файлы),
-  //     //    resourceId которых есть в вашем accessList
-  //     // final allowedItems = regionContents
-  //     //     .where((it) => accessList.contains(
-  //     //         (it is FolderItem ? it.resourceId : (it as FileItem).resourceId)))
-  //     //     .toList();
-  //     final allowedFolders = regionContents
-  //         .whereType<FolderItem>() // только папки
-  //         .where((f) =>
-  //             accessList.contains(f.resourceId)) // чьё resourceId в accessList
-  //         .toList();
-
-  //     // 5) Готовим локальный репозиторий и корневую папку
-  //     final localRepo =
-  //         GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
-  //             as LocalRepository;
-  //     final localRoot = await localRepo.getAppDirectory(path: '/');
-
-  //     // 6) Синхронизируем каждый разрешённый элемент:
-  //     for (var folder in allowedFolders) {
-  //       // рекурсивно зайдёт в папку и скачает и папки, и файлы внутри неё
-  //       await _syncYandexFolder(folder, localRoot);
-  //     }
-  //     // for (var item in allowedItems) {
-  //     //   if (item is FolderItem) {
-  //     //     // синхронизирует папку и всю её вложенность
-  //     //     await _syncYandexFolder(item, localRoot);
-  //     //   } else if (item is FileItem) {
-  //     //     // синхронизирует одиночный файл в директорию localRoot
-  //     //     await _syncYandexFile(item, localRoot);
-  //     //   }
-  //     // }
-  //   } catch (e) {
-  //     debugPrint('❌ Ошибка выборочной синхронизации: $e');
-  //     rethrow;
-  //   }
-  // }
-  // Future<List<dynamic>> listFolderByResourceId(String resourceId) async {
-  //   try {
-  //     // 1) Запросим метаданные + вложения одной командой
-  //     final resp = await dioDisk.get(
-  //       '/resources',
-  //       queryParameters: {
-  //         'resource_id': resourceId,
-  //         // при желании можно добавить 'limit': '1000'
-  //       },
-  //     );
-
-  //     // 2) Посмотрим, что в ответе и куда мы пишем
-  //     debugPrint('▶️ Request URI: ${resp.requestOptions.uri}');
-  //     debugPrint('▶️ Status code: ${resp.statusCode}');
-  //     debugPrint('▶️ Body: ${resp.data}');
-
-  //     if (resp.statusCode != 200) {
-  //       throw Exception('Yandex Disk API returned ${resp.statusCode}');
-  //     }
-
-  //     // 3) Забираем список детей
-  //     final itemsJson =
-  //         (resp.data['_embedded']?['items'] ?? []) as List<dynamic>;
-  //     final result = <dynamic>[];
-  //     for (final raw in itemsJson) {
-  //       final item = raw as Map<String, dynamic>;
-  //       if (item['type'] == 'dir') {
-  //         result.add(await _mapFolderItem(item));
-  //       } else {
-  //         result.add(_mapFileItem(item));
-  //       }
-  //     }
-  //     return result;
-  //   } on DioException catch (e) {
-  //     debugPrint('❌ DioException URI: ${e.requestOptions.uri}');
-  //     debugPrint('❌ Status: ${e.response?.statusCode}');
-  //     debugPrint('❌ Response body: ${e.response?.data}');
-  //     rethrow;
-  //   }
-  // }
-
-  // Future<void> syncFromYandexDiskSelective({
-  //   required String userRegionalId,
-  //   required List<String> accessList,
-  // }) async {
-  //   // 1) Ищем папку регионала в корне
-  //   final rootItems = await getFileAndFolderModels(path: 'disk:/');
-  //   final regionFolder = rootItems.whereType<FolderItem>().firstWhere(
-  //       (f) => f.resourceId == userRegionalId,
-  //       orElse: () => throw Exception('Регион не найден'));
-
-  //   // 2) Готовим локальный root/appDirectory и создаём папку регионала
-  //   final locRepo =
-  //       GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
-  //           as LocalRepository;
-  //   final appDir = await locRepo.getAppDirectory(path: '/');
-  //   final regionLocalDir = Directory(p.join(appDir.path, regionFolder.name));
-  //   if (!await regionLocalDir.exists()) {
-  //     await regionLocalDir.create(recursive: true);
-  //   }
-
-  //   // 3) Получаем сразу содержимое регионала по resource_id
-  //   final regionContents = await listFolderByResourceId(
-  //     userRegionalId,
-  //   );
-
-  //   // 4) Фильтруем только папки-участки из accessList
-  //   final allowedFolders = regionContents
-  //       .whereType<FolderItem>()
-  //       .where((f) => accessList.contains(f.resourceId))
-  //       .toList();
-
-  //   // 5) Рекурсивно синхронизируем каждую разрешённую папку внутрь региона
-  //   for (var folder in allowedFolders) {
-  //     await _syncYandexFolder(folder, regionLocalDir);
-  //   }
-  // }
-  /// Синхронизировать только те регионы и участки, к которым у пользователя есть доступ
-  // Future<void> syncFromYandexDiskByAccess({
-  //   required String userRegionalId,
-  //   required List<String> accessList,
-  //   required bool isAdmin,
-  // }) async {
-  //   // 1. Берём ВСЕ регионалы из корня
-  //   final rootItems = await getFileAndFolderModels(path: 'disk:/');
-  //   final allRegionals = rootItems.whereType<FolderItem>().toList();
-
-  //   // 2. Фильтруем регионалы: либо все (админ), либо только свой
-  //   final allowedRegionals = isAdmin
-  //       ? allRegionals
-  //       : allRegionals.where((r) => r.resourceId == userRegionalId).toList();
-
-  //   // 3. Подготавливаем локальный репозиторий и корень
-  //   final locRepo =
-  //       GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
-  //           as LocalRepository;
-  //   final appDir = await locRepo.getAppDirectory(path: '/');
-
-  //   for (final regional in allowedRegionals) {
-  //     // 3.1. Создаем локальную папку регионала
-  //     final regionLocalDir = Directory(p.join(appDir.path, regional.name));
-  //     if (!await regionLocalDir.exists()) {
-  //       await regionLocalDir.create(recursive: true);
-  //     }
-
-  //     // 3.2. Получаем всех «детей» этого регионала
-  //     final regionalContents =
-  //         await getFileAndFolderModels(path: regional.path);
-
-  //     // 3.3. Оставляем только папки-участки из accessList
-  //     final allowedAreas = regionalContents
-  //         .whereType<FolderItem>()
-  //         .where((area) => accessList.contains(area.resourceId))
-  //         .toList();
-
-  //     // 3.4. Рекурсивно синхронизируем каждый допущенный участок
-  //     for (final area in allowedAreas) {
-  //       await _syncYandexFolder(area, regionLocalDir);
-  //     }
-  //   }
-  // }
   Future<void> syncRegionalAndAreasStructure({
     required String userRegionalId,
     required List<String> accessList,

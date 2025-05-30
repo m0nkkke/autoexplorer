@@ -1,6 +1,6 @@
 name: autoexplorer
 description: "Simple explorer-project"
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -29,6 +29,7 @@ dependencies:
   internet_connection_checker: ^1.0.0+1
   firebase_messaging: ^15.2.5
   flutter_local_notifications: ^19.1.0
+  flutter_image_compress: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -37,7 +38,6 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.3
 
 flutter:
-
   uses-material-design: true
 
   assets:
