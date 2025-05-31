@@ -6,8 +6,10 @@ class FileItem extends Abstractfile {
     required this.creationDate,
     required super.path,
     required this.imageURL,
+    this.isSynced = false,
   });
 
   final String creationDate;
   final String imageURL;
+  bool isSynced;
 }

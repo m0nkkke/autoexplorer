@@ -1,24 +1,34 @@
+// File: lib/features/storage/widgets/app_bar_menu.dart
+
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
+enum AppBarMenuOption {
+  createFolder,
+  search,
+  refresh,
+  deleteSynced,
+  switchAccount,
+}
 
 class AppBarMenu extends StatelessWidget {
   final VoidCallback onSearch;
   final String path;
   final Function(String) onCreateFolder;
   final VoidCallback onRefresh;
+  final VoidCallback onDeleteSynced;
 
   const AppBarMenu({
-    super.key,
+    Key? key,
     required this.onSearch,
     required this.path,
     required this.onCreateFolder,
     required this.onRefresh,
-  });
+    required this.onDeleteSynced,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +63,18 @@ class AppBarMenu extends StatelessWidget {
           ],
         ),
       ),
+      const PopupMenuDivider(),
+      PopupMenuItem(
+        value: AppBarMenuOption.deleteSynced,
+        child: Row(
+          children: [
+            const Icon(Icons.delete_sweep, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text('Удалить синх-файлы'),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(),
       PopupMenuItem(
         value: AppBarMenuOption.switchAccount,
         child: Row(
@@ -91,6 +113,30 @@ class AppBarMenu extends StatelessWidget {
 
       case AppBarMenuOption.refresh:
         onRefresh();
+        break;
+
+      case AppBarMenuOption.deleteSynced:
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Удалить файлы'),
+            content: Text(
+                'Вы уверены, что хотите удалить все синхронизированные файлы из текущей папки?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(S.of(ctx).cancelButton),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text('ОК'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          onDeleteSynced();
+        }
         break;
 
       case AppBarMenuOption.switchAccount:

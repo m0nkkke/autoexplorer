@@ -39,19 +39,19 @@ class UserKeyCreateScreen extends StatelessWidget {
                 children: [
                   // ФИО + Email + Password + Role
                   _buildTextField(
-                    label: S.of(context).firstName,
-                    value: state.firstName,
-                    onChanged: (v) => ctx
-                        .read<UserCreateBloc>()
-                        .add(UpdateCreateFieldEvent('firstName', v)),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(
                     label: S.of(context).lastName,
                     value: state.lastName,
                     onChanged: (v) => ctx
                         .read<UserCreateBloc>()
                         .add(UpdateCreateFieldEvent('lastName', v)),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: S.of(context).firstName,
+                    value: state.firstName,
+                    onChanged: (v) => ctx
+                        .read<UserCreateBloc>()
+                        .add(UpdateCreateFieldEvent('firstName', v)),
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -122,34 +122,53 @@ class UserKeyCreateScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Участки
-                  if (state.areasIdsMap.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SizedBox(
-                        height: 150,
-                        child: Center(
-                          child: Text(
-                            S.of(context).noAreas,
-                            style: TextStyle(fontSize: 16),
+                  // Участки: 1) загрузка, 2) нет элементов, 3) список
+                  state.isAreasLoading
+                      ? Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Грузим участки...',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    )
-                  else
-                    RootsInfo(
-                      title: S.of(context).areaTitle,
-                      items: state.areasIdsMap.keys.toList(),
-                      selectedItems: state.selectedAreas,
-                      onChanged: (set) => ctx
-                          .read<UserCreateBloc>()
-                          .add(OnCreateAreaChangedEvent(set)),
-                      folderIdsMap: state.areasIdsMap,
-                      isLoading: state.isAreasLoading,
-                    ),
+                        )
+                      : state.areasIdsMap.isEmpty
+                          ? Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: SizedBox(
+                                height: 150,
+                                child: Center(
+                                  child: Text(
+                                    S.of(context).noAreas,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : RootsInfo(
+                              title: S.of(context).areaTitle,
+                              items: state.areasIdsMap.keys.toList(),
+                              selectedItems: state.selectedAreas,
+                              onChanged: (set) => ctx
+                                  .read<UserCreateBloc>()
+                                  .add(OnCreateAreaChangedEvent(set)),
+                              folderIdsMap: state.areasIdsMap,
+                              isLoading: state.isAreasLoading,
+                            ),
 
                   const SizedBox(height: 24),
 

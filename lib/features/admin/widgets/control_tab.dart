@@ -26,10 +26,14 @@ class _ControlTabState extends State<ControlTab> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    _controlBloc.add(LoadUsers());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ControlBloc>(
-      create: (context) => _controlBloc,
+    return BlocProvider<ControlBloc>.value(
+      value: _controlBloc,
       child: Scaffold(
         body: Column(
           children: [
@@ -58,33 +62,61 @@ class _ControlTabState extends State<ControlTab> {
                   if (state.status == ControlStatus.loading) {
                     return const Center(child: CircularProgressIndicator());
                   }
+
                   if (state.status == ControlStatus.failure) {
-                    return Center(
-                        child: Text(S
-                            .of(context)
-                            .errorWithMessage(state.errorMessage.toString())));
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Text(
+                              S.of(context).errorWithMessage(
+                                  state.errorMessage.toString()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   }
+
                   if (state.users.isEmpty) {
-                    return Center(child: Text(S.of(context).noAvailableUsers));
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Text(S.of(context).noAvailableUsers),
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
-                  return ListView.builder(
-                    itemCount: state.users.length,
-                    itemBuilder: (context, index) {
-                      final doc = state.users[index];
-                      final user = doc.data() as Map<String, dynamic>;
-                      final uid = doc.id;
-                      final regionId = user['regional'] as String;
-                      // вот здесь сразу берём имя региона из мапы
-                      final regionName = state.regionNamesMap[regionId] ?? '—';
-
-                      return KeyListItem(
-                        keyUserName: '${user['firstName']} ${user['lastName']}',
-                        keyArea: regionName,
-                        userData: user,
-                        uid: uid,
-                      );
-                    },
+                  return RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: state.users.length,
+                      itemBuilder: (context, index) {
+                        final doc = state.users[index];
+                        final user = doc.data() as Map<String, dynamic>;
+                        final uid = doc.id;
+                        final regionId = user['regional'] as String;
+                        final regionName =
+                            state.regionNamesMap[regionId] ?? '—';
+                        return KeyListItem(
+                          keyUserName:
+                              '${user['firstName']} ${user['lastName']}',
+                          keyArea: regionName,
+                          userData: user,
+                          uid: uid,
+                        );
+                      },
+                    ),
                   );
                 },
               ),

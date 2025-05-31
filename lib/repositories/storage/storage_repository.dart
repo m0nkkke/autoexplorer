@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
 import 'package:autoexplorer/repositories/storage/models/disk_capacity.dart';
@@ -15,6 +16,7 @@ import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 class StorageRepository extends AbstractStorageRepository {
   /// для работы с /v1/disk/resources
@@ -223,6 +225,24 @@ class StorageRepository extends AbstractStorageRepository {
         quality: 80,
       );
 
+  Future<File> get _syncFile async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dir.path, 'sync_status.json'));
+    if (!await file.exists()) {
+      await file.writeAsString(jsonEncode({}), flush: true);
+    }
+    return file;
+  }
+
+  Future<void> _markSyncedInJson(String localPath) async {
+    final file = await _syncFile;
+    final content = await file.readAsString();
+    final Map<String, dynamic> data =
+        content.isEmpty ? {} : jsonDecode(content) as Map<String, dynamic>;
+    data[localPath] = true;
+    await file.writeAsString(jsonEncode(data), flush: true);
+  }
+
   @override
   Future<void> uploadFile({
     required String filePath,
@@ -264,17 +284,7 @@ class StorageRepository extends AbstractStorageRepository {
         throw Exception('Ошибка загрузки: ${uploadResp.statusCode}');
       }
 
-      // 4) Обновляем Firestore
-      final user = FirebaseAuth.instance.currentUser;
-      final mskTime = DateTime.now().toUtc().add(const Duration(hours: 3));
-      final formatted = DateFormat('dd-MM-yyyy HH:mm').format(mskTime);
-      final docRef =
-          FirebaseFirestore.instance.collection('users').doc(user!.uid);
-      await docRef.update({
-        'lastUpload': formatted,
-        'imagesCount': FieldValue.increment(1),
-      });
-
+      await _markSyncedInJson(filePath);
       debugPrint('✅ Загружено и сжато: $cleanPath');
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) return;

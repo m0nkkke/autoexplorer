@@ -21,6 +21,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import '../widgets/folder_list_item.dart';
+import 'package:path/path.dart' as p;
 import 'package:image_picker/image_picker.dart';
 
 class StorageListScreen extends StatefulWidget {
@@ -325,8 +326,23 @@ class _StorageListScreenState extends State<StorageListScreen> {
             StorageListCreateFolder(name: folderName, path: widget.path),
           );
         },
-        onDelete: _isSelectionMode ? _deleteSelectedItems : null,
+        // onDelete: _isSelectionMode ? _deleteSelectedItems : null,
         refreshItems: refreshItems,
+        onDeleteSynced: () {
+          // здесь собираем все синхронизированные FileItem и диспатчим удаление
+          final synced = filesAndFolders
+              .whereType<FileItem>()
+              .where((f) => f.isSynced)
+              .toList();
+          for (final f in synced) {
+            final name = p.basename(f.path);
+            final parent = p.dirname(f.path);
+            _storageListBloc.add(DeleteFolderEvent(
+              folderName: name,
+              currentPath: parent,
+            ));
+          }
+        },
       ),
 
       body: RefreshIndicator(
@@ -348,6 +364,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
                     debugPrint('File item found: ${item.name}');
                     final displayDate = formatDate(item.creationDate);
                     return FileListItem(
+                      isSynced: item.isSynced,
                       title: item.name,
                       creationDate: displayDate,
                       isSelectionMode: _isSelectionMode,

@@ -81,3 +81,12 @@ class SyncAllEvent extends StorageListEvent {
   final String path;
   SyncAllEvent({required this.path});
 }
+
+class StorageListMarkSynced extends StorageListEvent {
+  final String filePath;
+  StorageListMarkSynced({required this.filePath});
+}
+
+class StorageListSyncOffline extends StorageListEvent {
+  StorageListSyncOffline();
+}

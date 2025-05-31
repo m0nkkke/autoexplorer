@@ -7,25 +7,31 @@ class FileListItem extends StatelessWidget {
   final String creationDate;
   final bool isSelectionMode;
   final bool isSelected;
+  final bool isSynced; // ← новый флаг
   final VoidCallback? onLongPress;
   final VoidCallback onTap;
   final bool isLargeIcons;
 
   const FileListItem({
-    super.key,
+    Key? key,
     required this.index,
     required this.title,
     required this.creationDate,
     required this.isSelectionMode,
     required this.isSelected,
+    required this.isSynced, // ← требуем его в конструкторе
     this.onLongPress,
     required this.onTap,
     required this.isLargeIcons,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final iconSize = isLargeIcons ? 60.0 : 40.0;
+    // Выбираем нужную иконку синхронизации
+    final syncIcon = isSynced
+        ? const Icon(Icons.cloud_done, color: Colors.green)
+        : const Icon(Icons.cloud_off, color: Colors.red);
 
     return GestureDetector(
       onLongPress: onLongPress,
@@ -35,19 +41,20 @@ class FileListItem extends StatelessWidget {
         child: ListTile(
           leading: SvgPicture.asset(
             'assets/svg/file_icon.svg',
-            height: iconSize, 
-            width: iconSize, 
+            height: iconSize,
+            width: iconSize,
           ),
           title: Text(title, style: Theme.of(context).textTheme.bodyMedium),
-          subtitle: Text(creationDate, style: Theme.of(context).textTheme.bodySmall),
+          subtitle:
+              Text(creationDate, style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
+              // при режиме выбора — чекбокс
               ? Checkbox(
                   value: isSelected,
-                  onChanged: (bool? value) {
-                    onTap();
-                  },
+                  onChanged: (_) => onTap(),
                 )
-              : const SizedBox(width: 24),
+              // иначе — иконка синхронизации, справа
+              : syncIcon,
         ),
       ),
     );

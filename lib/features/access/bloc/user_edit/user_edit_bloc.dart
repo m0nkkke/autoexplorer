@@ -5,6 +5,7 @@ import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +15,8 @@ part 'user_edit_state.dart';
 
 class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
   final AbstractUsersRepository _userRepo = GetIt.I<AbstractUsersRepository>();
-  final AbstractStorageRepository _storage = GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
+  final AbstractStorageRepository _storage =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
 
   UserEditBloc(AEUser initialUser)
       : super(UserEditState.fromUser(initialUser)) {
@@ -26,7 +28,7 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
       emit(state.copyWith(isRegionsLoading: true));
       try {
         final list = await _storage.getFileAndFolderModels(path: 'disk:/');
-        final map = <String,String>{};
+        final map = <String, String>{};
         final folders = <FolderItem>[];
         for (var f in list.whereType<FolderItem>()) {
           folders.add(f);
@@ -41,7 +43,8 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
           add(LoadAreasEvent(state.regional));
         }
       } catch (_) {
-        emit(state.copyWith(isRegionsLoading: false, error: 'Не удалось загрузить регионы'));
+        emit(state.copyWith(
+            isRegionsLoading: false, error: 'Не удалось загрузить регионы'));
       }
     });
 
@@ -61,7 +64,7 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
             .firstWhere((f) => f.resourceId == e.regionId);
         final list = await _storage.getFileAndFolderModels(path: folder.path);
 
-        final map = <String,String>{};
+        final map = <String, String>{};
         final sel = <String>{};
         for (var f in list.whereType<FolderItem>()) {
           map[f.name] = f.resourceId;
@@ -76,7 +79,9 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
           selectedAreas: sel,
         ));
       } catch (_) {
-        emit(state.copyWith(isAreasLoading: false, error: 'Не удалось загрузить участки'));
+        debugPrint('ОШИБКА ПРИ ЗАГРУЗКЕ УЧАСТКОВ ${e.toString()}');
+        emit(state.copyWith(
+            isAreasLoading: false, error: 'Не удалось загрузить участки'));
       }
     });
 
@@ -87,8 +92,7 @@ class UserEditBloc extends Bloc<UserEditEvent, UserEditState> {
     on<SubmitUserEvent>((_, emit) async {
       emit(state.copyWith(isSaving: true, error: null));
       try {
-        final u = state.toUser()
-          ..accessList = state.selectedAreas.toList();
+        final u = state.toUser()..accessList = state.selectedAreas.toList();
         await _userRepo.updateUser(u);
         emit(state.copyWith(isSaving: false, saved: true));
       } catch (_) {
