@@ -25,6 +25,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function(String) onCreateFolder;
   final VoidCallback refreshItems;
   // final VoidCallback? onDelete;
+  final VoidCallback onSyncedFiles;
   final VoidCallback onDeleteSynced;
 
   const CustomAppBar({
@@ -46,6 +47,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.refreshItems,
     required this.onDeleteSynced,
     required this.onSortChanged,
+    required this.onSyncedFiles,
   }) : super(key: key);
 
   @override
@@ -183,6 +185,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           onCreateFolder: widget.onCreateFolder,
           onRefresh: widget.refreshItems,
           onDeleteSynced: widget.onDeleteSynced,
+          onSyncFiles: widget.onSyncedFiles,
         ),
       ];
     }

@@ -90,3 +90,11 @@ class StorageListMarkSynced extends StorageListEvent {
 class StorageListSyncOffline extends StorageListEvent {
   StorageListSyncOffline();
 }
+
+class ManualSyncEvent extends StorageListEvent {
+  ManualSyncEvent({required this.currentPath});
+  final String currentPath;
+
+  @override
+  List<Object> get props => [currentPath];
+}

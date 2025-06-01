@@ -283,7 +283,17 @@ class StorageRepository extends AbstractStorageRepository {
       if (uploadResp.statusCode != 201) {
         throw Exception('Ошибка загрузки: ${uploadResp.statusCode}');
       }
-
+      final user = FirebaseAuth.instance.currentUser;
+      final nowUtc = DateTime.now().toUtc();
+      final mskTime = nowUtc.add(Duration(hours: 3));
+      final formatter = DateFormat('dd-MM-yyyy HH:mm');
+      final formatted = formatter.format(mskTime);
+      final docRef =
+          FirebaseFirestore.instance.collection('users').doc('${user?.uid}');
+      await docRef.update({
+        'lastUpload': formatted,
+        'imagesCount': FieldValue.increment(1),
+      });
       await _markSyncedInJson(filePath);
       debugPrint('✅ Загружено и сжато: $cleanPath');
     } on DioException catch (e) {

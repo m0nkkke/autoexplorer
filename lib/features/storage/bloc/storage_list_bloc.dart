@@ -5,14 +5,12 @@ import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/global.dart';
 import 'package:autoexplorer/repositories/storage/abstract_storage_repository.dart';
 import 'package:autoexplorer/repositories/storage/local_repository.dart';
-import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
 import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/models/sortby.dart';
 import 'package:autoexplorer/repositories/storage/storage_repository.dart';
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
 import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +23,6 @@ part 'storage_list_state.dart';
 
 class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   bool _accessInitialized = false;
-  List<dynamic> _allItems = [];
   late UserRole _role;
   late List<String> _accessList;
 
@@ -34,7 +31,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
 
   /// resourceId → path подпапок первого уровня внутри регионала
   final Map<String, String> _allowedPaths = {};
-  late String _lastPath;
 
   /// resourceId региона из БД
   late String _userRegionalId;
@@ -43,6 +39,9 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   String? _userRegionalPath;
 
   bool _regionInitialized = false;
+  late StreamSubscription<bool> _internetAvailableSubscription;
+  final ConnectivityService _connectivityService =
+      GetIt.I<ConnectivityService>();
 
   StorageListBloc() : super(StorageListInitial()) {
     on<StorageListLoad>(_onStorageListLoad);
@@ -51,111 +50,10 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     on<LoadImageUrl>(_onLoadImageUrl);
     on<ResetImageLoadingState>(_onResetImageLoadingState);
     on<DeleteFolderEvent>(_onDeleteFolder);
-    on<SyncAllEvent>(_onSyncAreasFromYandex);
-    on<StorageListMarkSynced>(_onMarkSynced);
-    on<StorageListSyncOffline>(_onSyncOffline);
+    // Переименовали и переработали SyncAllEvent
+    on<ManualSyncEvent>(_onManualSyncEvent);
 
-    bool _syncScheduled = false;
-
-    GetIt.I<ConnectivityService>().addListener(() {
-      if (GetIt.I<ConnectivityService>().hasInternet && !_syncScheduled) {
-        _syncScheduled = true;
-        add(StorageListSyncOffline());
-        Future.delayed(const Duration(seconds: 2), () {
-          _syncScheduled = false;
-        });
-      }
-    });
-  }
-
-  Future<File> get _syncFile async {
-    final dir = await getApplicationDocumentsDirectory();
-    return File(p.join(dir.path, 'sync_status.json'));
-  }
-
-  /// Загружает из файла карту {path: true} для уже синхронизированных
-  Future<Set<String>> _loadSyncedPaths() async {
-    try {
-      final file = await _syncFile;
-      if (!await file.exists()) return {};
-      final jsonStr = await file.readAsString();
-      final Map<String, dynamic> data = jsonDecode(jsonStr);
-      return data.keys.where((k) => data[k] == true).toSet();
-    } catch (_) {
-      return {};
-    }
-  }
-
-  FutureOr<void> _onSyncOffline(
-    StorageListSyncOffline event,
-    Emitter<StorageListState> emit,
-  ) async {
-    emit(StorageListLoading());
-
-    final logFile = await _getLogFile();
-    final entries = jsonDecode(await logFile.readAsString()) as List<dynamic>;
-
-    int syncedCount = 0; // ← сюда накопим
-    final successes = <dynamic>[];
-
-    for (var raw in entries) {
-      final entry = FileJSON.fromJson(raw as Map<String, dynamic>);
-      final appDir = await localRepository.getAppDirectory(path: '/');
-      final absLocal = p.join(appDir.path, entry.uploadPath);
-      try {
-        await yandexRepository.uploadFile(
-          filePath: absLocal,
-          uploadPath: entry.remotePath,
-        );
-        await _saveSyncedPath(absLocal);
-        successes.add(raw);
-
-        // помечаем в памяти и отрисовываем
-        for (var it in _allItems) {
-          if (it is FileItem && it.path == absLocal) {
-            it.isSynced = true;
-            break;
-          }
-        }
-
-        syncedCount++; // ← инкрементируем
-        // emit(StorageListLoaded(items: List.from(_allItems)));
-      } catch (_) {
-        // оставляем в логе на следующий раз
-      }
-    }
-
-    // удаляем удачные
-    entries.removeWhere((e) => successes.contains(e));
-    await logFile.writeAsString(jsonEncode(entries), flush: true);
-
-    // 3. После цикла, если что-то синхронизировали — единоразово апдейтим Firestore
-    if (syncedCount > 0) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final docRef =
-            FirebaseFirestore.instance.collection('users').doc(user.uid);
-        // lastUpload — серверное время, imagesCount — за весь batch
-        await docRef.update({
-          'lastUpload': FieldValue.serverTimestamp(),
-          'imagesCount': FieldValue.increment(syncedCount),
-        });
-      }
-    }
-
-    // 4) В конце можно перезагрузить текущую папку, если нужно
-    // add(StorageListLoad(path: event.currentPath));
-  }
-
-  /// Обновляет JSON-файл, добавляя path → true
-  Future<void> _saveSyncedPath(String path) async {
-    final file = await _syncFile;
-    Map<String, dynamic> data = {};
-    if (await file.exists()) {
-      data = jsonDecode(await file.readAsString());
-    }
-    data[path] = true;
-    await file.writeAsString(jsonEncode(data), flush: true);
+    GetIt.I<ConnectivityService>().addListener(_onChangeConnectionHandler);
   }
 
   Future<void> _onChangeConnectionHandler() async {
@@ -173,21 +71,27 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     }
   }
 
-  Future<void> _onSyncAreasFromYandex(
-    SyncAllEvent event,
+  // Переработанный обработчик ручной синхронизации
+  FutureOr<void> _onManualSyncEvent(
+    ManualSyncEvent event,
     Emitter<StorageListState> emit,
   ) async {
     if (GetIt.I<ConnectivityService>().hasInternet) {
-      await _initAccess();
       emit(StorageListLoading());
-      if (globalRole == UserRole.worker) {
-        await yandexRepository.syncRegionalAndAreasStructure(
-          userRegionalId: _userRegionalId,
-          accessList: _accessList,
-          isAdmin: _role == UserRole.admin,
-        );
+      try {
+        // Вызываем метод синхронизации из ConnectivityService
+        await GetIt.I<ConnectivityService>().synchronizeFiles();
+        // После успешной синхронизации обновляем список файлов
+        add(StorageListLoad(path: event.currentPath));
+      } catch (e) {
+        debugPrint('Ошибка при ручной синхронизации: $e');
+        emit(StorageListLoadingFailure(
+            errorMessage: 'Не удалось синхронизировать данные.'));
       }
-      add(StorageListLoad(path: event.path));
+    } else {
+      // Если нет интернета, можно уведомить пользователя
+      debugPrint('Нет интернет-соединения для ручной синхронизации.');
+      // Можно добавить emit для отображения сообщения пользователю
     }
   }
 
@@ -243,36 +147,30 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       debugPrint("==============================");
 
       // 2) Обновляем UI
-      add(StorageListLoad(path: event.currentPath));
+      // add(StorageListLoad(path: event.currentPath)); // Убираем автоматическое обновление UI здесь
 
       if (GetIt.I<ConnectivityService>().hasInternet) {
-        // 3) Строим удалённый путь, вырезая всё до applicationData
-
-        // 4) Загружаем на Яндекс.Диск
+        // 3) Загружаем на Яндекс.Диск
         try {
           await yandexRepository.uploadFile(
             filePath: event.filePath,
             uploadPath: remotePath,
           );
-          // абсолютный локальный путь
-          final absLocal = p.join(appDir.path, event.uploadPath);
-          // помечаем в JSON
-          await _saveSyncedPath(absLocal);
-          // диспатч события, чтобы обновить в памяти и UI
-          add(StorageListMarkSynced(filePath: absLocal));
           debugPrint('⬆️ Файл загружен на Яндекс.Диск: $remotePath');
+          // Обновляем UI после успешной загрузки
+          add(StorageListLoad(path: event.currentPath));
         } catch (e) {
           debugPrint('⚠️ Не удалось загрузить на Я.Диск: $e');
+          // В случае ошибки загрузки на Я.Диск, записываем в лог для последующей синхронизации
+          final logEntry = FileJSON(
+            type: 'file',
+            uploadPath: event.uploadPath,
+            remotePath: remotePath,
+          );
+          await _appendToJsonLog(logEntry);
+          // Обновляем UI даже при ошибке загрузки на Я.Диск, чтобы показать локальный файл
+          add(StorageListLoad(path: event.currentPath));
         }
-        // // 4) Помечаем in-memory иконку: ищем в _allItems и ставим isSynced = true
-        // for (var it in _allItems) {
-        //   if (it is FileItem && it.path == absLocal) {
-        //     it.isSynced = true;
-        //     break;
-        //   }
-        // }
-
-        add(StorageListSyncOffline());
       } else {
         final logEntry = FileJSON(
           type: 'file',
@@ -280,6 +178,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           remotePath: remotePath,
         );
         await _appendToJsonLog(logEntry);
+        // Обновляем UI после сохранения в локальный лог
+        add(StorageListLoad(path: event.currentPath));
       }
     } catch (e) {
       debugPrint('❌ Ошибка в _onStorageListUploadFile: $e');
@@ -315,16 +215,31 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
         remoteParent = '/';
       }
       // 3) обновляем UI
-      add(StorageListLoad(path: event.path));
+      // add(StorageListLoad(path: event.path)); // Убираем автоматическое обновление UI здесь
 
       if (GetIt.I<ConnectivityService>().hasInternet) {
         // 4) создаём папку на Яндекс.Диске по относительному пути
-        await yandexRepository.createFolder(
-          name: event.name,
-          path: remoteParent, // вот здесь уже /Test999 или /
-        );
-        debugPrint(
-            '✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+        try {
+          await yandexRepository.createFolder(
+            name: event.name,
+            path: remoteParent, // вот здесь уже /Test999 или /
+          );
+          debugPrint(
+              '✅ Папка ${event.name} создана на Яндекс.Диске в $remoteParent');
+          // Обновляем UI после успешного создания папки
+          add(StorageListLoad(path: event.path));
+        } catch (e) {
+          debugPrint('⚠️ Не удалось создать папку на Я.Диск: $e');
+          // В случае ошибки создания папки на Я.Диске, записываем в лог
+          final logEntry = FileJSON(
+            type: 'folder',
+            uploadPath: event.name,
+            remotePath: remoteParent,
+          );
+          await _appendToJsonLog(logEntry);
+          // Обновляем UI даже при ошибке создания папки на Я.Диске, чтобы показать локальную папку
+          add(StorageListLoad(path: event.path));
+        }
       } else {
         final logEntry = FileJSON(
           type: 'folder',
@@ -332,6 +247,8 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           remotePath: remoteParent,
         );
         await _appendToJsonLog(logEntry);
+        // Обновляем UI после сохранения в локальный лог
+        add(StorageListLoad(path: event.path));
       }
     } catch (e) {
       debugPrint('❌ Ошибка в _onStorageListCreateFolder: $e');
@@ -381,7 +298,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     StorageListLoad event,
     Emitter<StorageListState> emit,
   ) async {
-    _lastPath = event.path;
     try {
       final hasInternet = GetIt.I<ConnectivityService>().hasInternet;
       if ((globalAccessList == [] || globalRole == null) && hasInternet) {
@@ -401,16 +317,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
               sortBy: event.sortBy,
               ascending: event.ascending,
             );
-      // загружаем статусы из JSON
-      final synced = await _loadSyncedPaths();
-      for (var it in itemsList) {
-        if (it is FileItem && synced.contains(it.path)) {
-          it.isSynced = true;
-        }
-      }
 
-      // сохраняем полный список
-      _allItems = itemsList;
       emit(StorageListLoaded(items: itemsList));
     } catch (e, st) {
       debugPrint(e.toString());
@@ -420,51 +327,39 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
   }
 
   // Обработчик события синхронизации с Яндекс Диском
-  FutureOr<void> _onSyncFromYandex(
-      SyncFromYandexEvent event, Emitter<StorageListState> emit) async {
-    try {
-      emit(StorageListLoading());
-      await yandexRepository.syncFromYandexDisk(); // Синхронизация
-      // add(StorageListLoad(
-      //     path: event.path)); // Обновление UI после синхронизации
-    } catch (e) {
-      debugPrint('==========onSyncFromYandex=========');
-      debugPrint(e.toString());
-      emit(StorageListLoadingFailure(
-          errorMessage: 'Не удалось синхронизировать данные.'));
-    }
-  }
+  // Этот метод, вероятно, больше не нужен в таком виде
+  // FutureOr<void> _onSyncFromYandex(
+  //     SyncFromYandexEvent event, Emitter<StorageListState> emit) async {
+  //   try {
+  //     emit(StorageListLoading());
+  //     await yandexRepository.syncFromYandexDisk(); // Синхронизация
+  //     // add(StorageListLoad(
+  //     //     path: event.path)); // Обновление UI после синхронизации
+  //   } catch (e) {
+  //     debugPrint('==========onSyncFromYandex=========');
+  //     debugPrint(e.toString());
+  //     emit(StorageListLoadingFailure(
+  //         errorMessage: 'Не удалось синхронизировать данные.'));
+  //   }
+  // }
 
   // Обработчик события синхронизации с локальным хранилищем
-  FutureOr<void> _onSyncToYandex(
-      SyncToYandexEvent event, Emitter<StorageListState> emit) async {
-    try {
-      emit(StorageListLoading());
-      await yandexRepository
-          .syncToYandexDisk(); // Синхронизация с локального хранилища
-      add(StorageListLoad(
-          path: event.path)); // Обновление UI после синхронизации
-    } catch (e) {
-      debugPrint('=========onSyncToYandex==========');
-      debugPrint(e.toString());
-      emit(StorageListLoadingFailure(
-          errorMessage: 'Не удалось синхронизировать данные.'));
-    }
-  }
-
-  FutureOr<void> _onMarkSynced(
-    StorageListMarkSynced event,
-    Emitter<StorageListState> emit,
-  ) {
-    for (var item in _allItems) {
-      if (item is FileItem && item.path == event.filePath) {
-        item.isSynced = true;
-        break;
-      }
-    }
-
-    emit(StorageListLoaded(items: List.from(_allItems)));
-  }
+  // Этот метод, вероятно, больше не нужен в таком виде
+  // FutureOr<void> _onSyncToYandex(
+  //     SyncToYandexEvent event, Emitter<StorageListState> emit) async {
+  //   try {
+  //     emit(StorageListLoading());
+  //     await yandexRepository
+  //         .syncToYandexDisk(); // Синхронизация с локального хранилища
+  //     add(StorageListLoad(
+  //         path: event.path)); // Обновление UI после синхронизации
+  //   } catch (e) {
+  //     debugPrint('=========onSyncToYandex==========');
+  //     debugPrint(e.toString());
+  //     emit(StorageListLoadingFailure(
+  //           errorMessage: 'Не удалось синхронизировать данные.'));
+  //   }
+  // }
 
   FutureOr<void> _onDeleteFolder(
       DeleteFolderEvent event, Emitter<StorageListState> emit) async {

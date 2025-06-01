@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
 import 'package:autoexplorer/features/storage/view/image_view_screen.dart';
@@ -51,6 +51,10 @@ class _StorageListScreenState extends State<StorageListScreen> {
   // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
 
   //
+// Подписка на стрим доступности интернета
+  late StreamSubscription<bool> _internetAvailableSubscription;
+  // Состояние для отображения кнопки синхронизации
+  bool _showSyncButton = false;
 
   Future<void> _initNotifications() async {
     final repository = GetIt.I<NotificationsRepositoryI>();
@@ -196,9 +200,26 @@ class _StorageListScreenState extends State<StorageListScreen> {
     }
   }
 
+  // Метод для ручного запуска синхронизации
+  void _manualSync() {
+    _storageListBloc.add(ManualSyncEvent(currentPath: widget.path));
+    // Опционально: скрыть кнопку синхронизации после запуска
+    // setState(() {
+    //   _showSyncButton = false;
+    // });
+  }
+
   void refreshItems() {
-    _storageListBloc.add(SyncAllEvent(path: widget.path));
-    setState(() {});
+    // При ручном обновлении списка просто загружаем его
+    _storageListBloc.add(StorageListLoad(path: widget.path));
+  }
+
+  @override
+  void dispose() {
+    // Отписываемся от стрима при уничтожении виджета
+    _internetAvailableSubscription.cancel();
+    _storageListBloc.close(); // Не забудьте закрыть Bloc
+    super.dispose();
   }
 
   void _deleteSelectedItems() {
@@ -260,14 +281,42 @@ class _StorageListScreenState extends State<StorageListScreen> {
 
     debugPrint("globalRole");
     debugPrint(globalRole.toString());
-    if (widget.path == '/' && GetIt.I<ConnectivityService>().hasInternet) {
-      _storageListBloc.add(SyncAllEvent(path: widget.path));
-    } else {
-      _storageListBloc.add(StorageListLoad(path: widget.path));
-    }
+
+    // Загружаем список файлов при инициализации
+    _storageListBloc.add(StorageListLoad(path: widget.path));
+
     debugPrint(widget.path);
     _initNotifications();
     // _loadData(path: widget.path);
+    // Подписываемся на стрим доступности интернета
+    _internetAvailableSubscription = GetIt.I<ConnectivityService>()
+        .internetAvailableStream
+        .listen((isAvailable) {
+      if (isAvailable) {
+        // Показываем Snackbar при появлении интернета
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Интернет доступен. Хотите синхронизировать файлы?'), // Возможно, стоит использовать S.of(context).your_localization_key
+            action: SnackBarAction(
+              label: 'Синхронизировать', // S.of(context).your_localization_key
+              onPressed: _manualSync,
+            ),
+            duration: Duration(seconds: 5), // Snackbar будет виден 10 секунд
+          ),
+        );
+        // Показываем кнопку синхронизации в AppBar
+        setState(() {
+          _showSyncButton = true;
+        });
+      } else {
+        // Скрываем кнопку синхронизации при отсутствии интернета
+        setState(() {
+          _showSyncButton = false;
+        });
+      }
+    });
+
     super.initState();
   }
 
@@ -328,6 +377,7 @@ class _StorageListScreenState extends State<StorageListScreen> {
         },
         // onDelete: _isSelectionMode ? _deleteSelectedItems : null,
         refreshItems: refreshItems,
+        onSyncedFiles: _manualSync,
         onDeleteSynced: () {
           // здесь собираем все синхронизированные FileItem и диспатчим удаление
           final synced = filesAndFolders

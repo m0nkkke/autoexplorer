@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:autoexplorer/repositories/storage/models/fileItem.dart';
+import 'package:autoexplorer/repositories/storage/models/file_json.dart';
 import 'package:autoexplorer/repositories/storage/models/folder.dart';
 import 'package:autoexplorer/repositories/storage/models/item_wrapper.dart';
 import 'package:autoexplorer/repositories/storage/models/sortby.dart';
@@ -36,60 +38,99 @@ class LocalRepository extends AbstractStorageRepository {
     SortBy sortBy = SortBy.name,
     bool ascending = true,
   }) async {
-    final dir = await getAppDirectory(path: path);
-    final List<ItemWrapper> wrapped = [];
+    try {
+      final dir = await getAppDirectory(
+          path: path); // Используем вашу логику определения директории
+      final List<ItemWrapper> wrapped = [];
 
-    final entities = await dir.list().toList();
-    for (final entity in entities) {
-      final name = p.basename(entity.path);
-      final stat = await entity.stat();
-      final DateTime date = stat.modified;
+      final entities = await dir.list().toList();
 
-      if (entity is Directory) {
-        final filesCount = await _getFilesCountInDirectory(entity.path);
-        wrapped.add(ItemWrapper(
-          name: name,
-          date: date,
-          item: FolderItem(
-            resourceId: '',
+      // 1. Читаем локальный лог
+      final logFile = await _getLogFile();
+      final content = await logFile.readAsString();
+      final List<dynamic> logEntriesJson = jsonDecode(content);
+      final List<FileJSON> logEntries =
+          logEntriesJson.map((json) => FileJSON.fromJson(json)).toList();
+
+      for (final entity in entities) {
+        final name = p.basename(entity.path);
+        final stat = await entity.stat();
+        final DateTime date = stat.modified;
+
+        if (entity is Directory) {
+          final filesCount = await _getFilesCountInDirectory(entity.path);
+          // Для папок состояние синхронизации не отслеживается в этом сценарии
+          wrapped.add(ItemWrapper(
             name: name,
-            filesCount: filesCount,
-            path: entity.path,
-          ),
-        ));
-      } else if (entity is File) {
-        wrapped.add(ItemWrapper(
-          name: name,
-          date: date,
-          item: FileItem(
+            date: date,
+            item: FolderItem(
+              resourceId:
+                  '', // Возможно, resourceId не нужен для локальных папок
+              name: name,
+              filesCount: filesCount,
+              path: entity
+                  .path, // Сохраняем относительный путь// Добавляем creationDate
+              // isSynced не добавляем для FolderItem
+            ),
+          ));
+        } else if (entity is File) {
+          // 2. Проверяем состояние синхронизации для текущего файла
+          final matchingLogEntry = logEntries.firstWhereOrNull((entry) =>
+              entry.uploadPath == entity.path); // Ищем по relativePath
+
+          // Если найдена запись в логе с isSynced == true, или если записи нет в логе,
+          // считаем файл синхронизированным. Иначе - несинхронизированным.
+          final isSynced = matchingLogEntry?.isSynced ?? true;
+
+          wrapped.add(ItemWrapper(
             name: name,
-            creationDate: date.toIso8601String(),
-            path: entity.path,
-            imageURL: entity.path,
-          ),
-        ));
+            date: date,
+            item: FileItem(
+              name: name,
+              creationDate: date.toIso8601String(),
+              path: entity.path, // Сохраняем относительный путь
+              imageURL:
+                  entity.path, // Возможно, imageURL должен быть локальным путем
+              isSynced: isSynced, // Передаем состояние синхронизации
+            ),
+          ));
+        }
       }
-    }
 
-    // 1) Фильтрация
-    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      final q = searchQuery.toLowerCase();
-      wrapped.retainWhere((w) => w.name.toLowerCase().contains(q));
-    }
-
-    // 2) Сортировка
-    wrapped.sort((a, b) {
-      int cmp;
-      if (sortBy == SortBy.name) {
-        cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      } else {
-        cmp = a.date.compareTo(b.date);
+      // 1) Фильтрация
+      if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+        final q = searchQuery.toLowerCase();
+        wrapped.retainWhere((w) => w.name.toLowerCase().contains(q));
       }
-      return ascending ? cmp : -cmp;
-    });
 
-    // 3) Отворачиваем обратно в модели
-    return wrapped.map((w) => w.item).toList();
+      // 2) Сортировка
+      wrapped.sort((a, b) {
+        int cmp;
+        if (sortBy == SortBy.name) {
+          cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        } else {
+          cmp = a.date.compareTo(b.date);
+        }
+        return ascending ? cmp : -cmp;
+      });
+
+      // 3) Отворачиваем обратно в модели
+      return wrapped.map((w) => w.item).toList();
+    } catch (e) {
+      print('Ошибка в LocalRepository.getFileAndFolderModels: $e');
+      return [];
+    }
+  }
+
+  // Добавляем метод для получения лог-файла
+  Future<File> _getLogFile() async {
+    final baseDir = await getApplicationDocumentsDirectory();
+    final logFile = File(p.join(baseDir.path, 'createLog.json'));
+    if (!await logFile.exists()) {
+      await logFile.create(recursive: true);
+      await logFile.writeAsString('[]', flush: true);
+    }
+    return logFile;
   }
 
   Future<int> _getFilesCountInDirectory(String path) async {
@@ -169,5 +210,16 @@ class LocalRepository extends AbstractStorageRepository {
     } catch (e) {
       rethrow;
     }
+  }
+}
+
+extension ListExtension<T> on List<T> {
+  T? firstWhereOrNull(bool Function(T) test) {
+    for (var element in this) {
+      if (test(element)) {
+        return element;
+      }
+    }
+    return null;
   }
 }

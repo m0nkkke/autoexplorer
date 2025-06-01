@@ -10,6 +10,7 @@ enum AppBarMenuOption {
   createFolder,
   search,
   refresh,
+  syncFiles,
   deleteSynced,
   switchAccount,
 }
@@ -19,6 +20,7 @@ class AppBarMenu extends StatelessWidget {
   final String path;
   final Function(String) onCreateFolder;
   final VoidCallback onRefresh;
+  final VoidCallback onSyncFiles;
   final VoidCallback onDeleteSynced;
 
   const AppBarMenu({
@@ -28,6 +30,7 @@ class AppBarMenu extends StatelessWidget {
     required this.onCreateFolder,
     required this.onRefresh,
     required this.onDeleteSynced,
+    required this.onSyncFiles,
   }) : super(key: key);
 
   @override
@@ -64,6 +67,16 @@ class AppBarMenu extends StatelessWidget {
         ),
       ),
       const PopupMenuDivider(),
+      PopupMenuItem(
+        value: AppBarMenuOption.syncFiles,
+        child: Row(
+          children: [
+            const Icon(Icons.upload_file, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text('Отправить на диск'),
+          ],
+        ),
+      ),
       PopupMenuItem(
         value: AppBarMenuOption.deleteSynced,
         child: Row(
@@ -113,6 +126,10 @@ class AppBarMenu extends StatelessWidget {
 
       case AppBarMenuOption.refresh:
         onRefresh();
+        break;
+
+      case AppBarMenuOption.syncFiles:
+        onSyncFiles();
         break;
 
       case AppBarMenuOption.deleteSynced:

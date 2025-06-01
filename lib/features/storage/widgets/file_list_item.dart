@@ -7,7 +7,7 @@ class FileListItem extends StatelessWidget {
   final String creationDate;
   final bool isSelectionMode;
   final bool isSelected;
-  final bool isSynced; // ← новый флаг
+  final bool isSynced;
   final VoidCallback? onLongPress;
   final VoidCallback onTap;
   final bool isLargeIcons;
@@ -19,7 +19,7 @@ class FileListItem extends StatelessWidget {
     required this.creationDate,
     required this.isSelectionMode,
     required this.isSelected,
-    required this.isSynced, // ← требуем его в конструкторе
+    required this.isSynced,
     this.onLongPress,
     required this.onTap,
     required this.isLargeIcons,
