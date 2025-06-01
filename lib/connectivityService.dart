@@ -16,6 +16,7 @@ class ConnectivityService extends ChangeNotifier {
   late final StreamSubscription<List<ConnectivityResult>> _subscription;
 
   bool _hasInternet = false;
+  bool _internetEventSent = false;
   bool get hasInternet => _hasInternet;
 
   // Стрим для уведомления о появлении интернета
@@ -42,10 +43,19 @@ class ConnectivityService extends ChangeNotifier {
     // если изменилось состояние
     if (wasOnline != _hasInternet) {
       notifyListeners();
-
+      _internetEventSent = false;
       // Если интернет появился, уведомляем об этом
       if (!wasOnline && _hasInternet) {
-        _internetAvailableController.add(true);
+        if (!_internetEventSent) {
+          _internetEventSent = true; // Устанавливаем флаг сразу
+
+          // Добавляем небольшую задержку
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _internetAvailableController.add(true);
+            debugPrint(
+                '🚀 Отправлено событие "интернет доступен"'); // Для отладки
+          });
+        }
       }
     }
   }
@@ -53,6 +63,7 @@ class ConnectivityService extends ChangeNotifier {
   @override
   void dispose() {
     _subscription.cancel();
+    _internetEventSent = false;
     _internetAvailableController.close();
     super.dispose();
   }

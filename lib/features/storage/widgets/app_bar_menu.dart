@@ -71,9 +71,9 @@ class AppBarMenu extends StatelessWidget {
         value: AppBarMenuOption.syncFiles,
         child: Row(
           children: [
-            const Icon(Icons.upload_file, color: Colors.black54),
+            const Icon(Icons.cloud_upload_outlined, color: Colors.black54),
             const SizedBox(width: 8),
-            Text('Отправить на диск'),
+            Text(S.of(context).sendToDisk),
           ],
         ),
       ),
@@ -83,7 +83,7 @@ class AppBarMenu extends StatelessWidget {
           children: [
             const Icon(Icons.delete_sweep, color: Colors.black54),
             const SizedBox(width: 8),
-            Text('Удалить синх-файлы'),
+            Text(S.of(context).deleteSyncFiles),
           ],
         ),
       ),
@@ -136,9 +136,8 @@ class AppBarMenu extends StatelessWidget {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('Удалить файлы'),
-            content: Text(
-                'Вы уверены, что хотите удалить все синхронизированные файлы из текущей папки?'),
+            title: Text(S.of(context).deleteSyncWindow),
+            content: Text(S.of(context).areYouSureToDeleteSync),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),

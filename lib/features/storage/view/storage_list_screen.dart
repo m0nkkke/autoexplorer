@@ -296,13 +296,14 @@ class _StorageListScreenState extends State<StorageListScreen> {
         // Показываем Snackbar при появлении интернета
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Интернет доступен. Хотите синхронизировать файлы?'), // Возможно, стоит использовать S.of(context).your_localization_key
-            action: SnackBarAction(
-              label: 'Синхронизировать', // S.of(context).your_localization_key
-              onPressed: _manualSync,
-            ),
-            duration: Duration(seconds: 5), // Snackbar будет виден 10 секунд
+            content: Text(S
+                .of(context)
+                .internetHasArrived), // Возможно, стоит использовать S.of(context).your_localization_key
+            // action: SnackBarAction(
+            //   label: 'Синхронизировать', // S.of(context).your_localization_key
+            //   onPressed: _manualSync,
+            // ),
+            duration: Duration(seconds: 2), // Snackbar будет виден 10 секунд
           ),
         );
         // Показываем кнопку синхронизации в AppBar

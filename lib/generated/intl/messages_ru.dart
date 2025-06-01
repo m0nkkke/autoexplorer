@@ -44,6 +44,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "adminPanelTitle": MessageLookupByLibrary.simpleMessage("Админ-панель"),
     "areYouSure": MessageLookupByLibrary.simpleMessage("Вы уверены?"),
     "areYouSureToDeleteNFolders": m0,
+    "areYouSureToDeleteSync": MessageLookupByLibrary.simpleMessage(
+      "Вы уверены, что хотите удалить все синхронизированные файлы из текущей папки?",
+    ),
     "areYouSureWithParam": m1,
     "areaTitle": MessageLookupByLibrary.simpleMessage("Участок"),
     "cameraMode": MessageLookupByLibrary.simpleMessage("Из камеры"),
@@ -69,6 +72,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "creationTabTitle": MessageLookupByLibrary.simpleMessage("Создание"),
     "deleteButton": MessageLookupByLibrary.simpleMessage("Удалить"),
     "deleteSelected": MessageLookupByLibrary.simpleMessage("Удалить выбранное"),
+    "deleteSyncFiles": MessageLookupByLibrary.simpleMessage(
+      "Удалить синх-файлы",
+    ),
+    "deleteSyncWindow": MessageLookupByLibrary.simpleMessage("Удалить файлы"),
     "diskStatusFailed": MessageLookupByLibrary.simpleMessage("Диск отключен"),
     "diskStatusSuccess": MessageLookupByLibrary.simpleMessage("Диск подключен"),
     "diskTabTitle": MessageLookupByLibrary.simpleMessage("Диск"),
@@ -91,6 +98,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "imagesCount": m4,
     "imagesCreated": MessageLookupByLibrary.simpleMessage(
       "Изображений создано",
+    ),
+    "internetHasArrived": MessageLookupByLibrary.simpleMessage(
+      "Интернет доступен. Перейдите в меню для отправки фото на диск",
     ),
     "keyCopySuccess": MessageLookupByLibrary.simpleMessage(
       "Ключ скопирован в буфер обмена",
@@ -122,6 +132,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectFoldersToDelete": MessageLookupByLibrary.simpleMessage(
       "Выберите файлы для удаления",
     ),
+    "sendToDisk": MessageLookupByLibrary.simpleMessage("Отправить на диск"),
     "signInButton": MessageLookupByLibrary.simpleMessage("Авторизоваться"),
     "sortByDate": MessageLookupByLibrary.simpleMessage("Сортировка по дате"),
     "sortByName": MessageLookupByLibrary.simpleMessage("Сортировка по имени"),

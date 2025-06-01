@@ -70,5 +70,10 @@
   "accessKey": "Access key",
   "keyCopySuccess": "Copied!",
   "chooseRegional": "Choose regional",
-  "accessControl": "Access and user control"
+  "accessControl": "Access and user control",
+  "sendToDisk": "Send to cloud",
+  "deleteSyncFiles": "Delete sync-files",
+  "deleteSyncWindow": "Delete files",
+  "areYouSureToDeleteSync": "Are you sure you wanna delete files from this directory?",
+  "internetHasArrived": "Connection is back! Click on 'send to cloud' in menu"
 }

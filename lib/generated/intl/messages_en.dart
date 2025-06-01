@@ -44,6 +44,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "adminPanelTitle": MessageLookupByLibrary.simpleMessage("Admin-panel"),
     "areYouSure": MessageLookupByLibrary.simpleMessage("Are you sure?"),
     "areYouSureToDeleteNFolders": m0,
+    "areYouSureToDeleteSync": MessageLookupByLibrary.simpleMessage(
+      "Are you sure you wanna delete files from this directory?",
+    ),
     "areYouSureWithParam": m1,
     "areaTitle": MessageLookupByLibrary.simpleMessage("Area"),
     "cameraMode": MessageLookupByLibrary.simpleMessage("From camera"),
@@ -65,6 +68,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "creationTabTitle": MessageLookupByLibrary.simpleMessage("Templates"),
     "deleteButton": MessageLookupByLibrary.simpleMessage("Delete"),
     "deleteSelected": MessageLookupByLibrary.simpleMessage("Delete selected"),
+    "deleteSyncFiles": MessageLookupByLibrary.simpleMessage(
+      "Delete sync-files",
+    ),
+    "deleteSyncWindow": MessageLookupByLibrary.simpleMessage("Delete files"),
     "diskStatusFailed": MessageLookupByLibrary.simpleMessage(
       "Disk is not connected",
     ),
@@ -90,6 +97,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "iconsViewModeSmall": MessageLookupByLibrary.simpleMessage("Small"),
     "imagesCount": m4,
     "imagesCreated": MessageLookupByLibrary.simpleMessage("Images created"),
+    "internetHasArrived": MessageLookupByLibrary.simpleMessage(
+      "Connection is back! Click on \'send to cloud\' in menu",
+    ),
     "keyCopySuccess": MessageLookupByLibrary.simpleMessage("Copied!"),
     "lastName": MessageLookupByLibrary.simpleMessage("Surname"),
     "lastUpload": MessageLookupByLibrary.simpleMessage("Last upload"),
@@ -118,6 +128,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectFoldersToDelete": MessageLookupByLibrary.simpleMessage(
       "Choose folders to delete",
     ),
+    "sendToDisk": MessageLookupByLibrary.simpleMessage("Send to cloud"),
     "signInButton": MessageLookupByLibrary.simpleMessage("Sign in"),
     "sortByDate": MessageLookupByLibrary.simpleMessage("Date"),
     "sortByName": MessageLookupByLibrary.simpleMessage("Name"),

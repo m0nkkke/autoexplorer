@@ -168,48 +168,114 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
+  /// Сначала запрашиваем список корневых папок на Яндекс.Диске,
+  /// чтобы найти название той, чей resource_id совпадает с user['regional'].
+  Future<String?> _fetchRegionalFolderName(String regionalId) async {
+    try {
+      // Предполагаем, что для корня нужно передать path: 'disk:/'
+      final allRootItems = await getFileAndFolderModels(
+        path: 'disk:/',
+      );
+      for (final item in allRootItems) {
+        if (item is FolderItem) {
+          if (item.resourceId == regionalId) {
+            return item.name;
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Ошибка при загрузке корневых папок: $e');
+      return null;
+    }
+  }
+
   @override
+
+  /// 2) Метод создаёт папку [name] внутри POSIX-пути [path] (например, '/applicationData/РегионХ'),
+  ///    затем проверяет, лежит ли она локально внутри <appDir>/<regionalName>. Если да – добавляет её resource_id
+  ///    в accessList пользователя. Иначе – не меняет accessList.
   Future<void> createFolder({
     required String name,
-    required String path,
+    required String
+        path, // например "/Регионал-ЭнергоКрас" или "/Регионал-ЭнергоКрас/новаяпапка"
   }) async {
-    // 1) Собираем чистый POSIX-путь: "/Test999/666" или "/444" для корня
-    final fullPath = p.join(path, name);
+    // 1) Узнаём uid и регион пользователя
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser == null) {
+      throw StateError('Пользователь не авторизован');
+    }
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(fbUser.uid)
+        .get();
+    final userData = userDoc.data();
+    final regionalId = userData?['regional'] as String?;
+    if (regionalId == null) {
+      throw StateError('У пользователя нет поля "regional"');
+    }
+
+    // 2) Получаем локальный корневой каталог applicationData
+    final localRepo =
+        GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
+            as LocalRepository;
+    final appDir = await localRepo.getAppDirectory(path: '/');
+    // appDir.path ≈ "/data/user/0/.../applicationData"
+
+    // 3) Получаем имя папки-региона на Яндекс.Диске по resourceId
+    final regionalName = await _fetchRegionalFolderName(regionalId);
+    if (regionalName == null) {
+      debugPrint('Не найден регион с resourceId=$regionalId на Яндекс.Диске');
+      // Можно либо бросить ошибку, либо просто создать папку без изменения accessList
+    }
+
+    // 4) Формируем POSIX-путь для новой папки на Я.Диске
+    //    если path="/Регионал-ЭнергоКрас", name="accessadded",
+    //    то fullPath="/Регионал-ЭнергоКрас/accessadded"
+    final fullPath = p.posix.join(path, name);
 
     try {
-      // 2) Создаём папку (или проверяем, что она уже есть)
+      // 5) Создаём папку на Яндекс.Диске
       final createResp = await dio.put(
         '',
         queryParameters: {'path': fullPath},
       );
-
-      if (createResp.statusCode == 201 || createResp.statusCode == 409) {
-        debugPrint('✅ Папка создана (или уже есть): $fullPath');
-
-        // 3) Запрашиваем метаданные ресурса, чтобы получить resource_id
-        final metaResp = await dio.get(
-          '',
-          queryParameters: {'path': fullPath},
-        );
-
-        // 4) Парсим из ответа поле resource_id (или resourceId)
-        final data = metaResp.data as Map<String, dynamic>;
-        final resourceId = data['resource_id'] ?? data['resourceId'];
-
-        if (resourceId is String) {
-          final user = FirebaseAuth.instance.currentUser;
-          final docRef = FirebaseFirestore.instance
-              .collection('users')
-              .doc('${user?.uid}');
-          await docRef.update({
-            'accessList': FieldValue.arrayUnion([resourceId]),
-          });
-        } else {
-          throw StateError('Не удалось получить resource_id из ответа: $data');
-        }
-      } else {
+      if (createResp.statusCode != 201 && createResp.statusCode != 409) {
         throw StateError(
             'Unexpected status ${createResp.statusCode} при создании папки $fullPath');
+      }
+      debugPrint('✅ Папка создана (или уже есть): $fullPath');
+
+      // 6) Запрашиваем метаданные, чтобы получить resource_id
+      final metaResp = await dio.get(
+        '',
+        queryParameters: {'path': fullPath},
+      );
+      if (metaResp.statusCode != 200) {
+        throw StateError(
+            'Не удалось получить метаданные для $fullPath: ${metaResp.statusCode}');
+      }
+      final metaData = metaResp.data as Map<String, dynamic>;
+      final newResourceId = metaData['resource_id'] ?? metaData['resourceId'];
+      if (newResourceId is! String) {
+        throw StateError('Не удалось извлечь resource_id из ответа: $metaData');
+      }
+
+      // 7) Проверяем: создаём ли мы на прямом уровне региональной папки?
+      //    То есть, только если path exactly == "/Регионал-ЭнергоКрас"
+      if (regionalName != null && path == '/$regionalName') {
+        // Тогда добавляем resourceId в accessList пользователя
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(fbUser.uid)
+            .update({
+          'accessList': FieldValue.arrayUnion([newResourceId]),
+        });
+        debugPrint(
+            '🔑 $newResourceId добавлен в accessList пользователя ${fbUser.uid}');
+      } else {
+        debugPrint(
+            'ℹ️ Папка $fullPath не создана на уровне "/$regionalName" — не меняем accessList');
       }
     } on DioException catch (e) {
       debugPrint('❌ Ошибка при создании папки: ${e.message}');

@@ -629,6 +629,56 @@ class S {
       args: [],
     );
   }
+
+  /// `Send to cloud`
+  String get sendToDisk {
+    return Intl.message(
+      'Send to cloud',
+      name: 'sendToDisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete sync-files`
+  String get deleteSyncFiles {
+    return Intl.message(
+      'Delete sync-files',
+      name: 'deleteSyncFiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete files`
+  String get deleteSyncWindow {
+    return Intl.message(
+      'Delete files',
+      name: 'deleteSyncWindow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you wanna delete files from this directory?`
+  String get areYouSureToDeleteSync {
+    return Intl.message(
+      'Are you sure you wanna delete files from this directory?',
+      name: 'areYouSureToDeleteSync',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection is back! Click on 'send to cloud' in menu`
+  String get internetHasArrived {
+    return Intl.message(
+      'Connection is back! Click on \'send to cloud\' in menu',
+      name: 'internetHasArrived',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
