@@ -28,7 +28,6 @@ class FileListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconSize = isLargeIcons ? 60.0 : 40.0;
-    // Выбираем нужную иконку синхронизации
     final syncIcon = isSynced
         ? const Icon(Icons.cloud_done, color: Colors.green)
         : const Icon(Icons.cloud_off, color: Colors.red);
@@ -48,12 +47,10 @@ class FileListItem extends StatelessWidget {
           subtitle:
               Text(creationDate, style: Theme.of(context).textTheme.bodySmall),
           trailing: isSelectionMode
-              // при режиме выбора — чекбокс
               ? Checkbox(
                   value: isSelected,
                   onChanged: (_) => onTap(),
                 )
-              // иначе — иконка синхронизации, справа
               : syncIcon,
         ),
       ),

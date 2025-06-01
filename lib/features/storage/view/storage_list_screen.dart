@@ -43,17 +43,8 @@ class _StorageListScreenState extends State<StorageListScreen> {
   SortBy _sortBy = SortBy.name;
   bool _ascending = true;
   final _searchController = TextEditingController();
-  //
-
   final _storageListBloc = StorageListBloc();
-  // final _storageListBloc = GetIt.I<StorageListBloc>();
-
-  // ВРЕМЕННЫЕ ПЕРЕМЕННЫЕ ДЛЯ ДЕМОНСТРАЦИИ
-
-  //
-// Подписка на стрим доступности интернета
   late StreamSubscription<bool> _internetAvailableSubscription;
-  // Состояние для отображения кнопки синхронизации
   bool _showSyncButton = false;
 
   Future<void> _initNotifications() async {

@@ -47,13 +47,11 @@ class ConnectivityService extends ChangeNotifier {
       // Если интернет появился, уведомляем об этом
       if (!wasOnline && _hasInternet) {
         if (!_internetEventSent) {
-          _internetEventSent = true; // Устанавливаем флаг сразу
+          _internetEventSent = true;
 
-          // Добавляем небольшую задержку
           Future.delayed(const Duration(milliseconds: 500), () {
             _internetAvailableController.add(true);
-            debugPrint(
-                '🚀 Отправлено событие "интернет доступен"'); // Для отладки
+            debugPrint('🚀 Отправлено событие "интернет доступен"');
           });
         }
       }
@@ -81,8 +79,6 @@ class ConnectivityService extends ChangeNotifier {
 
   /// Пробегаем по всем записям из JSON-лога,
   /// отправляем каждую на Яндекс.Диск и удаляем из лога при успехе.
-  /// Пробегаем по всем записям из JSON-лога,
-  /// отправляем каждую на Яндекс.Диск и обновляем флаг isSynced при успехе.
   Future<void> _syncLog() async {
     final logFile = await _getLogFile();
     final content = await logFile.readAsString();
@@ -96,8 +92,6 @@ class ConnectivityService extends ChangeNotifier {
         GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository')
             as StorageRepository;
 
-    // final appDir = await localRepo.getAppDirectory(path: '/'); // Эта строка, возможно, не нужна здесь
-
     // Создаем временный список для итерации
     final List<dynamic> itemsToSync = List.from(array);
 
@@ -105,9 +99,8 @@ class ConnectivityService extends ChangeNotifier {
       final raw = itemsToSync[i];
       final entry = FileJSON.fromJson(raw as Map<String, dynamic>);
 
-      // Проверяем, нужно ли синхронизировать эту запись
       if (entry.isSynced) {
-        continue; // Пропускаем уже синхронизированные
+        continue;
       }
 
       try {
@@ -131,21 +124,14 @@ class ConnectivityService extends ChangeNotifier {
 
         if (originalEntryIndex != -1) {
           array[originalEntryIndex]['isSynced'] = true;
-          debugPrint(
-              '✅ Успешно синхронизировано: ${entry.uploadPath}'); // Для отладки
+          debugPrint('✅ Успешно синхронизировано: ${entry.uploadPath}');
         }
       } catch (e) {
-        // на неудачу не реагируем, оставляем запись с isSynced = false
-        debugPrint(
-            '⚠️ Ошибка синхронизации ${entry.uploadPath}: $e'); // Для отладки
+        debugPrint('⚠️ Ошибка синхронизации ${entry.uploadPath}: $e');
       }
     }
 
-    // Перезаписываем лог со всеми записями (включая обновленные)
     await logFile.writeAsString(jsonEncode(array), flush: true);
-
-    // Опционально: удалить синхронизированные записи из лога после перезапуска приложения
-    // или добавить отдельную функцию для очистки лога
   }
 
   /// Метод для ручного запуска синхронизации

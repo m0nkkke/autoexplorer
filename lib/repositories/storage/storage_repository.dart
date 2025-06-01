@@ -168,11 +168,8 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
-  /// Сначала запрашиваем список корневых папок на Яндекс.Диске,
-  /// чтобы найти название той, чей resource_id совпадает с user['regional'].
   Future<String?> _fetchRegionalFolderName(String regionalId) async {
     try {
-      // Предполагаем, что для корня нужно передать path: 'disk:/'
       final allRootItems = await getFileAndFolderModels(
         path: 'disk:/',
       );
@@ -220,13 +217,11 @@ class StorageRepository extends AbstractStorageRepository {
         GetIt.I<AbstractStorageRepository>(instanceName: 'local_repository')
             as LocalRepository;
     final appDir = await localRepo.getAppDirectory(path: '/');
-    // appDir.path ≈ "/data/user/0/.../applicationData"
 
     // 3) Получаем имя папки-региона на Яндекс.Диске по resourceId
     final regionalName = await _fetchRegionalFolderName(regionalId);
     if (regionalName == null) {
       debugPrint('Не найден регион с resourceId=$regionalId на Яндекс.Диске');
-      // Можно либо бросить ошибку, либо просто создать папку без изменения accessList
     }
 
     // 4) Формируем POSIX-путь для новой папки на Я.Диске
@@ -264,7 +259,6 @@ class StorageRepository extends AbstractStorageRepository {
       // 7) Проверяем: создаём ли мы на прямом уровне региональной папки?
       //    То есть, только если path exactly == "/Регионал-ЭнергоКрас"
       if (regionalName != null && path == '/$regionalName') {
-        // Тогда добавляем resourceId в accessList пользователя
         await FirebaseFirestore.instance
             .collection('users')
             .doc(fbUser.uid)

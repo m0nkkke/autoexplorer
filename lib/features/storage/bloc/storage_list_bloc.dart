@@ -146,9 +146,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       debugPrint(remotePath);
       debugPrint("==============================");
 
-      // 2) Обновляем UI
-      // add(StorageListLoad(path: event.currentPath)); // Убираем автоматическое обновление UI здесь
-
       if (GetIt.I<ConnectivityService>().hasInternet) {
         // 3) Загружаем на Яндекс.Диск
         try {
@@ -214,8 +211,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
       } else {
         remoteParent = '/';
       }
-      // 3) обновляем UI
-      // add(StorageListLoad(path: event.path)); // Убираем автоматическое обновление UI здесь
 
       if (GetIt.I<ConnectivityService>().hasInternet) {
         // 4) создаём папку на Яндекс.Диске по относительному пути
@@ -237,7 +232,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
             remotePath: remoteParent,
           );
           await _appendToJsonLog(logEntry);
-          // Обновляем UI даже при ошибке создания папки на Я.Диске, чтобы показать локальную папку
           add(StorageListLoad(path: event.path));
         }
       } else {
@@ -344,41 +338,6 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
           errorMessage: 'Не удалось загрузить данные.'));
     }
   }
-
-  // Обработчик события синхронизации с Яндекс Диском
-  // Этот метод, вероятно, больше не нужен в таком виде
-  // FutureOr<void> _onSyncFromYandex(
-  //     SyncFromYandexEvent event, Emitter<StorageListState> emit) async {
-  //   try {
-  //     emit(StorageListLoading());
-  //     await yandexRepository.syncFromYandexDisk(); // Синхронизация
-  //     // add(StorageListLoad(
-  //     //     path: event.path)); // Обновление UI после синхронизации
-  //   } catch (e) {
-  //     debugPrint('==========onSyncFromYandex=========');
-  //     debugPrint(e.toString());
-  //     emit(StorageListLoadingFailure(
-  //         errorMessage: 'Не удалось синхронизировать данные.'));
-  //   }
-  // }
-
-  // Обработчик события синхронизации с локальным хранилищем
-  // Этот метод, вероятно, больше не нужен в таком виде
-  // FutureOr<void> _onSyncToYandex(
-  //     SyncToYandexEvent event, Emitter<StorageListState> emit) async {
-  //   try {
-  //     emit(StorageListLoading());
-  //     await yandexRepository
-  //         .syncToYandexDisk(); // Синхронизация с локального хранилища
-  //     add(StorageListLoad(
-  //         path: event.path)); // Обновление UI после синхронизации
-  //   } catch (e) {
-  //     debugPrint('=========onSyncToYandex==========');
-  //     debugPrint(e.toString());
-  //     emit(StorageListLoadingFailure(
-  //           errorMessage: 'Не удалось синхронизировать данные.'));
-  //   }
-  // }
 
   FutureOr<void> _onDeleteFolder(
       DeleteFolderEvent event, Emitter<StorageListState> emit) async {
