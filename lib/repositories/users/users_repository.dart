@@ -1,5 +1,5 @@
 import 'package:autoexplorer/repositories/users/abstract_users_repository.dart';
-import 'package:autoexplorer/repositories/users/models/user/ae_user.dart'; // Изменено на AEUser
+import 'package:autoexplorer/repositories/users/models/user/ae_user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -14,7 +14,6 @@ class UsersRepository implements AbstractUsersRepository {
  @override
   Future<void> registerUser(String uid, AEUser userData) async { 
     try {
-      // Создаем объект AEUser для сохранения в Firestore
       final user = AEUser( 
         uid: uid,
         email: userData.email,
@@ -30,7 +29,6 @@ class UsersRepository implements AbstractUsersRepository {
         role: userData.role,
       );
 
-      // Сохранение пользователя в Firestore
       await _firestore.collection('users').doc(uid).set(user.toFirestore());
 
     } catch (e) {
@@ -38,7 +36,6 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
-  // Авторизация пользователя
   @override
   Future<AEUser?> signInUser(String email, String password) async { 
     try {
@@ -49,7 +46,6 @@ class UsersRepository implements AbstractUsersRepository {
 
       final user = await getUserByUid(uid);
       if (user == null) {
-        // Если пользователь удален из Firestore
         throw Exception("Ваш аккаунт был удалён. Доступ запрещен.");
       }
 
@@ -59,7 +55,6 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
-  // Получение пользователя по UID
   @override
   Future<AEUser?> getUserByUid(String uid) async { 
     try {
@@ -77,17 +72,6 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
-  // Создание пользователя в Firestore
-  @override
-  Future<void> createUser(AEUser user) async { 
-    try {
-      await _firestore.collection('users').doc(user.uid).set(user.toFirestore());
-    } catch (e) {
-      throw Exception('Failed to create user: ${e.toString()}');
-    }
-  }
-
-  // Получение всех пользователей
   @override
   Future<QuerySnapshot> getUsers() async {
     try {
@@ -98,7 +82,15 @@ class UsersRepository implements AbstractUsersRepository {
     }
   }
 
-  // Обновление пользователя
+  @override
+  Future<void> createUser(AEUser user) async { 
+    try {
+      await _firestore.collection('users').doc(user.uid).set(user.toFirestore());
+    } catch (e) {
+      throw Exception('Failed to create user: ${e.toString()}');
+    }
+  }
+
   @override
   Future<void> updateUser(AEUser user) async { 
     try {

@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class ImageSourceSheet extends StatelessWidget {
@@ -17,12 +18,12 @@ class ImageSourceSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           ListTile(
-            title: Row( 
-              mainAxisAlignment: MainAxisAlignment.center, 
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.camera_alt, color: Colors.blue),
                 const SizedBox(width: 8),
-                const Text('Из камеры'),
+                Text(S.of(context).cameraMode),
               ],
             ),
             onTap: () {
@@ -32,11 +33,11 @@ class ImageSourceSheet extends StatelessWidget {
           ),
           ListTile(
             title: Row(
-              mainAxisAlignment: MainAxisAlignment.center, 
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.photo, color: Colors.blue),
                 const SizedBox(width: 8),
-                const Text('Из галереи'),
+                Text(S.of(context).galleryMode),
               ],
             ),
             onTap: () {

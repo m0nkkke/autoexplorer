@@ -1,69 +1,169 @@
+// File: lib/features/storage/widgets/app_bar_menu.dart
+
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
+import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-enum AppBarMenuOption { createFolder, search, refresh, switchAccount }
+enum AppBarMenuOption {
+  createFolder,
+  search,
+  refresh,
+  syncFiles,
+  deleteSynced,
+  switchAccount,
+}
 
 class AppBarMenu extends StatelessWidget {
   final VoidCallback onSearch;
-  final path;
+  final String path;
+  final Function(String) onCreateFolder;
+  final VoidCallback onRefresh;
+  final VoidCallback onSyncFiles;
+  final VoidCallback onDeleteSynced;
 
-  AppBarMenu({super.key, required this.onSearch, required this.path});
-
-  // Заполнение пунктов меню
-  final List<_MenuItem> _menuItems = [
-    _MenuItem(AppBarMenuOption.createFolder, Icons.add, 'Новая папка'),
-    _MenuItem(AppBarMenuOption.search, Icons.search, 'Поиск'),
-    _MenuItem(AppBarMenuOption.refresh, Icons.refresh, 'Обновить'),
-    _MenuItem(AppBarMenuOption.switchAccount, Icons.vpn_key, 'Сменить'),
-  ];
+  const AppBarMenu({
+    Key? key,
+    required this.onSearch,
+    required this.path,
+    required this.onCreateFolder,
+    required this.onRefresh,
+    required this.onDeleteSynced,
+    required this.onSyncFiles,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<int>(
+    final items = <PopupMenuEntry<AppBarMenuOption>>[
+      PopupMenuItem(
+        value: AppBarMenuOption.createFolder,
+        child: Row(
+          children: [
+            const Icon(Icons.create_new_folder, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).createFolderMenu),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.search,
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).searchMenu),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.refresh,
+        child: Row(
+          children: [
+            const Icon(Icons.refresh, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).refreshMenu),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem(
+        value: AppBarMenuOption.syncFiles,
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_upload_outlined, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).sendToDisk),
+          ],
+        ),
+      ),
+      PopupMenuItem(
+        value: AppBarMenuOption.deleteSynced,
+        child: Row(
+          children: [
+            const Icon(Icons.delete_sweep, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).deleteSyncFiles),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem(
+        value: AppBarMenuOption.switchAccount,
+        child: Row(
+          children: [
+            const Icon(Icons.vpn_key, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).switchAccount),
+          ],
+        ),
+      ),
+    ];
+
+    return PopupMenuButton<AppBarMenuOption>(
       icon: const Icon(Icons.more_vert),
-      onSelected: (value) => _onMenuItemSelected(value, context),
-      itemBuilder: (context) => _menuItems
-          .map((item) => PopupMenuItem<int>(
-                value: item.option.index,
-                child: Row(
-                  children: [
-                    Icon(item.icon, color: Colors.black54),
-                    const SizedBox(width: 8),
-                    Text(item.text),
-                  ],
-                ),
-              ))
-          .toList(),
+      onSelected: (option) => _onMenuItemSelected(option, context),
+      itemBuilder: (_) => items,
     );
   }
 
-  // Обработка выбранного пункта меню
-  void _onMenuItemSelected(int value, BuildContext context) {
-    final option = AppBarMenuOption.values[value];
+  Future<void> _onMenuItemSelected(
+      AppBarMenuOption option, BuildContext context) async {
     switch (option) {
       case AppBarMenuOption.createFolder:
-        ShowCreateDialog.showCreateFolderDialog(context);
+        final folderName = await ShowCreateDialog.showCreateFolderDialog(
+          context,
+          currentPath: path,
+        );
+        if (folderName != null) {
+          onCreateFolder(folderName);
+        }
         break;
+
       case AppBarMenuOption.search:
         onSearch();
         break;
+
       case AppBarMenuOption.refresh:
-        Navigator.of(context).pushNamed('/storage');
+        onRefresh();
         break;
+
+      case AppBarMenuOption.syncFiles:
+        onSyncFiles();
+        break;
+
+      case AppBarMenuOption.deleteSynced:
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(S.of(context).deleteSyncWindow),
+            content: Text(S.of(context).areYouSureToDeleteSync),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(S.of(ctx).cancelButton),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text('ОК'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          onDeleteSynced();
+        }
+        break;
+
       case AppBarMenuOption.switchAccount:
-        FirebaseAuth.instance.signOut(); // НЕ ЗАБЫТЬ ПОМЕНЯТЬ И СДЕЛАТЬ ЧЕРЕЗ БЛОК
-        Navigator.of(context).pushNamed('/');
+        await FirebaseAuth.instance.signOut();
+        globalAccessList = null;
+        globalRole = null;
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        );
         break;
     }
   }
-}
-
-// Вспомогательный класс для представления элементов меню
-class _MenuItem {
-  final AppBarMenuOption option;
-  final IconData icon;
-  final String text;
-
-  _MenuItem(this.option, this.icon, this.text);
 }

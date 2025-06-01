@@ -1,10 +1,12 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class RegionSelector extends StatelessWidget {
   final String title; // Заголовок для меню
   final List<String> regions; // Список всех регионалов
   final String? selectedRegion; // Текущий выбранный регионал
-  final ValueChanged<String>? onRegionChanged; // Коллбек для изменения регионала
+  final ValueChanged<String>?
+      onRegionChanged; // Коллбек для изменения регионала
 
   const RegionSelector({
     super.key,
@@ -34,11 +36,12 @@ class RegionSelector extends StatelessWidget {
           ),
           child: DropdownButton<String>(
             value: selectedRegion, // Проверяем, что выбранный регионал валиден
-            hint: const Text('Выберите регионал'),
+            hint: Text(S.of(context).chooseRegional),
             isExpanded: true,
             onChanged: (String? newRegion) {
               if (newRegion != null && onRegionChanged != null) {
-                onRegionChanged!(newRegion); // Вызываем коллбек для изменения региона
+                onRegionChanged!(
+                    newRegion); // Вызываем коллбек для изменения региона
               }
             },
             items: regions.map((region) {

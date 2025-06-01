@@ -1,3 +1,5 @@
+import 'package:autoexplorer/generated/l10n.dart';
+import 'package:autoexplorer/global.dart';
 import 'package:flutter/material.dart';
 
 enum AppBarMenuOption { change }
@@ -5,34 +7,30 @@ enum AppBarMenuOption { change }
 class AppBarActions extends StatelessWidget {
   AppBarActions({super.key});
 
-  // Заполнение пункта меню
-  final List<_MenuItem> _menuItems = [
-    _MenuItem(AppBarMenuOption.change, Icons.key, 'Сменить'),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<int>(
+    // Список опций с иконками и локализованными текстами
+    final items = <PopupMenuEntry<AppBarMenuOption>>[
+      PopupMenuItem(
+        value: AppBarMenuOption.change,
+        child: Row(
+          children: [
+            Icon(Icons.key, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(S.of(context).switchAccount),
+          ],
+        ),
+      ),
+    ];
+    return PopupMenuButton<AppBarMenuOption>(
       icon: const Icon(Icons.more_vert),
-      onSelected: (value) => _onMenuItemSelected(value, context),
-      itemBuilder: (context) => _menuItems
-          .map((item) => PopupMenuItem<int>(
-                value: item.option.index,
-                child: Row(
-                  children: [
-                    Icon(item.icon, color: Colors.black54),
-                    const SizedBox(width: 8),
-                    Text(item.text),
-                  ],
-                ),
-              ))
-          .toList(),
+      onSelected: (option) => _onMenuItemSelected(option, context),
+      itemBuilder: (_) => items,
     );
   }
 
   // Обработка выбранного пункта меню
-  void _onMenuItemSelected(int value, BuildContext context) {
-    final option = AppBarMenuOption.values[value];
+  void _onMenuItemSelected(AppBarMenuOption option, BuildContext context) {
     switch (option) {
       case AppBarMenuOption.change:
         _showChangeDialog(context);
@@ -45,32 +43,26 @@ class AppBarActions extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Выйти из панели?'),
-        content: const Text('Вы хотите сменить аккаунт?'),
+        title: Text(S.of(context).areYouSure),
+        content: Text(S.of(context).youWantToChangeAccount),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Отмена'),
+            child: Text(S.of(context).cancelButton),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pushNamed('/');
+
+              globalAccessList = null;
+              globalRole = null;
             },
-            child: const Text('Сменить'),
+            child: Text(S.of(context).switchAccount),
           ),
         ],
       ),
     );
   }
-}
-
-// Вспомогательный класс для представления элементов меню
-class _MenuItem {
-  final AppBarMenuOption option;
-  final IconData icon;
-  final String text;
-
-  _MenuItem(this.option, this.icon, this.text);
 }

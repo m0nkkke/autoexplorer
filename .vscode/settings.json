@@ -2,5 +2,16 @@
     "cSpell.words": [
         "autoexplorer",
         "Viewsort"
-    ]
+    ],
+    // (опционально) авто-форматирование при сохранении для всех файлов
+  "editor.formatOnSave": true,
+
+  // настройки специфично для Dart/Flutter
+  "[dart]": {
+    // назначаем форматтер от Dart-Code
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    // включаем форматирование при сохранении
+    "editor.formatOnSave": true
+  }
+    
 }

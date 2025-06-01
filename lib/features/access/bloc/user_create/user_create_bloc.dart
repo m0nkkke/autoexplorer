@@ -6,6 +6,7 @@ import 'package:autoexplorer/repositories/users/models/user/ae_user_role.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
@@ -15,10 +16,10 @@ part 'user_create_state.dart';
 
 class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
   final AbstractUsersRepository _usersRepo = GetIt.I<AbstractUsersRepository>();
-  final AbstractStorageRepository _storageRepo = GetIt.I<AbstractStorageRepository>();
+  final AbstractStorageRepository _storageRepo =
+      GetIt.I<AbstractStorageRepository>(instanceName: 'yandex_repository');
 
-  UserCreateBloc()
-      : super(const UserCreateState()) {
+  UserCreateBloc() : super(const UserCreateState()) {
     on<UpdateCreateFieldEvent>(_onUpdateField);
     on<LoadCreateRegionsEvent>(_onLoadRegions);
     on<OnCreateRegionChangedEvent>(_onRegionChanged);
@@ -29,12 +30,24 @@ class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
 
   void _onUpdateField(UpdateCreateFieldEvent e, Emitter<UserCreateState> emit) {
     switch (e.field) {
-      case 'firstName':   emit(state.copyWith(firstName: e.value));   break;
-      case 'lastName':    emit(state.copyWith(lastName: e.value));    break;
-      case 'middleName':  emit(state.copyWith(middleName: e.value));  break;
-      case 'email':       emit(state.copyWith(email: e.value));       break;
-      case 'password':    emit(state.copyWith(password: e.value));    break;
-      case 'role':        emit(state.copyWith(role: e.value));        break;
+      case 'firstName':
+        emit(state.copyWith(firstName: e.value));
+        break;
+      case 'lastName':
+        emit(state.copyWith(lastName: e.value));
+        break;
+      case 'middleName':
+        emit(state.copyWith(middleName: e.value));
+        break;
+      case 'email':
+        emit(state.copyWith(email: e.value));
+        break;
+      case 'password':
+        emit(state.copyWith(password: e.value));
+        break;
+      case 'role':
+        emit(state.copyWith(role: e.value));
+        break;
     }
   }
 
@@ -42,9 +55,9 @@ class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
       LoadCreateRegionsEvent _, Emitter<UserCreateState> emit) async {
     emit(state.copyWith(isRegionsLoading: true));
     try {
-      final list = await _storageRepo.getFileAndFolderModels(path: '/');
+      final list = await _storageRepo.getFileAndFolderModels(path: '');
       final folders = list.whereType<FolderItem>().toList();
-      final map = { for (var f in folders) f.name: f.resourceId };
+      final map = {for (var f in folders) f.name: f.resourceId};
       emit(state.copyWith(
         isRegionsLoading: false,
         regionalFolderList: folders,
@@ -72,7 +85,9 @@ class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
       final folder = state.regionalFolderList
           .firstWhere((f) => f.resourceId == e.regionId);
       final list = await _storageRepo.getFileAndFolderModels(path: folder.path);
-      final map = { for (var f in list.whereType<FolderItem>()) f.name: f.resourceId };
+      final map = {
+        for (var f in list.whereType<FolderItem>()) f.name: f.resourceId
+      };
       emit(state.copyWith(
         isAreasLoading: false,
         areasIdsMap: map,
@@ -129,8 +144,10 @@ class UserCreateBloc extends Bloc<UserCreateEvent, UserCreateState> {
 
       emit(state.copyWith(status: CreateStatus.success));
     } catch (e) {
+      debugPrint(e.toString());
       emit(state.copyWith(
-          status: CreateStatus.failure, errorMessage: e.toString()));
+          status: CreateStatus.failure,
+          errorMessage: 'Не удалось создать пользователя.'));
     }
   }
 }

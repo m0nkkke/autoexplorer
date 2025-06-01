@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:autoexplorer/features/storage/bloc/storage_list_bloc.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -61,14 +62,14 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Просмотр изображения')),
+      appBar: AppBar(title: Text(S.of(context).viewImage)),
       body: BlocBuilder<StorageListBloc, StorageListState>(
         bloc: widget.imageViewerBloc,
         builder: (context, state) {
           if (state is ImageUrlLoaded) {
             return _buildImage(state.imageUrl);
           } else if (state is ImageLoadError) {
-            return const Center(child: Text('Ошибка загрузки изображения'));
+            return Center(child: Text(S.of(context).errorLoading));
           }
           return const Center(child: CircularProgressIndicator());
         },
@@ -99,10 +100,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
                 },
                 errorBuilder: (context, error, stackTrace) {
                   print(error.toString());
-                  return const Center(
+                  return Center(
                       child: Column(
                     children: [
-                      Text('Ошибка отображения изображения'),
+                      Text(S.of(context).errorLoading),
                     ],
                   ));
                 },

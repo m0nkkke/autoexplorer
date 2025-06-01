@@ -1,9 +1,12 @@
-class FolderItem {
-  FolderItem( 
-      {required this.name, required this.filesCount, required this.path, required this.resourceId,});
+import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
 
-  final String name;
+class FolderItem extends Abstractfile {
+  FolderItem({
+    required super.name,
+    required this.filesCount,
+    required super.path,
+    required this.resourceId,
+  });
   final int filesCount;
-  final String path;
   final String resourceId;
 }

@@ -6,29 +6,29 @@ class ControlState extends Equatable {
   final ControlStatus status;
   final List<QueryDocumentSnapshot> users;
   final String errorMessage;
-  final String? folderName;
+  final Map<String, String> regionNamesMap;
 
   const ControlState({
     this.status = ControlStatus.initial,
     this.users = const [],
     this.errorMessage = '',
-    this.folderName,
+    this.regionNamesMap = const {},    
   });
 
   ControlState copyWith({
     ControlStatus? status,
     List<QueryDocumentSnapshot>? users,
     String? errorMessage,
-    String? folderName,
+    Map<String, String>? regionNamesMap,  
   }) {
     return ControlState(
       status: status ?? this.status,
       users: users ?? this.users,
       errorMessage: errorMessage ?? this.errorMessage,
-      folderName: folderName ?? this.folderName,
+      regionNamesMap: regionNamesMap ?? this.regionNamesMap, 
     );
   }
 
   @override
-  List<Object?> get props => [status, users, errorMessage, folderName];
+  List<Object?> get props => [status, users, errorMessage, regionNamesMap];
 }

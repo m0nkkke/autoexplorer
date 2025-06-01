@@ -1,3 +1,4 @@
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 
 class LoginButton extends StatelessWidget {
@@ -23,8 +24,8 @@ class LoginButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: const Text(
-          'Авторизоваться',
+        child: Text(
+          S.of(context).signInButton,
           style: TextStyle(fontSize: 16, color: Colors.white),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:autoexplorer/features/admin/bloc/control/control_bloc.dart';
 import 'package:autoexplorer/features/admin/widgets/key_list_item.dart';
+import 'package:autoexplorer/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -25,10 +26,14 @@ class _ControlTabState extends State<ControlTab> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    _controlBloc.add(LoadUsers());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ControlBloc>(
-      create: (context) => _controlBloc,
+    return BlocProvider<ControlBloc>.value(
+      value: _controlBloc,
       child: Scaffold(
         body: Column(
           children: [
@@ -42,7 +47,7 @@ class _ControlTabState extends State<ControlTab> {
                   },
                   icon: const Icon(Icons.add_box,
                       color: Colors.lightBlue, size: 32),
-                  label: const Text('Создать новый ключ доступа'),
+                  label: Text(S.of(context).createNewAccessKey),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.black,
@@ -56,26 +61,63 @@ class _ControlTabState extends State<ControlTab> {
                 builder: (context, state) {
                   if (state.status == ControlStatus.loading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (state.status == ControlStatus.failure) {
-                    return Center(child: Text('Ошибка: ${state.errorMessage}'));
-                  } else if (state.users.isEmpty) {
-                    return const Center(child: Text('Нет доступных пользователей'));
-                  } else {
-                    return ListView.builder(
+                  }
+
+                  if (state.status == ControlStatus.failure) {
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Text(
+                              S.of(context).errorWithMessage(
+                                  state.errorMessage.toString()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (state.users.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Text(S.of(context).noAvailableUsers),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: state.users.length,
                       itemBuilder: (context, index) {
-                        final user = state.users[index].data()
-                            as Map<String, dynamic>;
-                        final uid = state.users[index].id;
+                        final doc = state.users[index];
+                        final user = doc.data() as Map<String, dynamic>;
+                        final uid = doc.id;
+                        final regionId = user['regional'] as String;
+                        final regionName =
+                            state.regionNamesMap[regionId] ?? '—';
                         return KeyListItem(
-                          keyUserName: user['firstName'] + ' ' + user['lastName'],
-                          keyArea: user['regional'],
+                          keyUserName:
+                              '${user['firstName']} ${user['lastName']}',
+                          keyArea: regionName,
                           userData: user,
                           uid: uid,
                         );
                       },
-                    );
-                  }
+                    ),
+                  );
                 },
               ),
             ),

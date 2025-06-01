@@ -1,14 +1,15 @@
-class FileItem {
+import 'package:autoexplorer/repositories/storage/models/abstract_file.dart';
+
+class FileItem extends Abstractfile {
   FileItem({
-    required this.name,
+    required super.name,
     required this.creationDate,
-    required this.path,
+    required super.path,
     required this.imageURL,
+    this.isSynced = false,
   });
 
-  final String name;
   final String creationDate;
-
-  final String path;
   final String imageURL;
+  bool isSynced;
 }
