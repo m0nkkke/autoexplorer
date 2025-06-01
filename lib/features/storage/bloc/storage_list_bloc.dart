@@ -292,6 +292,7 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     _userRegionalPath = rp;
 
     _accessInitialized = true;
+    debugPrint('ЗАВЕРШЕН INIT ACCESS');
   }
 
   FutureOr<void> _onStorageListLoad(
@@ -299,11 +300,29 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     Emitter<StorageListState> emit,
   ) async {
     try {
+      debugPrint("============= Вызов _onStorageListLoad =============");
+      emit(StorageListLoading());
+
       final hasInternet = GetIt.I<ConnectivityService>().hasInternet;
-      if ((globalAccessList == [] || globalRole == null) && hasInternet) {
-        await _initAccess();
+
+      if (hasInternet) {
+        try {
+          await _initAccess();
+          await yandexRepository.syncRegionalAndAreasStructure(
+            userRegionalId: _userRegionalId,
+            accessList: _accessList,
+            isAdmin: _role == UserRole.admin,
+          );
+        } catch (e) {
+          debugPrint(e.toString());
+        }
       }
 
+      // if (!_accessInitialized) {
+      //   await _initAccess();
+      // }
+
+      debugPrint("========= запуск onStorageListLoad ==========");
       final itemsList = (hasInternet && globalRole == UserRole.admin)
           ? await yandexRepository.getFileAndFolderModels(
               path: event.path,
