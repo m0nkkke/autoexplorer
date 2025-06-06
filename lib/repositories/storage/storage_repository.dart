@@ -168,7 +168,7 @@ class StorageRepository extends AbstractStorageRepository {
     }
   }
 
-  Future<String?> _fetchRegionalFolderName(String regionalId) async {
+  Future<String?> fetchRegionalFolderName(String regionalId) async {
     try {
       final allRootItems = await getFileAndFolderModels(
         path: 'disk:/',
@@ -219,7 +219,7 @@ class StorageRepository extends AbstractStorageRepository {
     final appDir = await localRepo.getAppDirectory(path: '/');
 
     // 3) Получаем имя папки-региона на Яндекс.Диске по resourceId
-    final regionalName = await _fetchRegionalFolderName(regionalId);
+    final regionalName = await fetchRegionalFolderName(regionalId);
     if (regionalName == null) {
       debugPrint('Не найден регион с resourceId=$regionalId на Яндекс.Диске');
     }

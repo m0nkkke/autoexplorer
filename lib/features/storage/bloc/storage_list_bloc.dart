@@ -265,6 +265,63 @@ class StorageListBloc extends Bloc<StorageListEvent, StorageListState> {
     globalRole = u.role;
     _userRegionalId = u.regional;
 
+    // 2) Получаем название актуальной региональной папки на Яндекс.Диске
+    final actualRegionalFolderName =
+        await yandexRepository.fetchRegionalFolderName(u.regional);
+
+    if (actualRegionalFolderName == null) {
+      throw Exception(
+          'Не удалось получить название региональной папки с Яндекс.Диска для ID: $actualRegionalFolderName');
+    }
+
+    List<dynamic> localFolders = [];
+    try {
+      localFolders = await localRepository.getFileAndFolderModels(
+          path: '/'); // Вызываем метод LocalRepository
+    } catch (e) {
+      debugPrint('Ошибка при получении списка локальных папок: $e');
+      // В случае ошибки, считаем, что локальных папок нет или они в некорректном состоянии, и продолжим удаление
+      localFolders = [];
+    }
+
+    bool needsDeletion = false;
+
+    if (localFolders.isEmpty) {
+      debugPrint('Локальных папок не найдено.');
+      needsDeletion = false; // Нет папок, нечего удалять
+    } else if (localFolders.length > 1) {
+      debugPrint(
+          'Обнаружено более одной локальной корневой папки. Требуется удаление.');
+      needsDeletion = true;
+    } else {
+      // localFolders.length == 1
+      final localFolderName = localFolders.first;
+      if (localFolderName.name != actualRegionalFolderName) {
+        debugPrint(
+            'Название локальной папки "$localFolderName.name" не совпадает с актуальным "$actualRegionalFolderName". Требуется удаление.');
+        needsDeletion = true;
+      } else {
+        debugPrint(
+            'Локальная папка найдена и название совпадает с актуальным. Удаление не требуется.');
+        needsDeletion = false;
+      }
+    }
+
+    if (needsDeletion) {
+      debugPrint('Удаляем все локальные корневые папки...');
+      for (final folder in localFolders) {
+        try {
+          // Используем deleteFolder вашего LocalRepository для удаления каждой папки в корне
+          await localRepository.deleteFolder(name: folder.name, path: '');
+          debugPrint('Удалена локальная папка: $folder.name');
+        } catch (e) {
+          debugPrint('Ошибка при удалении локальной папки $folder.name: $e');
+          // Обработайте ошибку, если необходимо
+        }
+      }
+      debugPrint('Удаление локальных корневых папок завершено.');
+    }
+
     // 2) Загружаем **корень** яндекс‑диска, чтобы построить _rootMap
     final rootItems = await yandexRepository.getFileAndFolderModels(path: '');
     final roots = rootItems.whereType<FolderItem>().toList();

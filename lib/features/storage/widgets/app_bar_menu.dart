@@ -1,10 +1,12 @@
 // File: lib/features/storage/widgets/app_bar_menu.dart
 
+import 'package:autoexplorer/connectivityService.dart';
 import 'package:autoexplorer/features/storage/widgets/showCreateDialog.dart';
 import 'package:autoexplorer/generated/l10n.dart';
 import 'package:autoexplorer/global.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 enum AppBarMenuOption {
   createFolder,
@@ -156,6 +158,18 @@ class AppBarMenu extends StatelessWidget {
         break;
 
       case AppBarMenuOption.switchAccount:
+        final connectivityService = GetIt.I<ConnectivityService>();
+
+        if (!connectivityService.hasInternet) {
+          // Интернет отсутствует, показываем сообщение пользователю и выходим из функции
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Отсутствует интернет-соединение. Невозможно выйти из аккаунта.'),
+            ),
+          );
+          return; // Прерываем выполнение кейса
+        }
         await FirebaseAuth.instance.signOut();
         globalAccessList = null;
         globalRole = null;
