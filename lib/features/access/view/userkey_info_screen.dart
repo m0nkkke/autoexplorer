@@ -61,8 +61,7 @@ class UserKeyInfoScreen extends StatelessWidget {
 
                   if (state.isRegionsLoading ||
                       state.regionalFolderList.isEmpty ||
-                      state.isAreasLoading ||
-                      state.areasIdsMap.isEmpty) ...[
+                      state.isAreasLoading) ...[
                     SizedBox(
                       height: 300,
                       child: Center(
