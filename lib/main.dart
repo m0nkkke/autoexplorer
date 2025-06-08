@@ -114,6 +114,7 @@ class AutoExplorerApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      locale: Locale('ru'),
       supportedLocales: S.delegate.supportedLocales,
     );
   }
